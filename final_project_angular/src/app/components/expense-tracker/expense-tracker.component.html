@@ -1,0 +1,113 @@
+<!-- Navbar -->
+<nav class="navbar">
+    <h2 class="logo">Receipt Saver</h2>
+    
+    <div class="nav-links">
+      <a routerLink="/homepage" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/expense-tracker" routerLinkActive="active">Expense Tracker</a>
+      <a routerLink="/past-receipts" routerLinkActive="active">Past Receipts</a>
+      <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
+    </div>
+    
+    <div class="logout-container">
+      <button class="logout-button" (click)="logout()">Logout</button>
+    </div>
+  </nav>
+  
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Expense Tracker</h1>
+      <p>Understand your spending habits and save more</p>
+    </div>
+  </section>
+  
+  <!-- Budget Overview -->
+  <div class="budget-overview">
+    <h3>{{ currentMonth }} Budget Overview</h3>
+    
+    <div class="budget-cards">
+      <div class="budget-card">
+        <div class="budget-title">Total Spent</div>
+        <div class="budget-amount">${{ totalSpent.toFixed(2) }}</div>
+      </div>
+      
+      <div class="budget-card">
+        <div class="budget-title">Monthly Budget</div>
+        <div class="budget-amount">${{ monthlyBudget.toFixed(2) }}</div>
+      </div>
+      
+      <div class="budget-card">
+        <div class="budget-title">Remaining Budget</div>
+        <div class="budget-amount" [class.budget-risk]="isBudgetAtRisk()">${{ remainingBudget.toFixed(2) }}</div>
+      </div>
+    </div>
+    
+    <div class="budget-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="percentageUsed" [class.almost-full]="isBudgetAtRisk()"></div>
+      </div>
+      <div class="progress-label">{{ percentageUsed }}% of budget used</div>
+    </div>
+  </div>
+  
+  <!-- Expense Categories -->
+  <div class="expense-categories">
+    <h3>Spending by Category</h3>
+    
+    <div class="category-list">
+      <div class="category-card" *ngFor="let category of expenseCategories">
+        <div class="category-icon" [style.background-color]="category.color">{{ category.icon }}</div>
+        <div class="category-details">
+          <div class="category-header">
+            <span class="category-name">{{ category.name }}</span>
+            <span class="category-amount">${{ category.amount.toFixed(2) }}</span>
+          </div>
+          <div class="category-bar">
+            <div class="category-progress" [style.width.%]="category.percentage" [style.background-color]="category.color"></div>
+          </div>
+          <div class="category-stats">
+            <span>{{ category.percentage }}% of total</span>
+            <span>{{ category.transactions }} transactions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Transactions -->
+  <div class="recent-transactions">
+    <h3>Recent Transactions</h3>
+    
+    <div class="transaction-list">
+      <div class="transaction-item" *ngFor="let transaction of recentTransactions">
+        <div class="transaction-icon">{{ transaction.icon }}</div>
+        <div class="transaction-details">
+          <div class="transaction-merchant">{{ transaction.merchant }}</div>
+          <div class="transaction-category">{{ transaction.category }}</div>
+        </div>
+        <div class="transaction-date">{{ getFormattedDate(transaction.date) }}</div>
+        <div class="transaction-amount">${{ transaction.amount.toFixed(2) }}</div>
+      </div>
+    </div>
+    
+    <a routerLink="/past-receipts" class="view-all">View All Transactions <span class="arrow-icon">→</span></a>
+  </div>
+  
+  <!-- Monthly Spending History -->
+  <div class="monthly-history">
+    <h3>Monthly Spending History</h3>
+    
+    <div class="history-chart">
+      <div class="chart-bars">
+        <div class="chart-bar" *ngFor="let month of monthlyHistory">
+          <div class="bar-fill" [style.height.px]="(month.amount / 2000) * 180"></div>
+          <div class="bar-label">{{ month.month.split(' ')[0].substring(0, 3) }}</div>
+          <div class="bar-value">${{ month.amount.toFixed(0) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Floating Scan Button -->
+  <button class="scan-button" routerLink="/scan">📸</button>

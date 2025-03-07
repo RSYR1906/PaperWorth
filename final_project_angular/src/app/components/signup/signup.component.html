@@ -1,0 +1,141 @@
+<div class="signup-container">
+    <h2>Create Your Account</h2>
+    <p class="signup-intro">Start tracking your expenses and discovering promotions</p>
+    
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+    
+    <!-- Signup Form -->
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input 
+          type="text" 
+          id="name" 
+          formControlName="name" 
+          placeholder="Enter your full name"
+          [class.invalid]="f['name'].touched && f['name'].invalid"
+        >
+        <div class="error-hint" *ngIf="f['name'].touched && f['name'].errors?.['required']">
+          Name is required
+        </div>
+        <div class="error-hint" *ngIf="f['name'].touched && f['name'].errors?.['minlength']">
+          Name must be at least 2 characters
+        </div>
+      </div>
+      
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="Enter your email address"
+          [class.invalid]="f['email'].touched && f['email'].invalid"
+        >
+        <div class="error-hint" *ngIf="f['email'].touched && f['email'].errors?.['required']">
+          Email is required
+        </div>
+        <div class="error-hint" *ngIf="f['email'].touched && f['email'].errors?.['email']">
+          Please enter a valid email address
+        </div>
+      </div>
+      
+      <!-- Password -->
+      <div class="form-group password-group">
+        <label for="password">Password</label>
+        <div class="password-input-container">
+          <input 
+            [type]="passwordVisible ? 'text' : 'password'" 
+            id="password" 
+            formControlName="password" 
+            placeholder="Create a password"
+            [class.invalid]="f['password'].touched && f['password'].invalid"
+          >
+          <button 
+            type="button" 
+            class="password-toggle" 
+            (click)="togglePasswordVisibility()"
+          >
+            {{ passwordVisible ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-hint" *ngIf="f['password'].touched && f['password'].errors?.['required']">
+          Password is required
+        </div>
+        <div class="error-hint" *ngIf="f['password'].touched && f['password'].errors?.['minlength']">
+          Password must be at least 8 characters
+        </div>
+      </div>
+      
+      <!-- Confirm Password -->
+      <div class="form-group password-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="password-input-container">
+          <input 
+            [type]="confirmPasswordVisible ? 'text' : 'password'" 
+            id="confirmPassword" 
+            formControlName="confirmPassword" 
+            placeholder="Confirm your password"
+            [class.invalid]="f['confirmPassword'].touched && f['confirmPassword'].invalid"
+          >
+          <button 
+            type="button" 
+            class="password-toggle" 
+            (click)="toggleConfirmPasswordVisibility()"
+          >
+            {{ confirmPasswordVisible ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div class="error-hint" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].errors?.['required']">
+          Please confirm your password
+        </div>
+        <div class="error-hint" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].errors?.['mismatch']">
+          Passwords do not match
+        </div>
+      </div>
+      
+      <!-- Terms and Conditions -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="agreeTerms">
+          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+        </label>
+        <div class="error-hint" *ngIf="f['agreeTerms'].touched && f['agreeTerms'].invalid">
+          You must agree to the terms and conditions
+        </div>
+      </div>
+      
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="signup-btn" 
+        [disabled]="isLoading"
+      >
+        {{ isLoading ? 'Creating account...' : 'Create Account' }}
+      </button>
+    </form>
+    
+    <!-- Already have an account -->
+    <p class="login-text">
+      Already have an account? <a href="javascript:void(0)" (click)="goToLogin()">Login</a>
+    </p>
+    
+    <!-- Social Signup -->
+    <div class="divider">
+      <span></span>
+      <p>OR</p>
+      <span></span>
+    </div>
+    
+    <div class="social-signup">
+      <button class="google-signup" (click)="signUpWithGoogle()">
+        <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
+        Sign up with Google
+      </button>
+    </div>
+  </div>

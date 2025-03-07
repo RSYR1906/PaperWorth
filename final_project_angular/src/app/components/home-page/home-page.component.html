@@ -1,0 +1,120 @@
+<!-- Navbar -->
+<nav class="navbar">
+  <h2 class="logo">Receipt Saver</h2>
+
+  <div class="nav-links">
+    <a routerLink="/homepage" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/expense-tracker" routerLinkActive="active">Expense Tracker</a>
+    <a routerLink="/past-receipts" routerLinkActive="active">Past Receipts</a>
+    <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
+  </div>
+  
+  <div class="logout-container">
+    <button class="logout-button" (click)="logout()">Logout</button>
+  </div>
+</nav>
+  
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Save More with Every Receipt!</h1>
+    <p>Scan your receipts to unlock exclusive deals and track your expenses.</p>
+    <button class="hero-button" (click)="triggerFileInput()">Scan a Receipt</button>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<div class="dashboard">
+  <div class="user-info">
+    <h2>Welcome, {{ userName }}</h2>
+    <p>Total Monthly Expenses: <strong>${{ monthlyExpenses }}</strong></p>
+  </div>
+</div>
+
+<!-- Hidden File Input -->
+<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
+
+<!-- Modal Overlay for Receipt Preview -->
+<div class="modal-overlay" *ngIf="selectedFile && !extractedData" (click)="resetScanner()"></div>
+
+<!-- Receipt Preview Modal -->
+<div class="receipt-modal" *ngIf="selectedFile && !extractedData">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Receipt Preview</h3>
+      <button class="close-btn" (click)="resetScanner()">×</button>
+    </div>
+    <div class="modal-body">
+      <img [src]="imagePreview" class="preview-image">
+    </div>
+    <div class="modal-footer">
+      <button class="action-btn secondary" (click)="resetScanner()">Cancel</button>
+      <button class="action-btn primary" [disabled]="isProcessing" (click)="uploadImage()">
+        {{ isProcessing ? 'Processing...' : 'Extract Information' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Extracted Data Modal -->
+<div class="modal-overlay" *ngIf="extractedData" (click)="resetScanner()"></div>
+
+<div class="receipt-modal" *ngIf="extractedData">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Extracted Information</h3>
+      <button class="close-btn" (click)="resetScanner()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="data-container">
+        <div class="data-row">
+          <span class="data-label">Merchant:</span>
+          <span class="data-value">{{ extractedData.merchantName }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Total Amount:</span>
+          <span class="data-value">${{ extractedData.totalAmount.toFixed(2) }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Date:</span>
+          <span class="data-value">{{ extractedData.date }}</span>
+        </div>
+      </div>
+      
+      <!-- OCR Result (collapsible) -->
+      <div class="ocr-result-container">
+        <button class="toggle-ocr-btn" (click)="showFullText = !showFullText">
+          {{ showFullText ? 'Hide' : 'Show' }} Full Extracted Text
+        </button>
+        <div class="ocr-result" *ngIf="showFullText && ocrText">
+          <pre>{{ ocrText }}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="action-btn secondary" (click)="resetScanner()">Cancel</button>
+      <button class="action-btn primary save-btn" (click)="saveReceipt()">Save Receipt</button>
+    </div>
+  </div>
+</div>
+  
+<!-- Promotions Section -->
+<div class="promotions" *ngIf="!selectedFile && !extractedData">
+  <h3>Recommended Promotions</h3>
+
+  <div *ngFor="let category of promotionsByCategory">
+    <h4>{{ category.name }}</h4>
+    <div class="promo-list">
+      <div *ngFor="let promo of category.deals" class="promo-card">
+        <img [src]="promo.imageUrl" alt="Promo Image" onerror="this.src='assets/placeholder.jpg'">
+        <div class="promo-content">
+          <p class="promo-title">{{ promo.description }}</p>
+          <p class="expiry">Valid until: {{ promo.expiry }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+<!-- Floating Camera Button -->
+<button class="scan-button" (click)="triggerFileInput()">📸</button>
