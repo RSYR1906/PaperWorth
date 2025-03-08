@@ -1,18 +1,50 @@
 <!-- Navbar -->
 <nav class="navbar">
-    <h2 class="logo">Receipt Saver</h2>
+  <div class="logo-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="40" height="30">
+      <!-- Background -->
+      <rect width="400" height="300" fill="#ffffff" rx="20" ry="20"/>
+      
+      <!-- Gradient background for receipt -->
+      <defs>
+        <linearGradient id="receiptGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f8f9fa"/>
+          <stop offset="100%" stop-color="#e9ecef"/>
+        </linearGradient>
+      </defs>
+      
+      <!-- Receipt paper -->
+      <path d="M240,50 L240,250 L160,250 L160,50 L240,50 Z" fill="url(#receiptGradient)" stroke="#dee2e6" stroke-width="2"/>
+      
+      <!-- Receipt serrated edge -->
+      <path d="M240,50 
+               L245,55 L240,60 L245,65 L240,70 L245,75 L240,80 L245,85 L240,90 
+               L245,95 L240,100 L245,105 L240,110 L245,115 L240,120 
+               L245,125 L240,130 L245,135 L240,140 L245,145 L240,150
+               L245,155 L240,160 L245,165 L240,170 L245,175 L240,180
+               L245,185 L240,190 L245,195 L240,200 L245,205 L240,210
+               L245,215 L240,220 L245,225 L240,230 L245,235 L240,240
+               L245,245 L240,250" 
+               fill="none" stroke="#dee2e6" stroke-width="2"/>
+      
+      <!-- Blue circle with dollar sign -->
+      <circle cx="200" cy="200" r="30" fill="#2E3192"/>
+      <text x="200" y="210" font-family="Arial, sans-serif" font-size="34" font-weight="bold" text-anchor="middle" fill="#ffffff">$</text>
+    </svg>
+    <h2 class="logo-text">PaperWorth</h2>
+  </div>
   
-    <div class="nav-links">
-      <a routerLink="/homepage" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/expense-tracker" routerLinkActive="active">Expense Tracker</a>
-      <a routerLink="/past-receipts" routerLinkActive="active">Past Receipts</a>
-      <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
-    </div>
-    
-    <div class="logout-container">
-      <button class="logout-button" (click)="logout()">Logout</button>
-    </div>
-  </nav>
+  <div class="nav-links">
+    <a routerLink="/homepage" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/expense-tracker" routerLinkActive="active">Expense Tracker</a>
+    <a routerLink="/past-receipts" routerLinkActive="active">Past Receipts</a>
+    <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
+  </div>
+  
+  <div class="logout-container">
+    <button class="logout-button" (click)="logout()">Logout</button>
+  </div>
+</nav>
   
   <!-- Hero Section -->
   <section class="hero">

@@ -1,8 +1,55 @@
-<div class="signup-container">
-    <h2>Create Your Account</h2>
-    <p class="signup-intro">Start tracking your expenses and discovering promotions</p>
+<div class="signup-page-container">
+  <div class="signup-container">
+    <!-- Logo -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="180" height="135">
+        <!-- Background -->
+        <rect width="400" height="300" fill="#ffffff" rx="20" ry="20"/>
+        
+        <!-- Gradient background for receipt -->
+        <defs>
+          <linearGradient id="receiptGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f8f9fa"/>
+            <stop offset="100%" stop-color="#e9ecef"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Receipt paper -->
+        <path d="M240,50 L240,250 L160,250 L160,50 L240,50 Z" fill="url(#receiptGradient)" stroke="#dee2e6" stroke-width="2"/>
+        
+        <!-- Receipt serrated edge -->
+        <path d="M240,50 
+                 L245,55 L240,60 L245,65 L240,70 L245,75 L240,80 L245,85 L240,90 
+                 L245,95 L240,100 L245,105 L240,110 L245,115 L240,120 
+                 L245,125 L240,130 L245,135 L240,140 L245,145 L240,150
+                 L245,155 L240,160 L245,165 L240,170 L245,175 L240,180
+                 L245,185 L240,190 L245,195 L240,200 L245,205 L240,210
+                 L245,215 L240,220 L245,225 L240,230 L245,235 L240,240
+                 L245,245 L240,250" 
+                 fill="none" stroke="#dee2e6" stroke-width="2"/>
+        
+        <!-- Receipt lines -->
+        <line x1="170" y1="80" x2="230" y2="80" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="100" x2="230" y2="100" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="120" x2="230" y2="120" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="140" x2="230" y2="140" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="160" x2="210" y2="160" stroke="#adb5bd" stroke-width="1"/>
+        
+        <!-- Blue circle with dollar sign -->
+        <circle cx="200" cy="200" r="30" fill="#2E3192"/>
+        <text x="200" y="210" font-family="Arial, sans-serif" font-size="34" font-weight="bold" text-anchor="middle" fill="#ffffff">$</text>
+        
+        <!-- Scan line effect -->
+        <rect x="160" y="110" width="80" height="4" fill="#2ecc71" opacity="0.7"/>
+        
+        <!-- Magnifying glass -->
+        <circle cx="120" cy="150" r="30" fill="none" stroke="#2E3192" stroke-width="6"/>
+        <line x1="142" y1="172" x2="160" y2="190" stroke="#2E3192" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+
+    <h2>Welcome to PaperWorth</h2>
+    <p class="signup-subtitle">Start tracking your expenses and discovering promotions</p>
     
-    <!-- Error Message -->
+    <!-- Error Message Display -->
     <div class="error-message" *ngIf="errorMessage">
       {{ errorMessage }}
     </div>
@@ -11,91 +58,91 @@
     <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
       <!-- Full Name -->
       <div class="form-group">
-        <label for="name">Full Name</label>
-        <input 
-          type="text" 
-          id="name" 
-          formControlName="name" 
-          placeholder="Enter your full name"
-          [class.invalid]="f['name'].touched && f['name'].invalid"
-        >
-        <div class="error-hint" *ngIf="f['name'].touched && f['name'].errors?.['required']">
-          Name is required
+        <div class="input-with-icon">
+          <span class="input-icon">👤</span>
+          <input 
+            type="text" 
+            id="name" 
+            formControlName="name" 
+            placeholder="Full Name"
+            [class.invalid]="f['name'].touched && f['name'].invalid"
+          >
         </div>
-        <div class="error-hint" *ngIf="f['name'].touched && f['name'].errors?.['minlength']">
-          Name must be at least 2 characters
+        <div class="validation-error" *ngIf="f['name'].touched && f['name'].errors">
+          <span *ngIf="f['name'].errors['required']">Name is required</span>
+          <span *ngIf="f['name'].errors['minlength']">Name must be at least 2 characters</span>
         </div>
       </div>
       
       <!-- Email -->
       <div class="form-group">
-        <label for="email">Email Address</label>
-        <input 
-          type="email" 
-          id="email" 
-          formControlName="email" 
-          placeholder="Enter your email address"
-          [class.invalid]="f['email'].touched && f['email'].invalid"
-        >
-        <div class="error-hint" *ngIf="f['email'].touched && f['email'].errors?.['required']">
-          Email is required
+        <div class="input-with-icon">
+          <span class="input-icon">✉️</span>
+          <input 
+            type="email" 
+            id="email" 
+            formControlName="email" 
+            placeholder="Email Address"
+            [class.invalid]="f['email'].touched && f['email'].invalid"
+          >
         </div>
-        <div class="error-hint" *ngIf="f['email'].touched && f['email'].errors?.['email']">
-          Please enter a valid email address
+        <div class="validation-error" *ngIf="f['email'].touched && f['email'].errors">
+          <span *ngIf="f['email'].errors['required']">Email is required</span>
+          <span *ngIf="f['email'].errors['email']">Please enter a valid email address</span>
         </div>
       </div>
       
       <!-- Password -->
       <div class="form-group password-group">
-        <label for="password">Password</label>
-        <div class="password-input-container">
-          <input 
-            [type]="passwordVisible ? 'text' : 'password'" 
-            id="password" 
-            formControlName="password" 
-            placeholder="Create a password"
-            [class.invalid]="f['password'].touched && f['password'].invalid"
-          >
-          <button 
-            type="button" 
-            class="password-toggle" 
-            (click)="togglePasswordVisibility()"
-          >
-            {{ passwordVisible ? '👁️' : '👁️‍🗨️' }}
-          </button>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <div class="password-input-container">
+            <input 
+              [type]="passwordVisible ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password" 
+              placeholder="Create a Password"
+              [class.invalid]="f['password'].touched && f['password'].invalid"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="togglePasswordVisibility()"
+            >
+              {{ passwordVisible ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
         </div>
-        <div class="error-hint" *ngIf="f['password'].touched && f['password'].errors?.['required']">
-          Password is required
-        </div>
-        <div class="error-hint" *ngIf="f['password'].touched && f['password'].errors?.['minlength']">
-          Password must be at least 8 characters
+        <div class="validation-error" *ngIf="f['password'].touched && f['password'].errors">
+          <span *ngIf="f['password'].errors['required']">Password is required</span>
+          <span *ngIf="f['password'].errors['minlength']">Password must be at least 8 characters</span>
         </div>
       </div>
       
       <!-- Confirm Password -->
       <div class="form-group password-group">
-        <label for="confirmPassword">Confirm Password</label>
-        <div class="password-input-container">
-          <input 
-            [type]="confirmPasswordVisible ? 'text' : 'password'" 
-            id="confirmPassword" 
-            formControlName="confirmPassword" 
-            placeholder="Confirm your password"
-            [class.invalid]="f['confirmPassword'].touched && f['confirmPassword'].invalid"
-          >
-          <button 
-            type="button" 
-            class="password-toggle" 
-            (click)="toggleConfirmPasswordVisibility()"
-          >
-            {{ confirmPasswordVisible ? '👁️' : '👁️‍🗨️' }}
-          </button>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <div class="password-input-container">
+            <input 
+              [type]="confirmPasswordVisible ? 'text' : 'password'" 
+              id="confirmPassword" 
+              formControlName="confirmPassword" 
+              placeholder="Confirm Password"
+              [class.invalid]="f['confirmPassword'].touched && f['confirmPassword'].invalid"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="toggleConfirmPasswordVisibility()"
+            >
+              {{ confirmPasswordVisible ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
         </div>
-        <div class="error-hint" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].errors?.['required']">
-          Please confirm your password
-        </div>
-        <div class="error-hint" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].errors?.['mismatch']">
-          Passwords do not match
+        <div class="validation-error" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].errors">
+          <span *ngIf="f['confirmPassword'].errors['required']">Please confirm your password</span>
+          <span *ngIf="f['confirmPassword'].errors['mismatch']">Passwords do not match</span>
         </div>
       </div>
       
@@ -105,8 +152,8 @@
           <input type="checkbox" formControlName="agreeTerms">
           <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
         </label>
-        <div class="error-hint" *ngIf="f['agreeTerms'].touched && f['agreeTerms'].invalid">
-          You must agree to the terms and conditions
+        <div class="validation-error" *ngIf="f['agreeTerms'].touched && f['agreeTerms'].invalid">
+          <span>You must agree to the terms and conditions</span>
         </div>
       </div>
       
@@ -116,13 +163,14 @@
         class="signup-btn" 
         [disabled]="isLoading"
       >
-        {{ isLoading ? 'Creating account...' : 'Create Account' }}
+        <span class="btn-icon">✨</span>
+        <span>{{ isLoading ? 'Creating account...' : 'Create Account' }}</span>
       </button>
     </form>
     
     <!-- Already have an account -->
     <p class="login-text">
-      Already have an account? <a href="javascript:void(0)" (click)="goToLogin()">Login</a>
+      Already have an account? <a routerLink="/login" routerLinkActive="active">Login</a>
     </p>
     
     <!-- Social Signup -->
@@ -135,7 +183,33 @@
     <div class="social-signup">
       <button class="google-signup" (click)="signUpWithGoogle()">
         <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
-        Sign up with Google
+        <span>Sign up with Google</span>
       </button>
     </div>
+    
+    <!-- Features Highlight -->
+    <div class="features-highlight">
+      <div class="feature">
+        <span class="feature-icon">📊</span>
+        <span>Track Spending</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🔍</span>
+        <span>Find Promotions</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💰</span>
+        <span>Save Money</span>
+      </div>
+    </div>
+    
+    <!-- Early Access Promotion -->
+    <div class="social-proof">
+      <p>Be among the first to experience PaperWorth</p>
   </div>
+  
+  <!-- Decorative Elements -->
+  <div class="decorative-circle circle-1"></div>
+  <div class="decorative-circle circle-2"></div>
+  <div class="decorative-circle circle-3"></div>
+</div>

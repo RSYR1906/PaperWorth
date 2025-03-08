@@ -1,76 +1,158 @@
-<div class="login-container">
-  <h2>Login to ReceiptSaver</h2>
+<div class="login-page-container">
+  <div class="login-container">
+    <!-- Logo -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="180" height="135">
+        <!-- Background -->
+        <rect width="400" height="300" fill="#ffffff" rx="20" ry="20"/>
+        
+        <!-- Gradient background for receipt -->
+        <defs>
+          <linearGradient id="receiptGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f8f9fa"/>
+            <stop offset="100%" stop-color="#e9ecef"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Receipt paper -->
+        <path d="M240,50 L240,250 L160,250 L160,50 L240,50 Z" fill="url(#receiptGradient)" stroke="#dee2e6" stroke-width="2"/>
+        
+        <!-- Receipt serrated edge -->
+        <path d="M240,50 
+                 L245,55 L240,60 L245,65 L240,70 L245,75 L240,80 L245,85 L240,90 
+                 L245,95 L240,100 L245,105 L240,110 L245,115 L240,120 
+                 L245,125 L240,130 L245,135 L240,140 L245,145 L240,150
+                 L245,155 L240,160 L245,165 L240,170 L245,175 L240,180
+                 L245,185 L240,190 L245,195 L240,200 L245,205 L240,210
+                 L245,215 L240,220 L245,225 L240,230 L245,235 L240,240
+                 L245,245 L240,250" 
+                 fill="none" stroke="#dee2e6" stroke-width="2"/>
+        
+        <!-- Receipt lines -->
+        <line x1="170" y1="80" x2="230" y2="80" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="100" x2="230" y2="100" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="120" x2="230" y2="120" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="140" x2="230" y2="140" stroke="#adb5bd" stroke-width="1"/>
+        <line x1="170" y1="160" x2="210" y2="160" stroke="#adb5bd" stroke-width="1"/>
+        
+        <!-- Blue circle with dollar sign -->
+        <circle cx="200" cy="200" r="30" fill="#2E3192"/>
+        <text x="200" y="210" font-family="Arial, sans-serif" font-size="34" font-weight="bold" text-anchor="middle" fill="#ffffff">$</text>
+        
+        <!-- Scan line effect -->
+        <rect x="160" y="110" width="80" height="4" fill="#2ecc71" opacity="0.7"/>
+        
+        <!-- Magnifying glass -->
+        <circle cx="120" cy="150" r="30" fill="none" stroke="#2E3192" stroke-width="6"/>
+        <line x1="142" y1="172" x2="160" y2="190" stroke="#2E3192" stroke-width="6" stroke-linecap="round"/>
+      </svg>
 
-  <!-- Error Message Display -->
-  <div class="error-message" *ngIf="errorMessage">
-    {{ errorMessage }}
-  </div>
+    <h2>Welcome to PaperWorth</h2>
+    <p class="login-subtitle">Turn your receipts into savings and insights</p>
 
-  <!-- Username & Password Login -->
-  <form [formGroup]="loginForm" (ngSubmit)="login()">
-    <div class="form-group">
-      <input 
-        type="text" 
-        placeholder="Email" 
-        formControlName="username" 
-        [class.invalid]="f['username'].touched && f['username'].invalid"
+    <!-- Error Message Display -->
+    <div class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Username & Password Login -->
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <div class="form-group">
+        <div class="input-with-icon">
+          <span class="input-icon">✉️</span>
+          <input 
+            type="text" 
+            placeholder="Email" 
+            formControlName="username" 
+            [class.invalid]="f['username'].touched && f['username'].invalid"
+          >
+        </div>
+        <div class="validation-error" *ngIf="f['username'].touched && f['username'].errors">
+          <span *ngIf="f['username'].errors['required']">Email is required</span>
+          <span *ngIf="f['username'].errors['email']">Please enter a valid email address</span>
+        </div>
+      </div>
+      
+      <div class="form-group password-group">
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <div class="password-input-container">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              placeholder="Password" 
+              formControlName="password"
+              [class.invalid]="f['password'].touched && f['password'].invalid"
+            >
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="togglePasswordVisibility()"
+            >
+              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+        </div>
+        <div class="validation-error" *ngIf="f['password'].touched && f['password'].errors">
+          <span *ngIf="f['password'].errors['required']">Password is required</span>
+          <span *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</span>
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        class="login-btn"
+        [disabled]="isLoading"
       >
-      <div class="validation-error" *ngIf="f['username'].touched && f['username'].errors">
-        <span *ngIf="f['username'].errors['required']">Email is required</span>
-        <span *ngIf="f['username'].errors['email']">Please enter a valid email address</span>
-      </div>
-    </div>
-    
-    <div class="form-group password-group">
-      <div class="password-input-container">
-        <input 
-          [type]="showPassword ? 'text' : 'password'" 
-          placeholder="Password" 
-          formControlName="password"
-          [class.invalid]="f['password'].touched && f['password'].invalid"
-        >
-        <button 
-          type="button" 
-          class="password-toggle" 
-          (click)="togglePasswordVisibility()"
-        >
-          {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+        <span class="btn-icon">🔐</span>
+        <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
+      </button>
+      
+      <!-- Demo Login -->
+      <div class="demo-login">
+        <button type="button" class="demo-login-btn" (click)="loginAsDemo()">
+          <span class="btn-icon">👤</span>
+          <span>Login as Demo User</span>
         </button>
+        <small>No password required - for testing only</small>
       </div>
-      <div class="validation-error" *ngIf="f['password'].touched && f['password'].errors">
-        <span *ngIf="f['password'].errors['required']">Password is required</span>
-        <span *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</span>
-      </div>
+    </form>
+
+    <div class="divider">
+      <span></span>
+      <p>OR</p>
+      <span></span>
     </div>
-    
-    <button 
-      type="submit" 
-      class="login-btn"
-      [disabled]="isLoading"
-    >
-      {{ isLoading ? 'Logging in...' : 'Login' }}
+
+    <!-- Social Login Buttons -->
+    <button class="google-login" (click)="loginWithGoogle()">
+      <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
+      <span>Login with Google</span>
     </button>
     
-    <!-- Demo Login -->
-    <div class="demo-login">
-      <button type="button" class="demo-login-btn" (click)="loginAsDemo()">
-        Login as Demo User
-      </button>
-      <small>No password required - for testing only</small>
-    </div>
-  </form>
-
-  <div class="divider">
-    <span></span>
-    <p>OR</p>
-    <span></span>
+    <p class="register-text">Don't have an account? <a routerLink="/signup" routerLinkActive="active">Sign up</a></p>
+    
+  <!-- Features Highlight -->
+<div class="features-highlight">
+  <div class="feature">
+    <span class="feature-icon">📊</span>
+    <span>Track Spending</span>
   </div>
+  <div class="feature">
+    <span class="feature-icon">🔍</span>
+    <span>Find Promotions</span>
+  </div>
+  <div class="feature">
+    <span class="feature-icon">💰</span>
+    <span>Save Money</span>
+  </div>
+</div>
 
-  <!-- Social Login Buttons -->
-  <button class="google-login" (click)="loginWithGoogle()">
-    <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
-    Login with Google
-  </button>
+<!-- Social Proof -->
+<div class="social-proof">
+  <p>Be among the first to experience PaperWorth</p>
+</div>
   
-  <p class="register-text">Don't have an account? <a routerLink="/signup" routerLinkActive="active">Sign up</a></p>
+  <!-- Decorative Elements -->
+  <div class="decorative-circle circle-1"></div>
+  <div class="decorative-circle circle-2"></div>
+  <div class="decorative-circle circle-3"></div>
 </div>
