@@ -25,7 +25,7 @@ import { UserService } from './services/user.service';
     PastReceiptsComponent,
     PromotionsComponent,
     SignupComponent
-  ],
+    ],
   imports: [
     BrowserModule,
     HttpClientModule,FormsModule,AppRoutingModule,ReactiveFormsModule, ServiceWorkerModule.register('ngsw-worker.js', {
