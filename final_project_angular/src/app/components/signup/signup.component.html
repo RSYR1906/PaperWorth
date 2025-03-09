@@ -55,25 +55,7 @@
     </div>
     
     <!-- Signup Form -->
-    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
-      <!-- Full Name -->
-      <div class="form-group">
-        <div class="input-with-icon">
-          <span class="input-icon">👤</span>
-          <input 
-            type="text" 
-            id="name" 
-            formControlName="name" 
-            placeholder="Full Name"
-            [class.invalid]="f['name'].touched && f['name'].invalid"
-          >
-        </div>
-        <div class="validation-error" *ngIf="f['name'].touched && f['name'].errors">
-          <span *ngIf="f['name'].errors['required']">Name is required</span>
-          <span *ngIf="f['name'].errors['minlength']">Name must be at least 2 characters</span>
-        </div>
-      </div>
-      
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()"> 
       <!-- Email -->
       <div class="form-group">
         <div class="input-with-icon">

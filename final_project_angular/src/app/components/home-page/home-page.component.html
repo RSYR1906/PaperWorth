@@ -153,44 +153,14 @@
   
 <!-- PROMOTIONS SECTION -->
 <div class="promotions" *ngIf="!selectedFile && !extractedData">
-  <!-- Matching promotions section (after receipt save) -->
-  <div *ngIf="recentlySavedReceipt && matchingPromotions.length > 0" class="matching-promotions-container">
-    <div class="matching-promotions-header">
-      <h3>Matching Promotions for {{ recentlySavedReceipt.merchantName }}</h3>
-      <button class="close-promotions-btn" (click)="resetAll()">×</button>
-    </div>
-    
-    <p class="matching-subheader">We found these deals based on your receipt from {{ recentlySavedReceipt.merchantName }}!</p>
-    
-    <div class="promo-list">
-      <div *ngFor="let promo of matchingPromotions" class="promo-card">
-        <img 
-          [src]="promo.imageURL || 'promotions/placeholder-image.jpg'" 
-          alt="Promo Image" 
-          onerror="this.src='promotions/placeholder-image.jpg'"
-        >
-        <div class="promo-content">
-          <div class="promo-merchant">{{ promo.merchant }}</div>
-          <p class="promo-title">{{ promo.description }}</p>
-          <p class="expiry">Valid until: {{ promo.expiryDate || promo.expiry }}</p>
-          <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="go-to-all-promotions">
-      <a routerLink="/promotions">See all promotions →</a>
-    </div>
-  </div>
-  
   <!-- Loading promotions indicator -->
   <div *ngIf="isLoadingPromotions" class="loading-promotions">
     <div class="spinner"></div>
     <p>Finding matching promotions...</p>
   </div>
 
-  <!-- Regular promotions section (default view) -->
-  <div *ngIf="!recentlySavedReceipt || matchingPromotions.length === 0">
+  <!-- Recommendations Section -->
+  <div>
     <h3 class="personalized-title">Recommended For You</h3>
     
     <!-- Loading indicator for recommendations -->

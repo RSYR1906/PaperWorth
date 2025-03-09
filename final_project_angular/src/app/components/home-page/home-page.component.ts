@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { PromotionService } from '../../services/promotions.service';
 
 @Component({
   selector: 'app-home-page',
@@ -41,7 +42,7 @@ export class HomePageComponent implements OnInit {
     }
   ];
   
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private promotionService: PromotionService) {}
 
   ngOnInit(): void {
     // Load user's receipt history when component initializes
@@ -121,7 +122,7 @@ export class HomePageComponent implements OnInit {
     
     // Process each category
     categories.forEach(category => {
-      this.http.get<any[]>(`http://localhost:8080/api/promotions/category/${category}`)
+      this.promotionService.getPromotionsByCategory(category)
         .subscribe({
           next: (promotions) => {
             console.log(`Promotions for ${category}:`, promotions);
@@ -271,26 +272,53 @@ export class HomePageComponent implements OnInit {
       });
   }
   
-  // New method to fetch matching promotions
+  // Method to fetch matching promotions and add them to recommendations
   fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
     this.isLoadingPromotions = true;
     
-    // Build the URL with query parameters
-    const url = `http://localhost:8080/api/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`;
-    
-    this.http.get<any[]>(url)
+    // First try to get promotions by merchant
+    this.promotionService.getPromotionsByMerchant(merchant)
       .subscribe({
         next: (promotions) => {
-          console.log('Matching promotions:', promotions);
-          this.matchingPromotions = promotions;
+          console.log('Matching promotions by merchant:', promotions);
+          if (promotions && promotions.length > 0) {
+            // Add these promotions to the recommended section
+            this.addPromotionsToRecommendations(merchant, promotions);
+            this.isLoadingPromotions = false;
+            this.isProcessing = false;
+            
+            // Clear the receipt data
+            this.resetScanner();
+          } else {
+            // If no promotions found by merchant, try by category
+            this.getPromotionsByCategory(category, receiptId);
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching promotions by merchant:', error);
+          // Try by category as fallback
+          this.getPromotionsByCategory(category, receiptId);
+        }
+      });
+  }
+
+  getPromotionsByCategory(category: string, receiptId: string) {
+    this.promotionService.getPromotionsByCategory(category)
+      .subscribe({
+        next: (promotions) => {
+          console.log('Matching promotions by category:', promotions);
+          if (promotions && promotions.length > 0) {
+            // Add these promotions to the recommended section
+            this.addPromotionsToRecommendations(category, promotions);
+          }
           this.isLoadingPromotions = false;
           this.isProcessing = false;
           
-          // Clear the receipt data after successfully showing promotions
-          this.resetScannerKeepPromotions();
+          // Clear the receipt data
+          this.resetScanner();
         },
         error: (error) => {
-          console.error('Error fetching promotions:', error);
+          console.error('Error fetching promotions by category:', error);
           
           // Fallback to receipt-based API if direct matching fails
           this.fetchPromotionsByReceiptId(receiptId);
@@ -304,12 +332,15 @@ export class HomePageComponent implements OnInit {
       .subscribe({
         next: (promotions) => {
           console.log('Promotions by receipt ID:', promotions);
-          this.matchingPromotions = promotions;
+          if (promotions && promotions.length > 0) {
+            // Since we don't know the exact category, use a generic name
+            this.addPromotionsToRecommendations("Recent Promotions", promotions);
+          }
           this.isLoadingPromotions = false;
           this.isProcessing = false;
           
-          // Clear the receipt data after successfully showing promotions
-          this.resetScannerKeepPromotions();
+          // Clear the receipt data
+          this.resetScanner();
         },
         error: (error) => {
           console.error('Error fetching promotions by receipt ID:', error);
@@ -317,25 +348,46 @@ export class HomePageComponent implements OnInit {
           this.isProcessing = false;
           
           // Even if promotions fail, clear the scanner
-          this.resetScannerKeepPromotions();
+          this.resetScanner();
         }
       });
   }
   
-  // Modified reset method that keeps promotions
-  resetScannerKeepPromotions(): void {
+  // Helper method to add promotions to recommendations
+  addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
+    // Check if this category already exists in recommendations
+    const existingCategoryIndex = this.recommendedPromotions.findIndex(
+      category => category.name.toLowerCase() === categoryName.toLowerCase()
+    );
+    
+    if (existingCategoryIndex >= 0) {
+      // Category exists, merge promotions (avoiding duplicates)
+      const existingDeals = this.recommendedPromotions[existingCategoryIndex].deals;
+      const existingIds = new Set(existingDeals.map((deal: { id: any; }) => deal.id));
+      
+      // Add only new promotions
+      promotions.forEach(promo => {
+        if (!existingIds.has(promo.id)) {
+          existingDeals.push(promo);
+        }
+      });
+    } else {
+      // Category doesn't exist, add it to the beginning for visibility
+      this.recommendedPromotions.unshift({
+        name: categoryName,
+        deals: promotions
+      });
+    }
+  }
+  
+  // Reset scanner state
+  resetScanner(): void {
     this.selectedFile = null;
     this.imagePreview = null;
     this.ocrText = '';
     this.extractedData = null;
     this.showFullText = false;
-  }
-  
-  // Clear everything including promotions
-  resetAll(): void {
-    this.resetScannerKeepPromotions();
     this.recentlySavedReceipt = null;
-    this.matchingPromotions = [];
   }
   
   // Helper method to determine category from merchant name
@@ -387,14 +439,6 @@ export class HomePageComponent implements OnInit {
     
     // Default to "Others" if no match
     return 'Others';
-  }
-
-  resetScanner(): void {
-    this.selectedFile = null;
-    this.imagePreview = null;
-    this.ocrText = '';
-    this.extractedData = null;
-    this.showFullText = false;
   }
 
   triggerFileInput() {
