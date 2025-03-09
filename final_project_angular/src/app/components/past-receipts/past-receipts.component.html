@@ -54,68 +54,81 @@
     </div>
   </section>
   
-  <!-- Receipts Container -->
-  <div class="receipts-container">
-    <!-- Filters and Search -->
-    <div class="receipts-controls">
-      <div class="search-bar">
-        <input type="text" placeholder="Search merchants..." [(ngModel)]="searchTerm">
-        <span class="search-icon">🔍</span>
-      </div>
-      
-      <div class="filters">
-        <div class="filter-group">
-          <label>Date Range:</label>
-          <select [(ngModel)]="filters.dateRange">
-            <option *ngFor="let range of dateRanges" [value]="range.id">{{ range.name }}</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label>Category:</label>
-          <select [(ngModel)]="filters.category">
-            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-          </select>
-        </div>
-        
-        <div class="filter-group">
-          <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="filters.hasPromotion">
-            <span>Has Promotions</span>
-          </label>
-        </div>
-      </div>
+<!-- Receipts Container -->
+<div class="receipts-container">
+  <!-- Filters and Search -->
+  <div class="receipts-controls">
+    <div class="search-bar">
+      <input type="text" placeholder="Search merchants..." [(ngModel)]="searchTerm">
+      <span class="search-icon">🔍</span>
     </div>
     
-    <div class="receipts-table-container" *ngIf="filteredReceipts.length > 0">
-        <table class="receipts-table">
-          <thead>
-            <tr>
-              <th>Merchant</th>
-              <th>Category</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th class="promo-column">Promo</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
-              <td class="receipt-merchant">{{ receipt.merchantName }}</td>
-              <td class="receipt-category">{{ receipt.category }}</td>
-              <td class="receipt-date">{{ formatDate(receipt.scanDate) }}</td>
-              <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
-              <td class="receipt-promo-cell">
-                <div class="receipt-promo" *ngIf="receipt.hasPromotion">🎁</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Date Range:</label>
+        <select [(ngModel)]="filters.dateRange">
+          <option *ngFor="let range of dateRanges" [value]="range.id">{{ range.name }}</option>
+        </select>
       </div>
       
-      <div class="no-receipts" *ngIf="filteredReceipts.length === 0">
-        <p>No receipts found matching your filters.</p>
-        <button routerLink="/scan" class="scan-btn">Scan New Receipt</button>
+      <div class="filter-group">
+        <label>Category:</label>
+        <select [(ngModel)]="filters.category">
+          <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+        </select>
       </div>
+      
+      <div class="filter-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="filters.hasPromotion">
+          <span>Has Promotions</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Indicator -->
+  <div class="loading-indicator" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading your receipts...</p>
+  </div>
+  
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error && !isLoading">
+    <p>{{ error }}</p>
+    <button class="action-btn primary" (click)="loadUserReceipts()">Retry</button>
+  </div>
+  
+  <!-- Receipts List -->
+  <div class="receipts-table-container" *ngIf="filteredReceipts.length > 0 && !isLoading">
+      <table class="receipts-table">
+        <thead>
+          <tr>
+            <th>Merchant</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th class="promo-column">Promo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
+            <td class="receipt-merchant">{{ receipt.merchantName }}</td>
+            <td class="receipt-category">{{ receipt.category }}</td>
+            <td class="receipt-date">{{ formatDate(receipt.scanDate) }}</td>
+            <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
+            <td class="receipt-promo-cell">
+              <div class="receipt-promo" *ngIf="receipt.hasPromotion">🎁</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="no-receipts" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
+      <p>No receipts found matching your filters.</p>
+      <button routerLink="/homepage" class="scan-btn">Scan New Receipt</button>
+    </div>
   
 <!-- Receipt Details Modal -->
 <div class="receipt-details-modal" *ngIf="selectedReceipt">

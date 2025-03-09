@@ -13,6 +13,9 @@ public class Receipt {
     private String merchant;
     private LocalDateTime dateOfPurchase;
     private double totalExpense;
+    private String category;
+    private String imageUrl;
+    private String[] items;
 
     public String getId() {
         return id;
@@ -54,10 +57,33 @@ public class Receipt {
         this.totalExpense = totalExpense;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String[] getItems() {
+        return items;
+    }
+
+    public void setItems(String[] items) {
+        this.items = items;
+    }
+
     @Override
     public String toString() {
         return "Receipt [id=" + id + ", userId=" + userId + ", merchant=" + merchant + ", dateOfPurchase="
-                + dateOfPurchase + ", totalExpense=" + totalExpense + "]";
+                + dateOfPurchase + ", totalExpense=" + totalExpense + ", category=" + category + "]";
     }
-
 }

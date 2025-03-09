@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ReceiptService } from '../../services/receipt.service';
 
 @Component({
   selector: 'app-past-receipts',
@@ -8,120 +9,11 @@ import { Router } from '@angular/router';
   styleUrls: ['./past-receipts.component.css']
 })
 export class PastReceiptsComponent implements OnInit {
-  receipts = [
-    {
-      id: '1',
-      merchantName: 'Cold Storage',
-      category: 'Groceries',
-      scanDate: '2025-03-01T13:45:00',
-      totalAmount: 87.50,
-      hasPromotion: true,
-      items: [
-        { name: 'Milk', quantity: 2, price: 6.50 },
-        { name: 'Bread', quantity: 1, price: 3.20 },
-        { name: 'Eggs', quantity: 1, price: 4.80 },
-        { name: 'Chicken', quantity: 1, price: 12.90 },
-        { name: 'Vegetables', quantity: 3, price: 15.60 },
-        { name: 'Fruits', quantity: 2, price: 18.40 },
-        { name: 'Cereal', quantity: 1, price: 7.90 },
-        { name: 'Yogurt', quantity: 4, price: 10.20 },
-        { name: 'Snacks', quantity: 2, price: 8.00 }
-      ]
-    },
-    {
-      id: '2',
-      merchantName: 'Starbucks',
-      category: 'Dining',
-      scanDate: '2025-02-28T09:15:00',
-      totalAmount: 15.80,
-      hasPromotion: true,
-      items: [
-        { name: 'Caffè Latte', quantity: 1, price: 6.50 },
-        { name: 'Chocolate Croissant', quantity: 1, price: 4.90 },
-        { name: 'Bottled Water', quantity: 1, price: 3.50 },
-        { name: 'Extra Shot', quantity: 1, price: 0.90 }
-      ]
-    },
-    {
-      id: '3',
-      merchantName: 'McDonald\'s',
-      category: 'Dining',
-      scanDate: '2025-02-27T19:30:00',
-      totalAmount: 22.40,
-      hasPromotion: true,
-      items: [
-        { name: 'McSpicy Meal', quantity: 1, price: 9.90 },
-        { name: 'McChicken Meal', quantity: 1, price: 7.90 },
-        { name: 'Apple Pie', quantity: 1, price: 1.80 },
-        { name: 'Ice Cream Cone', quantity: 1, price: 0.80 },
-        { name: 'Bottled Water', quantity: 1, price: 2.00 }
-      ]
-    },
-    {
-      id: '4',
-      merchantName: 'Uniqlo',
-      category: 'Shopping',
-      scanDate: '2025-02-25T14:20:00',
-      totalAmount: 159.90,
-      hasPromotion: true,
-      items: [
-        { name: 'T-Shirt', quantity: 3, price: 19.90 },
-        { name: 'Jeans', quantity: 1, price: 49.90 },
-        { name: 'Socks (3 Pack)', quantity: 1, price: 12.90 },
-        { name: 'Jacket', quantity: 1, price: 59.90 }
-      ]
-    },
-    {
-      id: '5',
-      merchantName: 'Guardian Pharmacy',
-      category: 'Healthcare',
-      scanDate: '2025-02-22T11:10:00',
-      totalAmount: 42.25,
-      hasPromotion: false,
-      items: [
-        { name: 'Multivitamins', quantity: 1, price: 15.90 },
-        { name: 'Hand Sanitizer', quantity: 2, price: 6.80 },
-        { name: 'Face Mask (Pack)', quantity: 1, price: 9.90 },
-        { name: 'Shampoo', quantity: 1, price: 8.95 }
-      ]
-    },
-    {
-      id: '6',
-      merchantName: 'Fairprice',
-      category: 'Groceries',
-      scanDate: '2025-02-20T16:45:00',
-      totalAmount: 68.45,
-      hasPromotion: false,
-      items: [
-        { name: 'Rice (5kg)', quantity: 1, price: 15.90 },
-        { name: 'Cooking Oil', quantity: 1, price: 8.50 },
-        { name: 'Toilet Paper', quantity: 1, price: 12.90 },
-        { name: 'Laundry Detergent', quantity: 1, price: 14.80 },
-        { name: 'Pasta', quantity: 2, price: 4.60 },
-        { name: 'Pasta Sauce', quantity: 1, price: 3.95 },
-        { name: 'Eggs', quantity: 1, price: 4.80 },
-        { name: 'Salt', quantity: 1, price: 1.20 },
-        { name: 'Sugar', quantity: 1, price: 1.80 }
-      ]
-    },
-    {
-      id: '7',
-      merchantName: 'Watsons',
-      category: 'Healthcare',
-      scanDate: '2025-02-18T10:30:00',
-      totalAmount: 31.55,
-      hasPromotion: false,
-      items: [
-        { name: 'Facial Cleanser', quantity: 1, price: 12.90 },
-        { name: 'Toothpaste', quantity: 2, price: 7.80 },
-        { name: 'Toothbrush', quantity: 1, price: 4.95 },
-        { name: 'Dental Floss', quantity: 1, price: 5.90 }
-      ]
-    }
-  ];
-  
+  receipts: any[] = [];
   selectedReceipt: any = null;
   searchTerm: string = '';
+  isLoading: boolean = true;
+  error: string = '';
   
   // Filters
   filters = {
@@ -135,8 +27,12 @@ export class PastReceiptsComponent implements OnInit {
     { id: 'all', name: 'All Categories' },
     { id: 'groceries', name: 'Groceries' },
     { id: 'dining', name: 'Dining' },
+    { id: 'fastfood', name: 'Fast Food' },
+    { id: 'cafes', name: 'Cafes' },
     { id: 'shopping', name: 'Shopping' },
-    { id: 'healthcare', name: 'Healthcare' }
+    { id: 'retail', name: 'Retail' },
+    { id: 'healthcare', name: 'Healthcare' },
+    { id: 'others', name: 'Others' }
   ];
   
   // Date ranges for filter
@@ -147,19 +43,133 @@ export class PastReceiptsComponent implements OnInit {
     { id: 'last-month', name: 'Last Month' }
   ];
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private receiptService: ReceiptService
+  ) { }
 
   ngOnInit(): void {
-    // In a real app, you would fetch data from a service
+    this.loadUserReceipts();
   }
   
-  logout() {
-    localStorage.removeItem('currentUser');
-    this.router.navigate(['/login']);
+  loadUserReceipts() {
+    this.isLoading = true;
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (!currentUser || !currentUser.id) {
+      this.error = 'User not logged in';
+      this.isLoading = false;
+      this.receipts = [];
+      return;
+    }
+    
+    const userId = currentUser.id;
+    this.receiptService.getUserReceipts(userId)
+      .subscribe({
+        next: (data) => {
+          console.log('Receipts loaded:', data);
+          
+          // Transform the data for display
+          this.receipts = data.map(receipt => {
+            // Convert dateOfPurchase to scanDate for consistency
+            const scanDate = receipt.dateOfPurchase || new Date().toISOString();
+            
+            return {
+              id: receipt.id,
+              merchantName: receipt.merchantName,
+              category: receipt.category || 'Others',
+              scanDate: scanDate,
+              totalAmount: receipt.totalExpense || 0,
+              hasPromotion: false, // We'll set this flag based on actual data when available
+              items: receipt.items ? this.parseItems(receipt.items) : []
+            };
+          });
+          
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading receipts:', error);
+          this.error = 'Failed to load receipts. Please try again later.';
+          this.isLoading = false;
+          
+          // Provide demo data if backend fails
+          this.loadDemoReceipts();
+        }
+      });
+  }
+  
+  parseItems(items: any[]): any[] {
+    // Parse items based on what format your backend returns
+    if (!items || !Array.isArray(items)) return [];
+    
+    // If items are already in the correct format, return as-is
+    if (items.length > 0 && typeof items[0] === 'object' && 'name' in items[0]) {
+      return items;
+    }
+    
+    // If items are strings, convert to objects
+    return items.map((item, index) => {
+      if (typeof item === 'string') {
+        return {
+          name: item,
+          quantity: 1,
+          price: 0
+        };
+      }
+      return item;
+    });
+  }
+  
+  loadDemoReceipts() {
+    // Fallback to demo data if API fails
+    this.receipts = [
+      {
+        id: '1',
+        merchantName: 'Cold Storage',
+        category: 'Groceries',
+        scanDate: '2025-03-01T13:45:00',
+        totalAmount: 87.50,
+        hasPromotion: true,
+        items: [
+          { name: 'Milk', quantity: 2, price: 6.50 },
+          { name: 'Bread', quantity: 1, price: 3.20 },
+          { name: 'Eggs', quantity: 1, price: 4.80 }
+        ]
+      },
+      {
+        id: '2',
+        merchantName: 'Starbucks',
+        category: 'Cafes',
+        scanDate: '2025-02-28T09:15:00',
+        totalAmount: 15.80,
+        hasPromotion: true,
+        items: [
+          { name: 'Caffè Latte', quantity: 1, price: 6.50 },
+          { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
+        ]
+      }
+    ];
   }
   
   viewReceiptDetails(receipt: any) {
     this.selectedReceipt = receipt;
+    
+    // Check if the receipt has promotions by calling the promotions API
+    if (receipt.id) {
+      this.receiptService.getReceiptPromotions(receipt.id)
+        .subscribe({
+          next: (promotions) => {
+            console.log('Receipt promotions:', promotions);
+            // Update hasPromotion flag based on API response
+            receipt.hasPromotion = promotions && promotions.length > 0;
+            // You could also store the promotions in the receipt object if needed
+            receipt.promotions = promotions;
+          },
+          error: (error) => {
+            console.error('Error loading promotions for receipt:', error);
+          }
+        });
+    }
   }
   
   closeReceiptDetails() {
@@ -180,9 +190,11 @@ export class PastReceiptsComponent implements OnInit {
       }
       
       // Filter by category
-      if (this.filters.category !== 'all' && 
-          receipt.category.toLowerCase() !== this.filters.category.toLowerCase()) {
-        return false;
+      if (this.filters.category !== 'all') {
+        const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
+        if (receiptCategory !== this.filters.category.toLowerCase()) {
+          return false;
+        }
       }
       
       // Filter by date range
@@ -219,6 +231,11 @@ export class PastReceiptsComponent implements OnInit {
       
       return true;
     });
+  }
+  
+  logout() {
+    localStorage.removeItem('currentUser');
+    this.router.navigate(['/login']);
   }
   
   // Format date

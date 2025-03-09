@@ -39,31 +39,62 @@ categories = [
   ngOnInit(): void {
     this.isLoading = true;
     
-    // Check if we received a receipt ID
+    // Check if we received query parameters
     this.route.queryParams.subscribe(params => {
       this.receivedReceiptId = params['receiptId'];
+      const merchant = params['merchant'];
+      const category = params['category'];
       
       if (this.receivedReceiptId) {
-        // Fetch promotions based on receipt ID
-        this.http.get<any[]>(`http://localhost:8080/api/promotions/receipt/${this.receivedReceiptId}`)
-          .subscribe({
-            next: (data) => {
-              console.log('Received data:', data);
-              this.allPromotions = data;
-              this.setDefaultCategory();
-              this.isLoading = false;
-            },
-            error: (error) => {
-              console.error('Error fetching promotions:', error);
-              this.isLoading = false;
-              this.fetchAllPromotions(); // Fallback
-            }
-          });
+        // First check for merchant and category parameters
+        if (merchant && category) {
+          console.log(`Fetching promotions for merchant: ${merchant}, category: ${category}`);
+          
+          // New endpoint to get promotions by merchant and category
+          this.http.get<any[]>(`http://localhost:8080/api/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
+            .subscribe({
+              next: (data) => {
+                console.log('Received matched promotions:', data);
+                this.allPromotions = data;
+                this.setDefaultCategory();
+                this.isLoading = false;
+              },
+              error: (error) => {
+                console.error('Error fetching matching promotions:', error);
+                // Fall back to receipt ID based matching
+                if (this.receivedReceiptId) {
+                  this.fetchPromotionsByReceiptId(this.receivedReceiptId);
+                } else {
+                  this.fetchAllPromotions(); // Fallback if somehow receiptId became null
+                }
+              }
+            });
+        } else {
+          // Fallback to receipt ID if merchant/category not provided
+          this.fetchPromotionsByReceiptId(this.receivedReceiptId);
+        }
       } else {
-        // Fetch all promotions
+        // Fetch all promotions if no receipt context
         this.fetchAllPromotions();
       }
     });
+  }
+  
+  fetchPromotionsByReceiptId(receiptId: string) {
+    this.http.get<any[]>(`http://localhost:8080/api/promotions/receipt/${receiptId}`)
+      .subscribe({
+        next: (data) => {
+          console.log('Received data from receipt ID:', data);
+          this.allPromotions = data;
+          this.setDefaultCategory();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error fetching promotions by receipt ID:', error);
+          this.isLoading = false;
+          this.fetchAllPromotions(); // Fallback
+        }
+      });
   }
   
   fetchAllPromotions() {
