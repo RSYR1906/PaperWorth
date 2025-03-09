@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BudgetService } from '../../services/budget.service';
 import { PromotionService } from '../../services/promotions.service';
 
 @Component({
@@ -10,8 +11,8 @@ import { PromotionService } from '../../services/promotions.service';
   styleUrls: ['./home-page.component.css']
 })
 export class HomePageComponent implements OnInit {
-  userName = "Demo"; // Mock user
-  monthlyExpenses = 1248.75; // Mock monthly expenses
+  userName = ""; // Will be loaded from user data
+  monthlyExpenses = 0; // Will be fetched from budget service
   extractedData: any = null;
   selectedFile: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
@@ -25,30 +26,60 @@ export class HomePageComponent implements OnInit {
   recommendedPromotions: any[] = [];
   isLoadingRecommendations: boolean = false;
   selectedPromotion: any = null;
-
+  isLoadingBudget: boolean = false;
 
   // Backup promotions in case no personalized recommendations are available
-  fallbackPromotionsByCategory = [
-    // {
-    //   name: "Fast Food",
-    //   deals: [
-    //     { description: "McDonald's - $6.50 McSpicy Meal", expiry: "March 30, 2025", imageUrl: "promotions/mcdonalds.jpg" },
-    //     { description: "KFC - 2-for-1 Zinger Burgers", expiry: "April 10, 2025", imageUrl: "promotions/kfc.jpg" }
-    //   ]
-    // },
-    // {
-    //   name: "Groceries",
-    //   deals: [
-    //     { description: "Giant - Myojo Instant Noodles Assorted", expiry: "March 28, 2025", imageUrl: "promotions/giant.jpg" }
-    //   ]
-    // }
-  ];
+  fallbackPromotionsByCategory = [];
   
-  constructor(private http: HttpClient, private router: Router, private promotionService: PromotionService) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router, 
+    private promotionService: PromotionService,
+    private budgetService: BudgetService
+  ) {}
 
   ngOnInit(): void {
+    // Load user data
+    this.loadUserData();
+    
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
+  }
+  
+  loadUserData(): void {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (currentUser && currentUser.name) {
+      this.userName = currentUser.name;
+    } else if (currentUser && currentUser.id) {
+      // If we have userId but no name, set a default name
+      this.userName = "User";
+    } else {
+      this.userName = "Guest";
+    }
+    
+    // Load budget data if user is logged in
+    if (currentUser && currentUser.id) {
+      this.isLoadingBudget = true;
+      
+      // Get the current month in YYYY-MM format
+      const now = new Date();
+      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      this.budgetService.loadUserBudget(currentUser.id, currentMonthYear)
+        .subscribe({
+          next: (budget) => {
+            if (budget) {
+              this.monthlyExpenses = budget.totalSpent;
+            }
+            this.isLoadingBudget = false;
+          },
+          error: (error) => {
+            console.error('Error loading budget data:', error);
+            this.isLoadingBudget = false;
+          }
+        });
+    }
   }
   
   loadUserReceiptHistory(): void {
@@ -260,6 +291,9 @@ export class HomePageComponent implements OnInit {
             ...receiptData,
             id: receiptId
           };
+          
+          // Update monthly expenses with the new receipt amount
+          this.monthlyExpenses += this.extractedData.totalAmount;
           
           // Instead of navigating, fetch matching promotions
           this.fetchMatchingPromotions(this.extractedData.merchantName, category, receiptId);
@@ -491,17 +525,17 @@ export class HomePageComponent implements OnInit {
   }
 
   // Add this method to handle promotion click
-viewPromotionDetails(promotion: any) {
-  this.selectedPromotion = promotion;
-}
+  viewPromotionDetails(promotion: any) {
+    this.selectedPromotion = promotion;
+  }
 
-// Add this method to close the promotion details modal
-closePromotionDetails() {
-  this.selectedPromotion = null;
-}
+  // Add this method to close the promotion details modal
+  closePromotionDetails() {
+    this.selectedPromotion = null;
+  }
 
-// Add this method to save a promotion
-savePromotion(promotion: any) {
-  alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
-}
+  // Add this method to save a promotion
+  savePromotion(promotion: any) {
+    alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
+  }
 }

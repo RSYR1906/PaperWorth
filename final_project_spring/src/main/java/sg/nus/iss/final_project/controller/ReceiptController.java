@@ -6,6 +6,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import sg.nus.iss.final_project.model.Receipt;
 import sg.nus.iss.final_project.repo.ReceiptRepository;
+import sg.nus.iss.final_project.service.BudgetService;
 
 @RestController
 @RequestMapping("/api/receipts")
 @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class ReceiptController {
     private final ReceiptRepository receiptRepository;
+
+    @Autowired
+    private BudgetService budgetService;
 
     public ReceiptController(ReceiptRepository receiptRepository) {
         this.receiptRepository = receiptRepository;
@@ -47,30 +52,37 @@ public class ReceiptController {
 
             // Handle numeric total amount
             Object totalAmountObj = receiptData.get("totalAmount");
+            double totalAmount = 0.0;
             if (totalAmountObj instanceof Number) {
-                receipt.setTotalExpense(((Number) totalAmountObj).doubleValue());
+                totalAmount = ((Number) totalAmountObj).doubleValue();
+                receipt.setTotalExpense(totalAmount);
             } else if (totalAmountObj instanceof String) {
                 try {
-                    receipt.setTotalExpense(Double.parseDouble((String) totalAmountObj));
+                    totalAmount = Double.parseDouble((String) totalAmountObj);
+                    receipt.setTotalExpense(totalAmount);
                 } catch (NumberFormatException e) {
                     receipt.setTotalExpense(0.0);
                 }
             }
 
             // Parse and set date
+            LocalDateTime purchaseDate = LocalDateTime.now();
             Object dateObj = receiptData.get("date");
             if (dateObj != null) {
                 String dateStr = dateObj.toString();
                 LocalDateTime parsedDate = parseDate(dateStr);
-                receipt.setDateOfPurchase(parsedDate != null ? parsedDate : LocalDateTime.now());
-            } else {
-                receipt.setDateOfPurchase(LocalDateTime.now());
+                if (parsedDate != null) {
+                    purchaseDate = parsedDate;
+                }
             }
+            receipt.setDateOfPurchase(purchaseDate);
 
             // Set category if provided - handle any type
+            String category = "Others";
             Object categoryObj = receiptData.get("category");
             if (categoryObj != null) {
-                receipt.setCategory(categoryObj.toString());
+                category = categoryObj.toString();
+                receipt.setCategory(category);
             }
 
             // Set image URL if provided
@@ -93,6 +105,15 @@ public class ReceiptController {
 
             // Save receipt to MongoDB
             Receipt savedReceipt = receiptRepository.save(receipt);
+
+            // Update budget with this expense
+            if (receipt.getUserId() != null && totalAmount > 0) {
+                // Format month-year as YYYY-MM from the purchase date
+                String monthYear = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+
+                // Add the expense to the user's budget
+                budgetService.addExpenseToBudget(receipt.getUserId(), monthYear, category, totalAmount);
+            }
 
             return ResponseEntity.ok(savedReceipt);
         } catch (Exception e) {

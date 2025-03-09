@@ -1,6 +1,7 @@
 // src/app/app-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { BudgetSettingsComponent } from './components/budget-settings/budget-settings.component';
 import { ExpenseTrackerComponent } from './components/expense-tracker/expense-tracker.component';
 import { HomePageComponent } from './components/home-page/home-page.component';
 import { LoginComponent } from './components/login/login.component';
@@ -16,6 +17,7 @@ const routes: Routes = [
   { path: 'promotions', component: PromotionsComponent },
   { path: 'past-receipts', component: PastReceiptsComponent },
   { path: 'expense-tracker', component: ExpenseTrackerComponent },
+  { path: 'budget-settings', component: BudgetSettingsComponent },
   { path: '**', redirectTo: '/homepage' }
 ];
 

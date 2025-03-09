@@ -46,17 +46,28 @@
   </div>
 </nav>
   
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Expense Tracker</h1>
-      <p>Understand your spending habits and save more</p>
-    </div>
-  </section>
-  
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Expense Tracker</h1>
+    <p>Understand your spending habits and save more</p>
+  </div>
+</section>
+
+<!-- Loading Indicator -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading your budget data...</p>
+</div>
+
+<!-- Main Content Area (only shown when not loading) -->
+<div *ngIf="!isLoading">
   <!-- Budget Overview -->
   <div class="budget-overview">
-    <h3>{{ currentMonth }} Budget Overview</h3>
+    <div class="budget-header">
+      <h3>{{ currentMonth }} Budget Overview</h3>
+      <a routerLink="/budget-settings" class="budget-settings-link">Budget Settings</a>
+    </div>
     
     <div class="budget-cards">
       <div class="budget-card">
@@ -83,8 +94,8 @@
     </div>
   </div>
   
-  <!-- Expense Categories -->
-  <div class="expense-categories">
+  <!-- Expense Categories (only shown if categories exist) -->
+  <div class="expense-categories" *ngIf="expenseCategories.length > 0">
     <h3>Spending by Category</h3>
     
     <div class="category-list">
@@ -107,8 +118,14 @@
     </div>
   </div>
   
-  <!-- Recent Transactions -->
-  <div class="recent-transactions">
+  <!-- No Categories Message -->
+  <div class="no-data-message" *ngIf="expenseCategories.length === 0">
+    <p>No spending categories yet. Start by adding some receipts!</p>
+    <button class="action-btn" routerLink="/homepage">Scan a Receipt</button>
+  </div>
+  
+  <!-- Recent Transactions (only shown if transactions exist) -->
+  <div class="recent-transactions" *ngIf="recentTransactions.length > 0">
     <h3>Recent Transactions</h3>
     
     <div class="transaction-list">
@@ -126,8 +143,8 @@
     <a routerLink="/past-receipts" class="view-all">View All Transactions <span class="arrow-icon">→</span></a>
   </div>
   
-  <!-- Monthly Spending History -->
-  <div class="monthly-history">
+  <!-- Monthly Spending History (only shown if history exists) -->
+  <div class="monthly-history" *ngIf="monthlyHistory.length > 0">
     <h3>Monthly Spending History</h3>
     
     <div class="history-chart">
@@ -140,6 +157,7 @@
       </div>
     </div>
   </div>
+</div>
   
-  <!-- Floating Scan Button -->
-  <button class="scan-button" routerLink="/scan">📸</button>
+<!-- Floating Scan Button -->
+<button class="scan-button" routerLink="/homepage">📸</button>

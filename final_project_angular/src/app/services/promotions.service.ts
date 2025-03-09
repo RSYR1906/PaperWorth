@@ -2,13 +2,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { Promotion } from '../model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PromotionService {
-  private apiUrl = 'http://localhost:8080/api/promotions';
+  private apiUrl = `${environment.apiUrl}/promotions`;
 
   constructor(private http: HttpClient) { }
 

@@ -2,6 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { User } from '../model';
 
 @Injectable({
@@ -9,7 +10,7 @@ import { User } from '../model';
 })
 export class UserService {
   // Base URL of your Spring Boot backend
-  private apiUrl = 'http://localhost:8080/api/users';
+  private apiUrl = `${environment.apiUrl}/users`;
 
   constructor(private http: HttpClient) { }
 

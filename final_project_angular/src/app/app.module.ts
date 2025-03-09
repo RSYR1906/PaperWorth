@@ -6,6 +6,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { BudgetSettingsComponent } from './components/budget-settings/budget-settings.component';
 import { ExpenseTrackerComponent } from './components/expense-tracker/expense-tracker.component';
 import { HomePageComponent } from './components/home-page/home-page.component';
 import { LoginComponent } from './components/login/login.component';
@@ -24,7 +25,8 @@ import { UserService } from './services/user.service';
     ExpenseTrackerComponent,
     PastReceiptsComponent,
     PromotionsComponent,
-    SignupComponent
+    SignupComponent,
+    BudgetSettingsComponent
     ],
   imports: [
     BrowserModule,

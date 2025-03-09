@@ -67,32 +67,88 @@
   }
 }
 
-/* Budget Overview Styles */
-.budget-overview {
+/* Loading Indicator */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 0;
+  margin: 30px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2E3192;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #6c757d;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Common section styles */
+.budget-overview, 
+.expense-categories,
+.recent-transactions,
+.monthly-history,
+.no-data-message {
   background-color: white;
   margin: 30px;
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  animation: fadeIn 0.8s ease-out;
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.budget-overview:hover {
+.budget-overview {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.expense-categories {
+  animation: fadeIn 1s ease-out;
+}
+
+.recent-transactions {
+  animation: fadeIn 1.2s ease-out;
+}
+
+.monthly-history {
+  animation: fadeIn 1.4s ease-out;
+}
+
+.budget-overview:hover,
+.expense-categories:hover,
+.recent-transactions:hover,
+.monthly-history:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.budget-overview h3 {
+/* Section Headers */
+.budget-overview h3,
+.expense-categories h3,
+.recent-transactions h3,
+.monthly-history h3 {
   margin-bottom: 25px;
   color: #343a40;
   font-size: 22px;
@@ -101,7 +157,10 @@
   padding-bottom: 10px;
 }
 
-.budget-overview h3:after {
+.budget-overview h3:after,
+.expense-categories h3:after,
+.recent-transactions h3:after,
+.monthly-history h3:after {
   content: "";
   position: absolute;
   bottom: 0;
@@ -111,6 +170,42 @@
   background-color: #2E3192;
 }
 
+/* Budget Header with Settings Link */
+.budget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.budget-settings-link {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  color: #2E3192;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-left: 20px;
+  transition: all 0.3s;
+}
+
+.budget-settings-link:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.budget-settings-link::before {
+  content: "⚙️";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Budget Cards */
 .budget-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -149,6 +244,7 @@
   color: #dc3545;
 }
 
+/* Budget Progress Bar */
 .budget-progress {
   margin-top: 25px;
 }
@@ -188,41 +284,7 @@
   font-weight: 500;
 }
 
-/* Expense Categories Styles */
-.expense-categories {
-  background-color: white;
-  margin: 30px;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  animation: fadeIn 1s ease-out;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.expense-categories:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-}
-
-.expense-categories h3 {
-  margin-bottom: 25px;
-  color: #343a40;
-  font-size: 22px;
-  font-weight: 600;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.expense-categories h3:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background-color: #2E3192;
-}
-
+/* Categories List */
 .category-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -301,41 +363,7 @@
   font-weight: 500;
 }
 
-/* Recent Transactions Styles */
-.recent-transactions {
-  background-color: white;
-  margin: 30px;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  animation: fadeIn 1.2s ease-out;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.recent-transactions:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-}
-
-.recent-transactions h3 {
-  margin-bottom: 25px;
-  color: #343a40;
-  font-size: 22px;
-  font-weight: 600;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.recent-transactions h3:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background-color: #2E3192;
-}
-
+/* Recent Transactions */
 .transaction-list {
   margin-bottom: 20px;
 }
@@ -425,41 +453,7 @@
   transform: translateX(3px);
 }
 
-/* Monthly History Styles */
-.monthly-history {
-  background-color: white;
-  margin: 30px;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  animation: fadeIn 1.4s ease-out;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.monthly-history:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-}
-
-.monthly-history h3 {
-  margin-bottom: 25px;
-  color: #343a40;
-  font-size: 22px;
-  font-weight: 600;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.monthly-history h3:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background-color: #2E3192;
-}
-
+/* Monthly History Chart */
 .history-chart {
   height: 280px;
   padding: 20px 0;
@@ -505,6 +499,36 @@
   color: #343a40;
   font-weight: 600;
   margin-top: 5px;
+}
+
+/* Empty State Styling */
+.no-data-message {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.no-data-message p {
+  color: #6c757d;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.action-btn {
+  background-color: #2E3192;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background-color: #232578;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(46, 49, 146, 0.2);
 }
 
 /* Floating Scan Button */
@@ -558,7 +582,8 @@
   .budget-overview,
   .expense-categories,
   .recent-transactions,
-  .monthly-history {
+  .monthly-history,
+  .no-data-message {
     margin: 15px;
     padding: 20px;
   }
@@ -583,6 +608,16 @@
   
   .chart-bar {
     min-width: 60px;
+  }
+  
+  .budget-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .budget-settings-link {
+    margin-left: 0;
+    margin-top: 10px;
   }
 }
 
