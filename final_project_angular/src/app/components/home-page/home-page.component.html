@@ -174,7 +174,7 @@
       <div *ngFor="let category of recommendedPromotions">
         <h4>{{ category.name }}</h4>
         <div class="promo-list">
-          <div *ngFor="let promo of category.deals" class="promo-card">
+          <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
             <img 
               [src]="promo.imageUrl" 
               alt="Promo Image" 
@@ -199,6 +199,48 @@
       <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
         <p>Scan more receipts to get personalized recommendations!</p>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Promotion Details Modal -->
+<div class="promotion-details-modal" *ngIf="selectedPromotion">
+  <div class="modal-overlay" (click)="closePromotionDetails()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ selectedPromotion.merchant || selectedPromotion.merchantName }}</h3>
+      <button class="close-button" (click)="closePromotionDetails()">×</button>
+    </div>
+    
+    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='promotions/placeholder-image.jpg'">
+    
+    <div class="promo-detail-info">
+      <h4>{{ selectedPromotion.description }}</h4>
+      
+      <div class="promo-detail-row" *ngIf="selectedPromotion.location">
+        <span class="label">Location:</span>
+        <span>{{ selectedPromotion.location }}</span>
+      </div>
+      
+      <div class="promo-detail-row">
+        <span class="label">Valid Until:</span>
+        <span>{{ selectedPromotion.expiry }}</span>
+      </div>
+      
+      <div class="promo-detail-row" *ngIf="selectedPromotion.code">
+        <span class="label">Promotion Code:</span>
+        <span class="promo-code">{{ selectedPromotion.code }}</span>
+      </div>
+      
+      <div class="promo-detail-row" *ngIf="selectedPromotion.conditions">
+        <span class="label">Conditions:</span>
+        <span class="conditions">{{ selectedPromotion.conditions }}</span>
+      </div>
+    </div>
+    
+    <div class="promo-detail-actions">
+      <button class="action-button" (click)="savePromotion(selectedPromotion)">Save Promotion</button>
+      <button class="action-button secondary">Share</button>
     </div>
   </div>
 </div>

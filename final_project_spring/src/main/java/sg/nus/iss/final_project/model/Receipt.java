@@ -33,11 +33,11 @@ public class Receipt {
         this.userId = userId;
     }
 
-    public String getMerchant() {
+    public String getMerchantName() {
         return merchantName;
     }
 
-    public void setMerchant(String merchantName) {
+    public void setMerchantName(String merchantName) {
         this.merchantName = merchantName;
     }
 
@@ -86,4 +86,5 @@ public class Receipt {
         return "Receipt [id=" + id + ", userId=" + userId + ", merchantName=" + merchantName + ", dateOfPurchase="
                 + dateOfPurchase + ", totalExpense=" + totalExpense + ", category=" + category + "]";
     }
+
 }

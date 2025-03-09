@@ -42,7 +42,7 @@ public class ReceiptController {
             // Set merchant name
             Object merchantNameObj = receiptData.get("merchantName");
             if (merchantNameObj != null) {
-                receipt.setMerchant(merchantNameObj.toString());
+                receipt.setMerchantName(merchantNameObj.toString());
             }
 
             // Handle numeric total amount

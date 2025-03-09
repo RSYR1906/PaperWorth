@@ -24,22 +24,24 @@ export class HomePageComponent implements OnInit {
   userReceiptHistory: any[] = [];
   recommendedPromotions: any[] = [];
   isLoadingRecommendations: boolean = false;
+  selectedPromotion: any = null;
+
 
   // Backup promotions in case no personalized recommendations are available
   fallbackPromotionsByCategory = [
-    {
-      name: "Fast Food",
-      deals: [
-        { description: "McDonald's - $6.50 McSpicy Meal", expiry: "March 30, 2025", imageUrl: "promotions/mcdonalds.jpg" },
-        { description: "KFC - 2-for-1 Zinger Burgers", expiry: "April 10, 2025", imageUrl: "promotions/kfc.jpg" }
-      ]
-    },
-    {
-      name: "Groceries",
-      deals: [
-        { description: "Giant - Myojo Instant Noodles Assorted", expiry: "March 28, 2025", imageUrl: "promotions/giant.jpg" }
-      ]
-    }
+    // {
+    //   name: "Fast Food",
+    //   deals: [
+    //     { description: "McDonald's - $6.50 McSpicy Meal", expiry: "March 30, 2025", imageUrl: "promotions/mcdonalds.jpg" },
+    //     { description: "KFC - 2-for-1 Zinger Burgers", expiry: "April 10, 2025", imageUrl: "promotions/kfc.jpg" }
+    //   ]
+    // },
+    // {
+    //   name: "Groceries",
+    //   deals: [
+    //     { description: "Giant - Myojo Instant Noodles Assorted", expiry: "March 28, 2025", imageUrl: "promotions/giant.jpg" }
+    //   ]
+    // }
   ];
   
   constructor(private http: HttpClient, private router: Router, private promotionService: PromotionService) {}
@@ -487,4 +489,19 @@ export class HomePageComponent implements OnInit {
   getFileExtension(filename: string): string {
     return filename.split('.').pop()?.toLowerCase() || '';
   }
+
+  // Add this method to handle promotion click
+viewPromotionDetails(promotion: any) {
+  this.selectedPromotion = promotion;
+}
+
+// Add this method to close the promotion details modal
+closePromotionDetails() {
+  this.selectedPromotion = null;
+}
+
+// Add this method to save a promotion
+savePromotion(promotion: any) {
+  alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
+}
 }
