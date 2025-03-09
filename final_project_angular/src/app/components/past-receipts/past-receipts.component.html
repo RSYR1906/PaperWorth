@@ -46,13 +46,13 @@
   </div>
 </nav>
   
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Past Receipts</h1>
-      <p>View and manage all your scanned receipts</p>
-    </div>
-  </section>
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Past Receipts</h1>
+    <p>View and manage all your scanned receipts</p>
+  </div>
+</section>
   
 <!-- Receipts Container -->
 <div class="receipts-container">
@@ -101,84 +101,92 @@
   
   <!-- Receipts List -->
   <div class="receipts-table-container" *ngIf="filteredReceipts.length > 0 && !isLoading">
-      <table class="receipts-table">
-        <thead>
-          <tr>
-            <th>Merchant</th>
-            <th>Category</th>
-            <th>Date</th>
-            <th>Amount</th>
-            <th class="promo-column">Promo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
-            <td class="receipt-merchant">{{ receipt.merchantName }}</td>
-            <td class="receipt-category">{{ receipt.category }}</td>
-            <td class="receipt-date">{{ formatDate(receipt.scanDate) }}</td>
-            <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
-            <td class="receipt-promo-cell">
-              <div class="receipt-promo" *ngIf="receipt.hasPromotion">🎁</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="receipts-table">
+      <thead>
+        <tr>
+          <th>Merchant</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th class="promo-column">Promo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
+          <td class="receipt-merchant">{{ receipt.merchantName }}</td>
+          <td class="receipt-category">{{ receipt.category }}</td>
+          <td class="receipt-date">{{ formatDate(receipt.scanDate) }}</td>
+          <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
+          <td class="receipt-promo-cell">
+            <div class="receipt-promo" *ngIf="receipt.hasPromotion">🎁</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
     
-    <div class="no-receipts" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
-      <p>No receipts found matching your filters.</p>
-      <button routerLink="/homepage" class="scan-btn">Scan New Receipt</button>
-    </div>
+  <div class="no-receipts" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
+    <p>No receipts found matching your filters.</p>
+    <button routerLink="/homepage" class="scan-btn">Scan New Receipt</button>
+  </div>
   
 <!-- Receipt Details Modal -->
 <div class="receipt-details-modal" *ngIf="selectedReceipt">
-    <div class="modal-overlay" (click)="closeReceiptDetails()"></div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>{{ selectedReceipt.merchantName }}</h3>
-        <button class="close-button" (click)="closeReceiptDetails()">×</button>
-      </div>
-      
-      <div class="receipt-info">
-        <div class="receipt-info-row">
-          <span>Date:</span>
-          <span>{{ formatDate(selectedReceipt.scanDate) }}</span>
-        </div>
-        <div class="receipt-info-row">
-          <span>Time:</span>
-          <span>{{ formatTime(selectedReceipt.scanDate) }}</span>
-        </div>
-        <div class="receipt-info-row">
-          <span>Category:</span>
-          <span>{{ selectedReceipt.category }}</span>
-        </div>
-      </div>
-      
-      <div class="receipt-items">
-        <h4>Items</h4>
-        <div class="receipt-item-header">
-          <span class="item-name">Item</span>
-          <span class="item-qty">Qty</span>
-          <span class="item-price">Price</span>
-        </div>
-        <div class="receipt-item-row" *ngFor="let item of selectedReceipt.items">
-          <span class="item-name">{{ item.name }}</span>
-          <span class="item-qty">{{ item.quantity }}</span>
-          <span class="item-price">${{ item.price.toFixed(2) }}</span>
-        </div>
-        <div class="receipt-total">
-          <span>Total</span>
-          <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
-        </div>
-      </div>
-      
-      <div class="receipt-actions">
-        <button class="action-button" *ngIf="selectedReceipt.hasPromotion" routerLink="/promotions" [queryParams]="{receiptId: selectedReceipt.id}">View Promotions</button>
-        <button class="action-button secondary">Download PDF</button>
-        <button class="action-button secondary">Share Receipt</button>
+  <div class="modal-overlay" (click)="closeReceiptDetails()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ selectedReceipt.merchantName }}</h3>
+      <button class="close-button" (click)="closeReceiptDetails()">×</button>
+    </div>
+    
+    <!-- Receipt Image (if available) -->
+    <div class="receipt-image-container" *ngIf="selectedReceipt.imageUrl">
+      <img [src]="selectedReceipt.imageUrl" class="receipt-image" alt="Receipt Image">
+      <div class="image-overlay">
+        <span>Click to enlarge</span>
       </div>
     </div>
+    
+    <div class="receipt-info">
+      <div class="receipt-info-row">
+        <span>Date:</span>
+        <span>{{ formatDate(selectedReceipt.scanDate) }}</span>
+      </div>
+      <div class="receipt-info-row">
+        <span>Time:</span>
+        <span>{{ formatTime(selectedReceipt.scanDate) }}</span>
+      </div>
+      <div class="receipt-info-row">
+        <span>Category:</span>
+        <span>{{ selectedReceipt.category }}</span>
+      </div>
+    </div>
+    
+    <div class="receipt-items">
+      <h4>Items</h4>
+      <div class="receipt-item-header">
+        <span class="item-name">Item</span>
+        <span class="item-qty">Qty</span>
+        <span class="item-price">Price</span>
+      </div>
+      <div class="receipt-item-row" *ngFor="let item of selectedReceipt.items">
+        <span class="item-name">{{ item.name }}</span>
+        <span class="item-qty">{{ item.quantity }}</span>
+        <span class="item-price">${{ item.price.toFixed(2) }}</span>
+      </div>
+      <div class="receipt-total">
+        <span>Total</span>
+        <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
+      </div>
+    </div>
+    
+    <div class="receipt-actions">
+      <button class="action-button" *ngIf="selectedReceipt.hasPromotion" routerLink="/promotions" [queryParams]="{receiptId: selectedReceipt.id}">View Promotions</button>
+      <button class="action-button secondary">Download PDF</button>
+      <button class="action-button secondary">Share Receipt</button>
+    </div>
   </div>
+</div>
   
-  <!-- Floating Scan Button -->
-  <button class="scan-button" routerLink="/scan">📸</button>
+<!-- Floating Scan Button -->
+<button class="scan-button" routerLink="/scan">📸</button>

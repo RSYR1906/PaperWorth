@@ -1,7 +1,5 @@
 package sg.nus.iss.final_project.model;
 
-import java.time.LocalDateTime;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,13 +7,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Promotion {
     @Id
     private String id;
-    private String merchant;
+    private String merchantName;
     private String description;
-    private LocalDateTime expiryDate;
-    private String imageURL;
+    private String expiry; // Changed from LocalDateTime to match the data structure
+    private String imageUrl; // Changed to match property name in the data
     private String location;
     private String code;
     private String conditions;
+    private String category; // Added category field
+    private int promotionId; // Added to store the numeric ID from the data
 
     public String getId() {
         return id;
@@ -26,11 +26,11 @@ public class Promotion {
     }
 
     public String getMerchant() {
-        return merchant;
+        return merchantName;
     }
 
-    public void setMerchant(String merchant) {
-        this.merchant = merchant;
+    public void setMerchant(String merchantName) {
+        this.merchantName = merchantName;
     }
 
     public String getDescription() {
@@ -41,20 +41,20 @@ public class Promotion {
         this.description = description;
     }
 
-    public LocalDateTime getExpiryDate() {
-        return expiryDate;
+    public String getExpiry() {
+        return expiry;
     }
 
-    public void setExpiryDate(LocalDateTime expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setExpiry(String expiry) {
+        this.expiry = expiry;
     }
 
-    public String getImageURL() {
-        return imageURL;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImageURL(String imageURL) {
-        this.imageURL = imageURL;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getLocation() {
@@ -81,11 +81,26 @@ public class Promotion {
         this.conditions = conditions;
     }
 
-    @Override
-    public String toString() {
-        return "Promotion [id=" + id + ", merchant=" + merchant + ", description=" + description + ", expiryDate="
-                + expiryDate + ", imageURL=" + imageURL + ", location=" + location + ", code=" + code + ", conditions="
-                + conditions + "]";
+    public String getCategory() {
+        return category;
     }
 
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public int getPromotionId() {
+        return promotionId;
+    }
+
+    public void setPromotionId(int promotionId) {
+        this.promotionId = promotionId;
+    }
+
+    @Override
+    public String toString() {
+        return "Promotion [id=" + id + ", merchantName=" + merchantName + ", description=" + description + ", expiry="
+                + expiry + ", imageUrl=" + imageUrl + ", location=" + location + ", code=" + code + ", conditions="
+                + conditions + ", category=" + category + ", promotionId=" + promotionId + "]";
+    }
 }

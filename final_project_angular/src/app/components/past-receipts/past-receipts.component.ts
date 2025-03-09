@@ -81,7 +81,8 @@ export class PastReceiptsComponent implements OnInit {
               scanDate: scanDate,
               totalAmount: receipt.totalExpense || 0,
               hasPromotion: false, // We'll set this flag based on actual data when available
-              items: receipt.items ? this.parseItems(receipt.items) : []
+              items: receipt.items ? this.parseItems(receipt.items) : [],
+              imageUrl: receipt.imageUrl // Store the image URL
             };
           });
           

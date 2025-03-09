@@ -127,7 +127,7 @@ export class HomePageComponent implements OnInit {
           next: (promotions) => {
             console.log(`Promotions for ${category}:`, promotions);
             
-            // Add this category and its promotions to our array
+            // Group the promotions by category
             if (promotions && promotions.length > 0) {
               categoryPromotionsArray.push({
                 name: category,
@@ -236,6 +236,7 @@ export class HomePageComponent implements OnInit {
       date: this.extractedData.date,
       scanDate: new Date().toISOString(), // Current time as scan date
       category: category,
+      imageUrl: this.imagePreview, // Store the image preview URL
       items: this.extractedData.items || [], // Include items if available
       additionalFields: {
         fullText: this.extractedData.fullText || this.ocrText,
@@ -276,54 +277,56 @@ export class HomePageComponent implements OnInit {
   fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
     this.isLoadingPromotions = true;
     
-    // First try to get promotions by merchant
-    this.promotionService.getPromotionsByMerchant(merchant)
+    // Use the match endpoint to find promotions by merchant or category
+    this.http.get<any[]>(`http://localhost:8080/api/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
       .subscribe({
         next: (promotions) => {
-          console.log('Matching promotions by merchant:', promotions);
+          console.log('Matching promotions:', promotions);
           if (promotions && promotions.length > 0) {
-            // Add these promotions to the recommended section
-            this.addPromotionsToRecommendations(merchant, promotions);
+            // Group promotions by category
+            const groupedPromotions = this.groupPromotionsByCategory(promotions);
+            
+            // Add each category group to recommendations
+            groupedPromotions.forEach(group => {
+              this.addPromotionsToRecommendations(group.name, group.deals);
+            });
+            
             this.isLoadingPromotions = false;
             this.isProcessing = false;
             
             // Clear the receipt data
             this.resetScanner();
           } else {
-            // If no promotions found by merchant, try by category
-            this.getPromotionsByCategory(category, receiptId);
+            // If no promotions found, try fallback to receipt-based API
+            this.fetchPromotionsByReceiptId(receiptId);
           }
         },
         error: (error) => {
-          console.error('Error fetching promotions by merchant:', error);
-          // Try by category as fallback
-          this.getPromotionsByCategory(category, receiptId);
-        }
-      });
-  }
-
-  getPromotionsByCategory(category: string, receiptId: string) {
-    this.promotionService.getPromotionsByCategory(category)
-      .subscribe({
-        next: (promotions) => {
-          console.log('Matching promotions by category:', promotions);
-          if (promotions && promotions.length > 0) {
-            // Add these promotions to the recommended section
-            this.addPromotionsToRecommendations(category, promotions);
-          }
-          this.isLoadingPromotions = false;
-          this.isProcessing = false;
-          
-          // Clear the receipt data
-          this.resetScanner();
-        },
-        error: (error) => {
-          console.error('Error fetching promotions by category:', error);
-          
-          // Fallback to receipt-based API if direct matching fails
+          console.error('Error fetching matching promotions:', error);
+          // Try fallback to receipt-based API
           this.fetchPromotionsByReceiptId(receiptId);
         }
       });
+  }
+  
+  // Group flat promotions by category
+  groupPromotionsByCategory(promotions: any[]): any[] {
+    // Group the promotions by category
+    const categoryMap = new Map<string, any[]>();
+    
+    promotions.forEach(promo => {
+      const category = promo.category || 'Uncategorized';
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, []);
+      }
+      categoryMap.get(category)?.push(promo);
+    });
+    
+    // Convert map to array of category objects
+    return Array.from(categoryMap.entries()).map(([name, deals]) => ({
+      name,
+      deals
+    }));
   }
   
   // Fallback method if direct matching fails
@@ -333,8 +336,13 @@ export class HomePageComponent implements OnInit {
         next: (promotions) => {
           console.log('Promotions by receipt ID:', promotions);
           if (promotions && promotions.length > 0) {
-            // Since we don't know the exact category, use a generic name
-            this.addPromotionsToRecommendations("Recent Promotions", promotions);
+            // Group promotions by category
+            const groupedPromotions = this.groupPromotionsByCategory(promotions);
+            
+            // Add each category group to recommendations
+            groupedPromotions.forEach(group => {
+              this.addPromotionsToRecommendations(group.name, group.deals);
+            });
           }
           this.isLoadingPromotions = false;
           this.isProcessing = false;
@@ -363,11 +371,12 @@ export class HomePageComponent implements OnInit {
     if (existingCategoryIndex >= 0) {
       // Category exists, merge promotions (avoiding duplicates)
       const existingDeals = this.recommendedPromotions[existingCategoryIndex].deals;
-      const existingIds = new Set(existingDeals.map((deal: { id: any; }) => deal.id));
+      const existingIds = new Set(existingDeals.map((deal: { id: any; promotionId: any; }) => deal.id || deal.promotionId));
       
       // Add only new promotions
       promotions.forEach(promo => {
-        if (!existingIds.has(promo.id)) {
+        const promoId = promo.id || promo.promotionId;
+        if (!existingIds.has(promoId)) {
           existingDeals.push(promo);
         }
       });
@@ -434,7 +443,7 @@ export class HomePageComponent implements OnInit {
         merchantName.includes('watsons') || 
         merchantName.includes('unity') ||
         merchantName.includes('pharmacy')) {
-      return 'Healthcare';
+      return 'Health & Beauty';
     }
     
     // Default to "Others" if no match

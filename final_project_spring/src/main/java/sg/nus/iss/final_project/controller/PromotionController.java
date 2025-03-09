@@ -3,7 +3,6 @@ package sg.nus.iss.final_project.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,28 +16,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import sg.nus.iss.final_project.model.Promotion;
+import sg.nus.iss.final_project.repo.PromotionRepository;
+
 @RestController
 @RequestMapping("/api/promotions")
 @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class PromotionController {
 
     private final MongoTemplate mongoTemplate;
+    private final PromotionRepository promotionRepository;
 
     @Autowired
-    public PromotionController(MongoTemplate mongoTemplate) {
+    public PromotionController(MongoTemplate mongoTemplate, PromotionRepository promotionRepository) {
         this.mongoTemplate = mongoTemplate;
+        this.promotionRepository = promotionRepository;
     }
 
     /**
      * Get all promotions
      */
     @GetMapping("")
-    public ResponseEntity<List<Map<String, Object>>> getAllPromotions() {
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> promotions = mongoTemplate.findAll(Map.class, "promotions")
-                .stream()
-                .map(map -> (Map<String, Object>) map)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<Promotion>> getAllPromotions() {
+        List<Promotion> promotions = promotionRepository.findAll();
         return ResponseEntity.ok(promotions);
     }
 
@@ -46,13 +46,17 @@ public class PromotionController {
      * Get promotions by category
      */
     @GetMapping("/category/{categoryName}")
-    public ResponseEntity<List<Map<String, Object>>> getPromotionsByCategory(@PathVariable String categoryName) {
-        Query query = new Query(Criteria.where("category").is(categoryName));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> promotions = mongoTemplate.find(query, Map.class, "promotions")
-                .stream()
-                .map(map -> (Map<String, Object>) map)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<Promotion>> getPromotionsByCategory(@PathVariable String categoryName) {
+        List<Promotion> promotions = promotionRepository.findByCategory(categoryName);
+        return ResponseEntity.ok(promotions);
+    }
+
+    /**
+     * Get promotions by merchant
+     */
+    @GetMapping("/merchant/{merchant}")
+    public ResponseEntity<List<Promotion>> getPromotionsByMerchant(@PathVariable String merchant) {
+        List<Promotion> promotions = promotionRepository.findByMerchantContainingIgnoreCase(merchant);
         return ResponseEntity.ok(promotions);
     }
 
@@ -60,7 +64,7 @@ public class PromotionController {
      * Get promotions based on merchant name and/or category
      */
     @GetMapping("/match")
-    public ResponseEntity<List<Map<String, Object>>> getMatchingPromotions(
+    public ResponseEntity<List<Promotion>> getMatchingPromotions(
             @RequestParam(required = false) String merchant,
             @RequestParam(required = false) String category) {
 
@@ -91,11 +95,7 @@ public class PromotionController {
 
         // Execute the query
         Query query = new Query(criteria);
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> promotions = mongoTemplate.find(query, Map.class, "promotions")
-                .stream()
-                .map(map -> (Map<String, Object>) map)
-                .collect(Collectors.toList());
+        List<Promotion> promotions = mongoTemplate.find(query, Promotion.class, "promotions");
 
         return ResponseEntity.ok(promotions);
     }
@@ -104,7 +104,7 @@ public class PromotionController {
      * Get promotions based on a receipt ID
      */
     @GetMapping("/receipt/{receiptId}")
-    public ResponseEntity<List<Map<String, Object>>> getPromotionsByReceiptId(@PathVariable String receiptId) {
+    public ResponseEntity<List<Promotion>> getPromotionsByReceiptId(@PathVariable String receiptId) {
         // Try to find the receipt in MongoDB
         Query receiptQuery = new Query(Criteria.where("_id").is(receiptId));
         @SuppressWarnings("unchecked")
@@ -129,12 +129,7 @@ public class PromotionController {
         // Fallback logic for demo purpose when receipt not found in database
         String fallbackCategory = getFallbackCategory(receiptId);
         if (!fallbackCategory.isEmpty()) {
-            Query query = new Query(Criteria.where("category").is(fallbackCategory));
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> promotions = mongoTemplate.find(query, Map.class, "promotions")
-                    .stream()
-                    .map(map -> (Map<String, Object>) map)
-                    .collect(Collectors.toList());
+            List<Promotion> promotions = promotionRepository.findByCategory(fallbackCategory);
             return ResponseEntity.ok(promotions);
         }
 

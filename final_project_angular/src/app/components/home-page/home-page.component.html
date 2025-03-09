@@ -176,14 +176,14 @@
         <div class="promo-list">
           <div *ngFor="let promo of category.deals" class="promo-card">
             <img 
-              [src]="promo.imageURL || promo.imageUrl" 
+              [src]="promo.imageUrl" 
               alt="Promo Image" 
               onerror="this.src='promotions/placeholder-image.jpg'"
             >
             <div class="promo-content">
               <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
               <p class="promo-title">{{ promo.description }}</p>
-              <p class="expiry">Valid until: {{ promo.expiryDate || promo.expiry }}</p>
+              <p class="expiry">Valid until: {{ promo.expiry }}</p>
               <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
             </div>
           </div>

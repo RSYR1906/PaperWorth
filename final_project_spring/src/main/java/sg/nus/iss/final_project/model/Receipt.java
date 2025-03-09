@@ -10,7 +10,7 @@ public class Receipt {
     @Id
     private String id;
     private String userId;
-    private String merchant;
+    private String merchantName;
     private LocalDateTime dateOfPurchase;
     private double totalExpense;
     private String category;
@@ -34,11 +34,11 @@ public class Receipt {
     }
 
     public String getMerchant() {
-        return merchant;
+        return merchantName;
     }
 
-    public void setMerchant(String merchant) {
-        this.merchant = merchant;
+    public void setMerchant(String merchantName) {
+        this.merchantName = merchantName;
     }
 
     public LocalDateTime getDateOfPurchase() {
@@ -83,7 +83,7 @@ public class Receipt {
 
     @Override
     public String toString() {
-        return "Receipt [id=" + id + ", userId=" + userId + ", merchant=" + merchant + ", dateOfPurchase="
+        return "Receipt [id=" + id + ", userId=" + userId + ", merchantName=" + merchantName + ", dateOfPurchase="
                 + dateOfPurchase + ", totalExpense=" + totalExpense + ", category=" + category + "]";
     }
 }

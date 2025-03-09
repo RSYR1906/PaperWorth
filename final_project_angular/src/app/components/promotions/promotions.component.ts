@@ -13,19 +13,20 @@ export class PromotionsComponent implements OnInit {
   isLoading: boolean = false;
   selectedCategory: string = 'all';
   allPromotions: any[] = [];
+  promotionsByCategory: any[] = [];
   
-// Categories for filter
-categories = [
-  { id: 'all', name: 'All Categories' },
-  { id: 'fastfood', name: 'Fast Food' },
-  { id: 'groceries', name: 'Groceries' },
-  { id: 'retail', name: 'Retail' },
-  { id: 'cafes', name: 'Cafes' },
-  { id: 'entertainment', name: 'Entertainment' },
-  { id: 'electronics', name: 'Electronics' },
-  { id: 'healthbeauty', name: 'Health & Beauty' },
-  { id: 'travel', name: 'Travel' }
-];
+  // Categories for filter
+  categories = [
+    { id: 'all', name: 'All Categories' },
+    { id: 'fastfood', name: 'Fast Food' },
+    { id: 'groceries', name: 'Groceries' },
+    { id: 'retail', name: 'Retail' },
+    { id: 'cafes', name: 'Cafes' },
+    { id: 'entertainment', name: 'Entertainment' },
+    { id: 'electronics', name: 'Electronics' },
+    { id: 'healthbeauty', name: 'Health & Beauty' },
+    { id: 'travel', name: 'Travel' }
+  ];
 
   // Selected promotion for details view
   selectedPromotion: any = null;
@@ -56,6 +57,7 @@ categories = [
               next: (data) => {
                 console.log('Received matched promotions:', data);
                 this.allPromotions = data;
+                this.organizePromotionsByCategory();
                 this.setDefaultCategory();
                 this.isLoading = false;
               },
@@ -86,6 +88,7 @@ categories = [
         next: (data) => {
           console.log('Received data from receipt ID:', data);
           this.allPromotions = data;
+          this.organizePromotionsByCategory();
           this.setDefaultCategory();
           this.isLoading = false;
         },
@@ -103,6 +106,7 @@ categories = [
         next: (data) => {
           console.log('Received all promotions:', data);
           this.allPromotions = data;
+          this.organizePromotionsByCategory();
           this.isLoading = false;
         },
         error: (error) => {
@@ -111,6 +115,28 @@ categories = [
           // You can keep your original hardcoded data as a fallback
         }
       });
+  }
+  
+  // Organize promotions by category
+  organizePromotionsByCategory() {
+    // Group the flattened promotions by category
+    const categoryMap = new Map<string, any[]>();
+    
+    this.allPromotions.forEach(promo => {
+      const category = promo.category || 'Uncategorized';
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, []);
+      }
+      categoryMap.get(category)?.push(promo);
+    });
+    
+    // Convert map to array of category objects
+    this.promotionsByCategory = Array.from(categoryMap.entries()).map(([category, promos]) => ({
+      category: category,
+      deals: promos
+    }));
+    
+    console.log('Organized promotions by category:', this.promotionsByCategory);
   }
   
   setDefaultCategory() {
@@ -126,16 +152,16 @@ categories = [
   
   // Get promotions filtered by selected category
   get filteredPromotions() {
-    if (!this.allPromotions || this.allPromotions.length === 0) {
+    if (!this.promotionsByCategory || this.promotionsByCategory.length === 0) {
       return [];
     }
     
     if (this.selectedCategory === 'all') {
-      return this.allPromotions;
+      return this.promotionsByCategory;
     }
     
-    return this.allPromotions.filter(category => {
-      const categoryId = (category.category || '').toLowerCase().replace(/\s+/g, '');
+    return this.promotionsByCategory.filter(categoryGroup => {
+      const categoryId = categoryGroup.category.toLowerCase().replace(/\s+/g, '');
       return categoryId === this.selectedCategory;
     });
   }
