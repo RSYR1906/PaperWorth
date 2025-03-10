@@ -1,8 +1,8 @@
+// src/app/components/login/login.component.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UserService } from '../../services/user.service';
-
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -18,7 +18,7 @@ export class LoginComponent {
 
   constructor(
     private router: Router,
-    private userService: UserService,
+    private firebaseAuthService: FirebaseAuthService,
     private fb: FormBuilder
   ) {
     this.loginForm = this.fb.group({
@@ -40,11 +40,6 @@ export class LoginComponent {
       const control = this.loginForm.get(key);
       control?.markAsTouched();
     });
-
-    console.log("Form status:", this.loginForm.status);
-    console.log("Form errors:", this.loginForm.errors);
-    console.log("Username errors:", this.f['username'].errors);
-    console.log("Password errors:", this.f['password'].errors);
 
     // Stop here if form is invalid
     if (this.loginForm.invalid) {
@@ -82,31 +77,26 @@ export class LoginComponent {
       return;
     }
 
-    // Regular authentication flow with backend
-    const credentials = {
-      email: username,
-      password: password
-    };
-
-    this.userService.login(credentials).subscribe(
-      (response) => {
-        console.log('Login successful:', response);
-        localStorage.setItem('currentUser', JSON.stringify(response));
+    // Regular authentication flow with Firebase
+    this.firebaseAuthService.signInWithEmailPassword(username, password)
+      .then((user) => {
+        console.log('Login successful:', user);
         this.router.navigate(['/homepage']);
         this.isLoading = false;
-      },
-      (error) => {
+      })
+      .catch((error) => {
         console.error('Login error:', error);
         
-        if (error.status === 401) {
-          this.errorMessage = 'Invalid username or password';
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          this.errorMessage = 'Invalid email or password';
+        } else if (error.code === 'auth/too-many-requests') {
+          this.errorMessage = 'Too many failed login attempts. Please try again later.';
         } else {
           this.errorMessage = 'An error occurred during login. Please try again.';
         }
         
         this.isLoading = false;
-      }
-    );
+      });
   }
 
   // Demo login button handler
@@ -119,7 +109,19 @@ export class LoginComponent {
   }
 
   loginWithGoogle() {
-    console.log("Google login clicked");
-    alert("Google login integration coming soon!");
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    this.firebaseAuthService.signInWithGoogle()
+      .then((user) => {
+        console.log('Google login successful:', user);
+        this.router.navigate(['/homepage']);
+        this.isLoading = false;
+      })
+      .catch((error) => {
+        console.error('Google login error:', error);
+        this.errorMessage = 'An error occurred during Google login. Please try again.';
+        this.isLoading = false;
+      });
   }
 }

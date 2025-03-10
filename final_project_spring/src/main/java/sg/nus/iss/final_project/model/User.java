@@ -7,6 +7,7 @@ public class User {
     private String name;
     private String email;
     private String passwordHash;
+    private String firebaseId; // New field for Firebase authentication
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -41,6 +42,14 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+    public String getFirebaseId() {
+        return firebaseId;
+    }
+
+    public void setFirebaseId(String firebaseId) {
+        this.firebaseId = firebaseId;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -52,7 +61,6 @@ public class User {
     @Override
     public String toString() {
         return "User [id=" + id + ", name=" + name + ", email=" + email + ", passwordHash=" + passwordHash
-                + ", createdAt=" + createdAt + "]";
+                + ", firebaseId=" + firebaseId + ", createdAt=" + createdAt + "]";
     }
-
 }

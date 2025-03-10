@@ -25,14 +25,21 @@ public class UserRepository {
         user.setName(rs.getString("name"));
         user.setEmail(rs.getString("email"));
         user.setPasswordHash(rs.getString("password_hash"));
+        // Handle firebase_id if the column exists
+        try {
+            user.setFirebaseId(rs.getString("firebase_id"));
+        } catch (Exception e) {
+            // Column might not exist yet, handle gracefully
+            user.setFirebaseId(null);
+        }
         user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         return user;
     };
 
     // Insert a new user
     public int save(User user) {
-        String sql = "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)";
-        return jdbcTemplate.update(sql, user.getName(), user.getEmail(), user.getPasswordHash());
+        String sql = "INSERT INTO users (name, email, password_hash, firebase_id) VALUES (?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, user.getName(), user.getEmail(), user.getPasswordHash(), user.getFirebaseId());
     }
 
     // Find user by email
@@ -40,6 +47,24 @@ public class UserRepository {
         String sql = "SELECT * FROM users WHERE email = ?";
         List<User> users = jdbcTemplate.query(sql, userRowMapper, email);
         return users.stream().findFirst();
+    }
+
+    // Find user by Firebase ID
+    public Optional<User> findByFirebaseId(String firebaseId) {
+        try {
+            String sql = "SELECT * FROM users WHERE firebase_id = ?";
+            List<User> users = jdbcTemplate.query(sql, userRowMapper, firebaseId);
+            return users.stream().findFirst();
+        } catch (Exception e) {
+            // Handle case where firebase_id column might not exist yet
+            return Optional.empty();
+        }
+    }
+
+    // Update Firebase ID for existing user
+    public int updateFirebaseId(Long userId, String firebaseId) {
+        String sql = "UPDATE users SET firebase_id = ? WHERE id = ?";
+        return jdbcTemplate.update(sql, firebaseId, userId);
     }
 
     // Get all users
@@ -65,6 +90,12 @@ public class UserRepository {
                         u.setName(rs.getString("name"));
                         u.setEmail(rs.getString("email"));
                         u.setPasswordHash(rs.getString("password_hash"));
+                        try {
+                            u.setFirebaseId(rs.getString("firebase_id"));
+                        } catch (Exception e) {
+                            // Column might not exist yet, handle gracefully
+                            u.setFirebaseId(null);
+                        }
                         u.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                         return u;
                     });

@@ -13,6 +13,7 @@ import { LoginComponent } from './components/login/login.component';
 import { PastReceiptsComponent } from './components/past-receipts/past-receipts.component';
 import { PromotionsComponent } from './components/promotions/promotions.component';
 import { SignupComponent } from './components/signup/signup.component';
+import { FirebaseAuthService } from './services/firebase-auth.service';
 import { PromotionService } from './services/promotions.service';
 import { ReceiptService } from './services/receipt.service';
 import { UserService } from './services/user.service';
@@ -36,7 +37,7 @@ import { UserService } from './services/user.service';
   // or after 30 seconds (whichever comes first).
   registrationStrategy: 'registerWhenStable:30000'
 })],
-  providers: [PromotionService,ReceiptService,UserService],
+  providers: [PromotionService,ReceiptService,UserService,FirebaseAuthService],
   bootstrap: [AppComponent]
 })
 

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../services/budget.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 
 @Component({
@@ -35,7 +36,8 @@ export class HomePageComponent implements OnInit {
     private http: HttpClient, 
     private router: Router, 
     private promotionService: PromotionService,
-    private budgetService: BudgetService
+    private budgetService: BudgetService,
+    private firebaseAuthService: FirebaseAuthService
   ) {}
 
   ngOnInit(): void {
@@ -495,12 +497,17 @@ export class HomePageComponent implements OnInit {
     this.showFullText = !this.showFullText;
   }
 
-  logout() {
-    // Clear user session
-    localStorage.removeItem('currentUser');
-    console.log("User logged out");
-    this.router.navigate(['']);
-  }
+  // Update the logout method in HomePage component
+logout() {
+  this.firebaseAuthService.signOut()
+    .then(() => {
+      // The navigation is already handled in the FirebaseAuthService
+      console.log("User logged out");
+    })
+    .catch(error => {
+      console.error("Logout error:", error);
+    });
+}
   
   // Helper method to format currency values
   formatCurrency(value: number): string {

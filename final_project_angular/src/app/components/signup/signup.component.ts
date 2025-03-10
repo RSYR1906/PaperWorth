@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+// src/app/components/signup/signup.component.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
 
 @Component({
   selector: 'app-signup',
@@ -19,9 +20,10 @@ export class SignupComponent {
   constructor(
     private router: Router,
     private formBuilder: FormBuilder,
-    private http: HttpClient
+    private firebaseAuthService: FirebaseAuthService
   ) {
     this.signupForm = this.formBuilder.group({
+      name: ['',[Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
@@ -70,49 +72,47 @@ export class SignupComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Prepare user data (excluding confirmPassword and agreeTerms)
-    const userData = {
-      name: this.signupForm.value.name,
-      email: this.signupForm.value.email,
-      password: this.signupForm.value.password
-    };
+    const email = this.signupForm.value.email;
+    const password = this.signupForm.value.password;
 
-    // In a real app, connect with your backend API
-    // This is a placeholder for the actual API call
-    setTimeout(() => {
-      // For demo purposes, simulate successful registration
-      console.log('User registered:', userData);
-      localStorage.setItem('registrationSuccess', 'true');
-      this.router.navigate(['/login']);
-      this.isLoading = false;
-      
-      // In a real app, you would call your backend
-      /*
-      this.http.post('http://localhost:8080/api/users/register', userData)
-        .subscribe(
-          (response) => {
-            console.log('Registration successful:', response);
-            localStorage.setItem('registrationSuccess', 'true');
-            this.router.navigate(['/login']);
-            this.isLoading = false;
-          },
-          (error) => {
-            console.error('Registration error:', error);
-            if (error.status === 409) {
-              this.errorMessage = 'Email already in use. Please use a different email address.';
-            } else {
-              this.errorMessage = 'Registration failed. Please try again.';
-            }
-            this.isLoading = false;
-          }
-        );
-      */
-    }, 1000);
+    // Register user with Firebase
+    this.firebaseAuthService.signUpWithEmailPassword(email, password)
+      .then((user) => {
+        console.log('Registration successful:', user);
+        localStorage.setItem('registrationSuccess', 'true');
+        this.router.navigate(['/homepage']);
+        this.isLoading = false;
+      })
+      .catch((error) => {
+        console.error('Registration error:', error);
+        
+        if (error.code === 'auth/email-already-in-use') {
+          this.errorMessage = 'Email already in use. Please try another email address.';
+        } else if (error.code === 'auth/weak-password') {
+          this.errorMessage = 'Password is too weak. Please choose a stronger password.';
+        } else {
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+        
+        this.isLoading = false;
+      });
   }
 
-signUpWithGoogle() {
-    console.log("Google signup clicked");
-    alert("Google singup integration coming soon!");
+  signUpWithGoogle() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    this.firebaseAuthService.signInWithGoogle()
+      .then((user) => {
+        console.log('Google signup successful:', user);
+        this.router.navigate(['/homepage']);
+        this.isLoading = false;
+      })
+      .catch((error) => {
+        console.error('Google signup error:', error);
+        this.errorMessage = 'An error occurred during Google signup. Please try again.';
+        this.isLoading = false;
+      });
   }
 
   // Navigate to login page
