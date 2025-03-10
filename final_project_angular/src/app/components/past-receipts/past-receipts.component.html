@@ -175,9 +175,8 @@
     </div>
     
     <div class="receipt-actions">
-      <button class="action-button" *ngIf="selectedReceipt.hasPromotion" routerLink="/promotions" [queryParams]="{receiptId: selectedReceipt.id}">View Promotions</button>
       <button class="action-button secondary">Download PDF</button>
-      <button class="action-button secondary">Share Receipt</button>
+      <button class="action-button secondary" (click)="deleteReceipt(selectedReceipt)">Delete Receipt</button>
     </div>
   </div>
 </div>

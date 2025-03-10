@@ -76,6 +76,22 @@ public class BudgetService {
         return budgetRepository.save(budget);
     }
 
+    // Remove an expense from a budget
+    public Budget removeExpenseFromBudget(String userId, String monthYear, String categoryName, double amount) {
+        Budget budget = getUserBudget(userId, monthYear);
+
+        BudgetCategory category = budget.findCategoryByName(categoryName);
+        if (category != null) {
+            // Subtract expense and decrement transaction count
+            category.subtractExpense(amount);
+        }
+
+        // Update totalSpent
+        budget.updateTotalSpent();
+
+        return budgetRepository.save(budget);
+    }
+
     // Update the total budget amount
     public Budget updateTotalBudget(String userId, String monthYear, double newBudgetAmount) {
         Budget budget = getUserBudget(userId, monthYear);

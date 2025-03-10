@@ -58,6 +58,12 @@ public class BudgetCategory {
         this.transactions++;
     }
 
+    // Helper method to subtract an expense
+    public void subtractExpense(double amount) {
+        this.spentAmount = Math.max(0, this.spentAmount - amount);
+        this.transactions = Math.max(0, this.transactions - 1);
+    }
+
     @Override
     public String toString() {
         return "BudgetCategory [category=" + category + ", budgetAmount=" + budgetAmount + ", spentAmount="

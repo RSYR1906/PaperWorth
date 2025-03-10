@@ -190,6 +190,25 @@ export class PastReceiptsComponent implements OnInit {
       document.body.style.overflow = '';
     }, 300); // Duration should match your CSS animation
   }
+
+  deleteReceipt(receipt: any) {
+    if (confirm('Are you sure you want to delete this receipt?')) {
+      this.receiptService.deleteReceipt(receipt.id).subscribe({
+        next: () => {
+          // Remove from local array
+          this.receipts = this.receipts.filter(r => r.id !== receipt.id);
+          
+          // Close modal if open
+          if (this.selectedReceipt && this.selectedReceipt.id === receipt.id) {
+            this.closeReceiptDetails();
+          }
+        },
+        error: (error) => {
+          alert('Failed to delete receipt. Please try again.');
+        }
+      });
+    }
+  }
   
   // Get filtered receipts
 get filteredReceipts() {

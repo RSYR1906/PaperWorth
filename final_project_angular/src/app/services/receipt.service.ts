@@ -57,4 +57,13 @@ export class ReceiptService {
       })
     );
   }
+
+  deleteReceipt(receiptId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${receiptId}`).pipe(
+      catchError(error => {
+        console.error('Error deleting receipt:', error);
+        return throwError(() => new Error('Failed to delete receipt. Please try again.'));
+      })
+    );
+  }
 }

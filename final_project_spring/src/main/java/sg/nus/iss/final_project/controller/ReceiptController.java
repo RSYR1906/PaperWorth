@@ -7,10 +7,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -134,6 +136,40 @@ public class ReceiptController {
         return receiptRepository.findById(receiptId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{receiptId}")
+    public ResponseEntity<?> deleteReceipt(@PathVariable String receiptId) {
+        try {
+            // Find receipt before deleting it
+            Optional<Receipt> receiptOpt = receiptRepository.findById(receiptId);
+
+            if (receiptOpt.isPresent()) {
+                Receipt receipt = receiptOpt.get();
+
+                // Delete the receipt
+                receiptRepository.deleteById(receiptId);
+
+                // Update budget by removing the expense
+                if (receipt.getUserId() != null && receipt.getTotalExpense() > 0) {
+                    // Format month-year as YYYY-MM from the purchase date
+                    String monthYear = receipt.getDateOfPurchase().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+
+                    // Remove the expense from the user's budget
+                    budgetService.removeExpenseFromBudget(
+                            receipt.getUserId(),
+                            monthYear,
+                            receipt.getCategory(),
+                            receipt.getTotalExpense());
+                }
+
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error deleting receipt: " + e.getMessage());
+        }
     }
 
     // Helper method to parse different date formats
