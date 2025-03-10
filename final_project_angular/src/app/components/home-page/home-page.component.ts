@@ -233,7 +233,7 @@ export class HomePageComponent implements OnInit {
           this.isProcessing = false;
           
           // Ensure extractedData is only set from API response
-          if (response && response.merchantName && response.totalAmount && response.date) {
+          if (response && response.merchantName && response.totalAmount && response.dateOfPurchase) {
             this.extractedData = response;
             this.ocrText = response.fullText || "No additional text extracted.";
           } else {
@@ -250,7 +250,7 @@ export class HomePageComponent implements OnInit {
   }
   
   saveReceipt() {
-    if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.date) {
+    if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
       alert("Incomplete receipt data. Please try again.");
       return;
     }
@@ -266,8 +266,8 @@ export class HomePageComponent implements OnInit {
       userId: currentUser.id || '1',
       merchantName: this.extractedData.merchantName,
       totalAmount: this.extractedData.totalAmount,
-      date: this.extractedData.date,
-      scanDate: new Date().toISOString(), // Current time as scan date
+      dateOfPurchase: this.extractedData.dateOfPurchase,
+      // scanDate: new Date().toISOString(), // Current time as scan date
       category: category,
       imageUrl: this.imagePreview, // Store the image preview URL
       items: this.extractedData.items || [], // Include items if available
@@ -275,7 +275,7 @@ export class HomePageComponent implements OnInit {
         fullText: this.extractedData.fullText || this.ocrText,
         // Include any other fields from extracted data
         ...Object.entries(this.extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'date', 'category', 'items', 'fullText'].includes(key))
+          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
           .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
       }
     };

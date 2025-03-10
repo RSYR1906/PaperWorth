@@ -108,18 +108,14 @@
           <th>Category</th>
           <th>Date</th>
           <th>Amount</th>
-          <th class="promo-column">Promo</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
           <td class="receipt-merchant">{{ receipt.merchantName }}</td>
           <td class="receipt-category">{{ receipt.category }}</td>
-          <td class="receipt-date">{{ formatDate(receipt.scanDate) }}</td>
+          <td class="receipt-date">{{ formatDate(receipt.dateOfPurchase) }}</td>
           <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
-          <td class="receipt-promo-cell">
-            <div class="receipt-promo" *ngIf="receipt.hasPromotion">🎁</div>
-          </td>
         </tr>
       </tbody>
     </table>
@@ -129,9 +125,10 @@
     <p>No receipts found matching your filters.</p>
     <button routerLink="/homepage" class="scan-btn">Scan New Receipt</button>
   </div>
-  
+</div>
+
 <!-- Receipt Details Modal -->
-<div class="receipt-details-modal" *ngIf="selectedReceipt">
+<div class="receipt-details-modal" *ngIf="selectedReceipt" [class.closing]="isClosing">
   <div class="modal-overlay" (click)="closeReceiptDetails()"></div>
   <div class="modal-content">
     <div class="modal-header">
@@ -142,32 +139,29 @@
     <!-- Receipt Image (if available) -->
     <div class="receipt-image-container" *ngIf="selectedReceipt.imageUrl">
       <img [src]="selectedReceipt.imageUrl" class="receipt-image" alt="Receipt Image">
-      <div class="image-overlay">
-        <span>Click to enlarge</span>
-      </div>
     </div>
     
     <div class="receipt-info">
       <div class="receipt-info-row">
         <span>Date:</span>
-        <span>{{ formatDate(selectedReceipt.scanDate) }}</span>
-      </div>
-      <div class="receipt-info-row">
-        <span>Time:</span>
-        <span>{{ formatTime(selectedReceipt.scanDate) }}</span>
+        <span>{{ formatDate(selectedReceipt.dateOfPurchase) }}</span>
       </div>
       <div class="receipt-info-row">
         <span>Category:</span>
         <span>{{ selectedReceipt.category }}</span>
       </div>
+      <div class="receipt-info-row" *ngIf="selectedReceipt.totalAmount">
+        <span>Total Amount:</span>
+        <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
+      </div>
     </div>
     
-    <div class="receipt-items">
+    <div class="receipt-items" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
       <h4>Items</h4>
       <div class="receipt-item-header">
-        <span class="item-name">Item</span>
-        <span class="item-qty">Qty</span>
-        <span class="item-price">Price</span>
+        <span>Item</span>
+        <span>Qty</span>
+        <span>Price</span>
       </div>
       <div class="receipt-item-row" *ngFor="let item of selectedReceipt.items">
         <span class="item-name">{{ item.name }}</span>

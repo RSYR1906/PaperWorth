@@ -14,6 +14,8 @@ export class PastReceiptsComponent implements OnInit {
   searchTerm: string = '';
   isLoading: boolean = true;
   error: string = '';
+  isClosing: boolean = false;
+
   
   // Filters
   filters = {
@@ -71,16 +73,16 @@ export class PastReceiptsComponent implements OnInit {
           
           // Transform the data for display
           this.receipts = data.map(receipt => {
-            // Convert dateOfPurchase to scanDate for consistency
-            const scanDate = receipt.dateOfPurchase || new Date().toISOString();
+            // If dateOfPurchase is missing, use a fallback date
+            const purchaseDate = receipt.dateOfPurchase || new Date().toISOString();
             
             return {
               id: receipt.id,
               merchantName: receipt.merchantName,
               category: receipt.category || 'Others',
-              scanDate: scanDate,
+              dateOfPurchase: purchaseDate, // This is the actual receipt date
               totalAmount: receipt.totalExpense || 0,
-              hasPromotion: false, // We'll set this flag based on actual data when available
+              hasPromotion: false, // Will be set later if applicable
               items: receipt.items ? this.parseItems(receipt.items) : [],
               imageUrl: receipt.imageUrl // Store the image URL
             };
@@ -124,35 +126,38 @@ export class PastReceiptsComponent implements OnInit {
   loadDemoReceipts() {
     // Fallback to demo data if API fails
     this.receipts = [
-      {
-        id: '1',
-        merchantName: 'Cold Storage',
-        category: 'Groceries',
-        scanDate: '2025-03-01T13:45:00',
-        totalAmount: 87.50,
-        hasPromotion: true,
-        items: [
-          { name: 'Milk', quantity: 2, price: 6.50 },
-          { name: 'Bread', quantity: 1, price: 3.20 },
-          { name: 'Eggs', quantity: 1, price: 4.80 }
-        ]
-      },
-      {
-        id: '2',
-        merchantName: 'Starbucks',
-        category: 'Cafes',
-        scanDate: '2025-02-28T09:15:00',
-        totalAmount: 15.80,
-        hasPromotion: true,
-        items: [
-          { name: 'Caffè Latte', quantity: 1, price: 6.50 },
-          { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
-        ]
-      }
+      // {
+      //   id: '1',
+      //   merchantName: 'Cold Storage',
+      //   category: 'Groceries',
+      //   scanDate: '2025-03-01T13:45:00',
+      //   totalAmount: 87.50,
+      //   hasPromotion: true,
+      //   items: [
+      //     { name: 'Milk', quantity: 2, price: 6.50 },
+      //     { name: 'Bread', quantity: 1, price: 3.20 },
+      //     { name: 'Eggs', quantity: 1, price: 4.80 }
+      //   ]
+      // },
+      // {
+      //   id: '2',
+      //   merchantName: 'Starbucks',
+      //   category: 'Cafes',
+      //   scanDate: '2025-02-28T09:15:00',
+      //   totalAmount: 15.80,
+      //   hasPromotion: true,
+      //   items: [
+      //     { name: 'Caffè Latte', quantity: 1, price: 6.50 },
+      //     { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
+      //   ]
+      // }
     ];
   }
   
   viewReceiptDetails(receipt: any) {
+    // Lock scroll on body when modal opens
+    document.body.style.overflow = 'hidden';
+    
     this.selectedReceipt = receipt;
     
     // Check if the receipt has promotions by calling the promotions API
@@ -174,65 +179,74 @@ export class PastReceiptsComponent implements OnInit {
   }
   
   closeReceiptDetails() {
-    this.selectedReceipt = null;
+    // First set closing state to trigger animation
+    this.isClosing = true;
+    
+    // Then actually remove the modal after animation duration
+    setTimeout(() => {
+      this.selectedReceipt = null;
+      this.isClosing = false;
+      // Restore scroll on body when modal closes
+      document.body.style.overflow = '';
+    }, 300); // Duration should match your CSS animation
   }
   
   // Get filtered receipts
-  get filteredReceipts() {
-    return this.receipts.filter(receipt => {
-      // Filter by search term
-      if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
+get filteredReceipts() {
+  return this.receipts.filter(receipt => {
+    // Filter by search term
+    if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
+      return false;
+    }
+    
+    // Filter by promotion
+    if (this.filters.hasPromotion && !receipt.hasPromotion) {
+      return false;
+    }
+    
+    // Filter by category
+    if (this.filters.category !== 'all') {
+      const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
+      if (receiptCategory !== this.filters.category.toLowerCase()) {
         return false;
       }
+    }
+    
+    // Filter by date range - now using dateOfPurchase instead of scanDate
+    if (this.filters.dateRange !== 'all') {
+      const receiptDate = new Date(receipt.dateOfPurchase);
+      const today = new Date();
       
-      // Filter by promotion
-      if (this.filters.hasPromotion && !receipt.hasPromotion) {
-        return false;
-      }
-      
-      // Filter by category
-      if (this.filters.category !== 'all') {
-        const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
-        if (receiptCategory !== this.filters.category.toLowerCase()) {
+      if (this.filters.dateRange === 'this-week') {
+        // This week logic
+        const firstDayOfWeek = new Date(today);
+        firstDayOfWeek.setDate(today.getDate() - today.getDay());
+        firstDayOfWeek.setHours(0, 0, 0, 0);
+        
+        if (receiptDate < firstDayOfWeek) {
+          return false;
+        }
+      } else if (this.filters.dateRange === 'this-month') {
+        // This month logic
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        if (receiptDate < firstDayOfMonth) {
+          return false;
+        }
+      } else if (this.filters.dateRange === 'last-month') {
+        // Last month logic
+        const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
           return false;
         }
       }
-      
-      // Filter by date range
-      if (this.filters.dateRange !== 'all') {
-        const receiptDate = new Date(receipt.scanDate);
-        const today = new Date();
-        
-        if (this.filters.dateRange === 'this-week') {
-          // This week logic
-          const firstDayOfWeek = new Date(today);
-          firstDayOfWeek.setDate(today.getDate() - today.getDay());
-          firstDayOfWeek.setHours(0, 0, 0, 0);
-          
-          if (receiptDate < firstDayOfWeek) {
-            return false;
-          }
-        } else if (this.filters.dateRange === 'this-month') {
-          // This month logic
-          const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-          
-          if (receiptDate < firstDayOfMonth) {
-            return false;
-          }
-        } else if (this.filters.dateRange === 'last-month') {
-          // Last month logic
-          const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-          const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-          
-          if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
-            return false;
-          }
-        }
-      }
-      
-      return true;
-    });
-  }
+    }
+    
+    return true;
+  });
+}
   
   logout() {
     localStorage.removeItem('currentUser');

@@ -121,7 +121,7 @@ public class OcrService {
 
         // Extract date
         String date = extractDate(ocrText);
-        data.put("date", date);
+        data.put("dateOfPurchase", date);
 
         // Try to determine category based on merchant name
         String category = determineCategory(merchantName);

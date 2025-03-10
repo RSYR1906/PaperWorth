@@ -67,7 +67,7 @@ public class ReceiptController {
 
             // Parse and set date
             LocalDateTime purchaseDate = LocalDateTime.now();
-            Object dateObj = receiptData.get("date");
+            Object dateObj = receiptData.get("dateOfPurchase");
             if (dateObj != null) {
                 String dateStr = dateObj.toString();
                 LocalDateTime parsedDate = parseDate(dateStr);
@@ -142,6 +142,9 @@ public class ReceiptController {
 
         // Try common date formats
         String[] formats = {
+                "yyyy-MM-dd'T'HH:mm:ss.SSSZ", // Try explicit ISO format with timezone
+                "yyyy-MM-dd'T'HH:mm:ss.SSS", // ISO without timezone
+                "yyyy-MM-dd'T'HH:mm:ss",
                 "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy",
                 "dd-MM-yyyy", "MM-dd-yyyy", "yyyy/MM/dd",
                 "dd.MM.yyyy", "MM.dd.yyyy", "yyyy.MM.dd"
