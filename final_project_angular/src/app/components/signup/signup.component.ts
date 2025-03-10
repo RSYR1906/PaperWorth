@@ -72,11 +72,12 @@ export class SignupComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
+    const name = this.signupForm.value.name;
     const email = this.signupForm.value.email;
     const password = this.signupForm.value.password;
 
     // Register user with Firebase
-    this.firebaseAuthService.signUpWithEmailPassword(email, password)
+    this.firebaseAuthService.signUpWithEmailPassword(email, password, name)
       .then((user) => {
         console.log('Registration successful:', user);
         localStorage.setItem('registrationSuccess', 'true');

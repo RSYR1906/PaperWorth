@@ -11,7 +11,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
-  signOut
+  signOut,
+  updateProfile
 } from 'firebase/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -87,9 +88,18 @@ export class FirebaseAuthService {
   }
   
   // Sign up with email and password
-  signUpWithEmailPassword(email: string, password: string): Promise<any> {
+  signUpWithEmailPassword(email: string, password: string, displayName?: string): Promise<any> {
     return createUserWithEmailAndPassword(this.auth, email, password)
       .then((result) => {
+        // If displayName is provided, update the user profile
+        if (displayName && result.user) {
+          return updateProfile(result.user, {
+            displayName: displayName
+          }).then(() => {
+            // After updating profile, get the user data
+            return this.getUserData(result.user, displayName);
+          });
+        }
         return this.getUserData(result.user);
       });
   }
@@ -114,18 +124,19 @@ export class FirebaseAuthService {
   }
 
   // Get user data from backend or create new user if not exists
-  private getUserData(firebaseUser: FirebaseUser): Promise<any> {
+  private getUserData(firebaseUser: FirebaseUser, displayName?: string): Promise<any> {
     if (!firebaseUser) return Promise.resolve(null);
-
+  
     // Prepare user data from Firebase auth
     const userData = {
       id: firebaseUser.uid,
-      name: firebaseUser.displayName || 'User',
+      name: displayName || firebaseUser.displayName || 'User',
       email: firebaseUser.email,
       photoURL: firebaseUser.photoURL,
       emailVerified: firebaseUser.emailVerified,
       createdAt: new Date().toISOString()
     };
+  
 
     // Check if user exists in your backend or create new one
     return this.http.post(`${environment.apiUrl}/users/firebase-auth`, {
