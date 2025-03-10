@@ -43,4 +43,4 @@ Thumbs.db
 .vercel
 
 
-/src/app/firebase-config.ts
+src/app/firebase-config.ts
