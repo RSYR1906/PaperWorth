@@ -1,6 +1,8 @@
 package sg.nus.iss.final_project.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -137,31 +139,54 @@ public class ReceiptController {
     // Helper method to parse different date formats
     private LocalDateTime parseDate(String dateStr) {
         if (dateStr == null || dateStr.trim().isEmpty()) {
+            System.out.println("Empty date string, using current date");
             return LocalDateTime.now();
         }
 
-        // Try common date formats
-        String[] formats = {
-                "yyyy-MM-dd'T'HH:mm:ss.SSSZ", // Try explicit ISO format with timezone
-                "yyyy-MM-dd'T'HH:mm:ss.SSS", // ISO without timezone
-                "yyyy-MM-dd'T'HH:mm:ss",
-                "yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy",
-                "dd-MM-yyyy", "MM-dd-yyyy", "yyyy/MM/dd",
-                "dd.MM.yyyy", "MM.dd.yyyy", "yyyy.MM.dd"
+        System.out.println("Attempting to parse date: " + dateStr);
+
+        // Try the most common format for your receipts first (dd/MM/yyyy)
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+            System.out.println("Successfully parsed date with dd/MM/yyyy format: " + date);
+            return LocalDateTime.of(date, LocalTime.MIDNIGHT);
+        } catch (DateTimeParseException e) {
+            System.out.println("Failed to parse as dd/MM/yyyy format");
+        }
+
+        // Try MM/dd/yyyy format (US style)
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            LocalDate date = LocalDate.parse(dateStr, formatter);
+            System.out.println("Successfully parsed date with MM/dd/yyyy format: " + date);
+            return LocalDateTime.of(date, LocalTime.MIDNIGHT);
+        } catch (DateTimeParseException e) {
+            System.out.println("Failed to parse as MM/dd/yyyy format");
+        }
+
+        // Try other formats if needed
+        String[] otherFormats = {
+                "yyyy-MM-dd",
+                "dd-MM-yyyy",
+                "MM-dd-yyyy",
+                "yyyy/MM/dd",
+                "dd.MM.yyyy"
         };
 
-        for (String format : formats) {
+        for (String format : otherFormats) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-                return LocalDateTime.of(
-                        LocalDateTime.parse(dateStr, formatter).toLocalDate(),
-                        LocalDateTime.now().toLocalTime());
+                LocalDate date = LocalDate.parse(dateStr, formatter);
+                System.out.println("Successfully parsed date with " + format + " format: " + date);
+                return LocalDateTime.of(date, LocalTime.MIDNIGHT);
             } catch (DateTimeParseException e) {
-                // Try next format
+                System.out.println("Failed to parse as " + format + " format");
             }
         }
 
-        // Return current date/time if parsing fails
+        // If all parsing attempts fail, log and return current date
+        System.out.println("All parsing attempts failed for: " + dateStr + ", using current date");
         return LocalDateTime.now();
     }
 }
