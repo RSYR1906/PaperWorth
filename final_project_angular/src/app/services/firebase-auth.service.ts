@@ -16,13 +16,12 @@ import {
 } from 'firebase/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { firebaseConfig } from '../firebase-config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirebaseAuthService {
-  private app = initializeApp(firebaseConfig);
+  private app = initializeApp(environment.firebaseConfig);
   private auth = getAuth(this.app);
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$: Observable<any> = this.currentUserSubject.asObservable();
