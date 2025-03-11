@@ -13,6 +13,7 @@ import { LoginComponent } from './components/login/login.component';
 import { PastReceiptsComponent } from './components/past-receipts/past-receipts.component';
 import { PromotionsComponent } from './components/promotions/promotions.component';
 import { SignupComponent } from './components/signup/signup.component';
+import { MaterialModule } from './material.module';
 import { FirebaseAuthService } from './services/firebase-auth.service';
 import { PromotionService } from './services/promotions.service';
 import { ReceiptService } from './services/receipt.service';
@@ -21,7 +22,8 @@ import { UserService } from './services/user.service';
 
 @NgModule({
   declarations: [
-    AppComponent,HomePageComponent,
+    AppComponent,
+    HomePageComponent,
     LoginComponent,
     ExpenseTrackerComponent,
     PastReceiptsComponent,
@@ -31,7 +33,7 @@ import { UserService } from './services/user.service';
     ],
   imports: [
     BrowserModule,
-    HttpClientModule,FormsModule,AppRoutingModule,ReactiveFormsModule, ServiceWorkerModule.register('ngsw-worker.js', {
+    HttpClientModule,FormsModule,AppRoutingModule,ReactiveFormsModule,MaterialModule, ServiceWorkerModule.register('ngsw-worker.js', {
   enabled: !isDevMode(),
   // Register the ServiceWorker as soon as the application is stable
   // or after 30 seconds (whichever comes first).

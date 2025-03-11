@@ -7,8 +7,10 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile
 } from 'firebase/auth';
@@ -33,6 +35,7 @@ export class FirebaseAuthService {
   private auth = getAuth(this.app);
   private currentUserSubject = new BehaviorSubject<UserData | null>(null);
   public currentUser$: Observable<UserData | null> = this.currentUserSubject.asObservable();
+  private isProcessingRedirect = false;
 
   constructor(
     private router: Router,
@@ -44,8 +47,8 @@ export class FirebaseAuthService {
     // Listen to auth state changes
     this.setupAuthStateListener();
     
-    // Handle redirect sign-in
-    // this.handleRedirectSignIn();
+    // Handle redirect result on component init
+    this.handleRedirectResult();
   }
 
   private loadStoredUser(): void {
@@ -74,67 +77,90 @@ export class FirebaseAuthService {
   }
 
   // Handle redirect sign-in result
-  // private async handleRedirectSignIn(): Promise<void> {
-  //   try {
-  //     const result = await getRedirectResult(this.auth);
-  //     if (result && result.user) {
-  //       try {
-  //         const userData = await this.getUserData(result.user);
-  //         console.log('Redirect sign-in successful:', userData);
-  //       } catch (error) {
-  //         console.error('Error processing user data after redirect:', error);
-  //       }
-  //     }
-  //   } catch (error: any) {
-  //     console.error('Redirect Sign-In Error:', error.code, error.message);
-  //   }
-  // }
+  private async handleRedirectResult(): Promise<void> {
+    try {
+      // Set flag to avoid infinite loops
+      if (this.isProcessingRedirect) return;
+      this.isProcessingRedirect = true;
 
-  // // Sign in with email and password
+      const result = await getRedirectResult(this.auth);
+      if (result && result.user) {
+        try {
+          await this.getUserData(result.user);
+          console.log('Redirect sign-in successful');
+          this.router.navigate(['/homepage']);
+        } catch (error) {
+          console.error('Error processing user data after redirect:', error);
+        }
+      }
+      this.isProcessingRedirect = false;
+    } catch (error: any) {
+      console.error('Redirect Sign-In Error:', error.code, error.message);
+      this.isProcessingRedirect = false;
+    }
+  }
+
+  // Sign in with email and password
   async signInWithEmailandPassword(email: string, password: string): Promise<UserData> {
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
     return this.getUserData(credential.user);
   }
 
-  // Sign in with Google - with improved debugging
-async signInWithGoogle(): Promise<UserData | null> {
-  const provider = new GoogleAuthProvider();
+  // Sign in with Google - improved to better handle popup vs redirect
+  async signInWithGoogle(): Promise<UserData | null> {
+    const provider = new GoogleAuthProvider();
     
-  // Add these settings to help with popup issues
-  provider.setCustomParameters({
-    prompt: 'select_account'
-  });
-  
-  console.log('Attempting Google sign-in with popup...');
-  
-  try {
-    // Try popup first
-    const result = await signInWithPopup(this.auth, provider);
-    console.log('Popup sign-in successful');
-    return await this.getUserData(result.user);
-  } catch (error: any) {
-    console.error('Google Sign-In Error Details:', {
-      code: error.code,
-      message: error.message,
-      fullError: error
+    // Add these settings to help with popup issues
+    provider.setCustomParameters({
+      prompt: 'select_account',
+      // Add login_hint if you have the user's email already
+      // Adding extra options to improve popup behavior
+      'display': 'popup'
     });
     
-    // If popup blocked or COOP issue, fall back to redirect
-    if (error.code === 'auth/popup-blocked' || 
-        error.message?.includes('Cross-Origin-Opener-Policy')) {
-      console.log('Popup issue detected, falling back to redirect...');
-      // await signInWithRedirect(this.auth, provider);
-      return null; // Will handle this on next page load
+    // Use sessionStorage to track attempted auth method
+    sessionStorage.setItem('auth_method_attempted', 'popup');
+    
+    console.log('Attempting Google sign-in with popup...');
+    
+    try {
+      // Always try popup first
+      const result = await signInWithPopup(this.auth, provider);
+      console.log('Popup sign-in successful');
+      return await this.getUserData(result.user);
+    } catch (error: any) {
+      console.error('Google Sign-In Error Details:', {
+        code: error.code,
+        message: error.message,
+        fullError: error
+      });
+      
+      // If popup was blocked or there was a COOP issue, use redirect
+      // This should be a last resort as it navigates away from the page
+      if (error.code === 'auth/popup-blocked' || 
+          error.code === 'auth/cancelled-popup-request' ||
+          error.message?.includes('Cross-Origin-Opener-Policy')) {
+        
+        console.log('Popup issue detected, falling back to redirect...');
+        // Store the fallback intent in sessionStorage
+        sessionStorage.setItem('auth_method_attempted', 'redirect');
+        
+        // Only use redirect as a last resort - it will navigate away
+        await signInWithRedirect(this.auth, provider);
+        return null; // The redirect will happen, so this return isn't reached
+      }
+      
+      throw error;
     }
-    throw error;
   }
-}
 
   // Sign out
   async signOut(): Promise<void> {
     await signOut(this.auth);
     this.currentUserSubject.next(null);
     localStorage.removeItem('currentUser');
+    // Clear any auth method tracking
+    sessionStorage.removeItem('auth_method_attempted');
     this.router.navigate(['/login']);
   }
 
@@ -149,7 +175,6 @@ async signInWithGoogle(): Promise<UserData | null> {
   }
 
   // Get user data from backend or create new user if not exists
- // Fix for getUserData method in firebase-auth.service.ts
   private async getUserData(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
     if (!firebaseUser) throw new Error('No Firebase user');
 
@@ -224,7 +249,7 @@ async signInWithGoogle(): Promise<UserData | null> {
         console.log('Updating profile with displayName:', displayName);
         await updateProfile(credential.user, { displayName });
         
-        // Wait for the profile update to complete - add this line
+        // Wait for the profile update to complete
         console.log('Profile update completed');
       }
       
