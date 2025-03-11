@@ -1,4 +1,3 @@
-// src/app/services/firebase-auth.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
@@ -8,15 +7,24 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
   updateProfile
 } from 'firebase/auth';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { firebaseConfig } from '../firebase-config';
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string | null;
+  photoURL?: string | null;
+  emailVerified: boolean;
+  createdAt: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -24,20 +32,36 @@ import { firebaseConfig } from '../firebase-config';
 export class FirebaseAuthService {
   private app = initializeApp(firebaseConfig);
   private auth = getAuth(this.app);
-  private currentUserSubject = new BehaviorSubject<any>(null);
-  public currentUser$: Observable<any> = this.currentUserSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<UserData | null>(null);
+  public currentUser$: Observable<UserData | null> = this.currentUserSubject.asObservable();
 
   constructor(
     private router: Router,
     private http: HttpClient
   ) {
-    // Check if user data exists in local storage
+    // Load user from localStorage if available
+    this.loadStoredUser();
+    
+    // Listen to auth state changes
+    this.setupAuthStateListener();
+    
+    // Handle redirect sign-in
+    this.handleRedirectSignIn();
+  }
+
+  private loadStoredUser(): void {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
-      this.currentUserSubject.next(JSON.parse(storedUser));
+      try {
+        this.currentUserSubject.next(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('currentUser');
+      }
     }
+  }
 
-    // Listen to auth state changes from Firebase
+  private setupAuthStateListener(): void {
     this.auth.onAuthStateChanged((user) => {
       if (user) {
         // User is signed in
@@ -50,71 +74,62 @@ export class FirebaseAuthService {
     });
   }
 
-  // Sign in with email and password
-  signInWithEmailPassword(email: string, password: string): Promise<any> {
-    return signInWithEmailAndPassword(this.auth, email, password)
-      .then((result) => {
-        return this.getUserData(result.user);
-      });
+  // Handle redirect sign-in result
+  private async handleRedirectSignIn(): Promise<void> {
+    try {
+      const result = await getRedirectResult(this.auth);
+      if (result && result.user) {
+        try {
+          const userData = await this.getUserData(result.user);
+          console.log('Redirect sign-in successful:', userData);
+        } catch (error) {
+          console.error('Error processing user data after redirect:', error);
+        }
+      }
+    } catch (error: any) {
+      console.error('Redirect Sign-In Error:', error.code, error.message);
+    }
   }
 
-  // Sign in with Google
-  signInWithGoogle(): Promise<any> {
-    const provider = new GoogleAuthProvider();
-    
-    // Check if mobile device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // Use redirect for mobile devices
-      return signInWithRedirect(this.auth, provider)
-        .then(() => {
-          // This won't be reached immediately as the page redirects
-          return null;
-        });
-    } else {
-      // Use popup for desktop
-      return signInWithPopup(this.auth, provider)
-        .then((result) => {
-          return this.getUserData(result.user);
-        })
-        .catch((error) => {
-          if (error.code === 'auth/popup-blocked') {
-            alert('Popup was blocked by the browser. Please allow popups for this site or try again using a different authentication method.');
-          }
-          throw error;  // re-throw the error so it can be caught by the component
-        });
+  // Sign in with email and password
+  async signInWithEmailPassword(email: string, password: string): Promise<UserData> {
+    const credential = await signInWithEmailAndPassword(this.auth, email, password);
+    return this.getUserData(credential.user);
+  }
+
+  // Sign in with Google - simplified version
+  async signInWithGoogle(): Promise<UserData | null> {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(this.auth, provider);
+      return await this.getUserData(result.user);
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error.code, error.message);
+      throw error;
     }
   }
   
   // Sign up with email and password
-  signUpWithEmailPassword(email: string, password: string, displayName?: string): Promise<any> {
-    return createUserWithEmailAndPassword(this.auth, email, password)
-      .then((result) => {
-        // If displayName is provided, update the user profile
-        if (displayName && result.user) {
-          return updateProfile(result.user, {
-            displayName: displayName
-          }).then(() => {
-            // After updating profile, get the user data
-            return this.getUserData(result.user, displayName);
-          });
-        }
-        return this.getUserData(result.user);
-      });
+  async signUpWithEmailPassword(email: string, password: string, displayName?: string): Promise<UserData> {
+    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+    
+    if (displayName && credential.user) {
+      await updateProfile(credential.user, { displayName });
+    }
+    
+    return this.getUserData(credential.user, displayName);
   }
 
   // Sign out
-  signOut(): Promise<void> {
-    return signOut(this.auth).then(() => {
-      this.currentUserSubject.next(null);
-      localStorage.removeItem('currentUser');
-      this.router.navigate(['/login']);
-    });
+  async signOut(): Promise<void> {
+    await signOut(this.auth);
+    this.currentUserSubject.next(null);
+    localStorage.removeItem('currentUser');
+    this.router.navigate(['/login']);
   }
 
   // Get current user
-  getCurrentUser(): any {
+  getCurrentUser(): UserData | null {
     return this.currentUserSubject.value;
   }
 
@@ -124,11 +139,11 @@ export class FirebaseAuthService {
   }
 
   // Get user data from backend or create new user if not exists
-  private getUserData(firebaseUser: FirebaseUser, displayName?: string): Promise<any> {
-    if (!firebaseUser) return Promise.resolve(null);
+  private async getUserData(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
+    if (!firebaseUser) throw new Error('No Firebase user');
   
     // Prepare user data from Firebase auth
-    const userData = {
+    const userData: UserData = {
       id: firebaseUser.uid,
       name: displayName || firebaseUser.displayName || 'User',
       email: firebaseUser.email,
@@ -137,31 +152,32 @@ export class FirebaseAuthService {
       createdAt: new Date().toISOString()
     };
   
-
-    // Check if user exists in your backend or create new one
-    return this.http.post(`${environment.apiUrl}/users/firebase-auth`, {
-      firebaseId: userData.id,
-      email: userData.email,
-      name: userData.name
-    }).toPromise()
-      .then((backendUser: any) => {
-        // Combine Firebase user data with backend user data
-        const user = { ...userData, ...backendUser };
-        
-        // Store in local storage and update subject
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        this.currentUserSubject.next(user);
-        
-        return user;
-      })
-      .catch((error) => {
-        console.error('Error syncing user with backend:', error);
-        
-        // Even if backend sync fails, still set the Firebase user data
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        this.currentUserSubject.next(userData);
-        
-        return userData;
-      });
+    try {
+      // Use firstValueFrom instead of toPromise()
+      const backendUser = await firstValueFrom(
+        this.http.post<any>(`${environment.apiUrl}/users/firebase-auth`, {
+          firebaseId: userData.id,
+          email: userData.email,
+          name: userData.name
+        })
+      );
+      
+      // Combine Firebase user data with backend user data
+      const user = { ...userData, ...backendUser };
+      
+      // Store in local storage and update subject
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      this.currentUserSubject.next(user);
+      
+      return user;
+    } catch (error) {
+      console.error('Error syncing user with backend:', error);
+      
+      // Even if backend sync fails, still set the Firebase user data
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      this.currentUserSubject.next(userData);
+      
+      return userData;
+    }
   }
 }
