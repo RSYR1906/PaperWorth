@@ -45,4 +45,4 @@ Thumbs.db
 
 src/app/firebase-config.ts
 capacitor.config.ts
-/myapp
+/my-app
