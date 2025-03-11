@@ -62,13 +62,13 @@
           <input 
             type="text" 
             placeholder="Email" 
-            formControlName="username" 
-            [class.invalid]="f['username'].touched && f['username'].invalid"
+            formControlName="email" 
+            [class.invalid]="f['email'].touched && f['email'].invalid"
           >
         </div>
-        <div class="validation-error" *ngIf="f['username'].touched && f['username'].errors">
-          <span *ngIf="f['username'].errors['required']">Email is required</span>
-          <span *ngIf="f['username'].errors['email']">Please enter a valid email address</span>
+        <div class="validation-error" *ngIf="f['email'].touched && f['email'].errors">
+          <span *ngIf="f['email'].errors['required']">Email is required</span>
+          <span *ngIf="f['email'].errors['email']">Please enter a valid email address</span>
         </div>
       </div>
       
@@ -105,15 +105,6 @@
         <span class="btn-icon">🔐</span>
         <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
       </button>
-      
-      <!-- Demo Login -->
-      <div class="demo-login">
-        <button type="button" class="demo-login-btn" (click)="loginAsDemo()">
-          <span class="btn-icon">👤</span>
-          <span>Login as Demo User</span>
-        </button>
-        <small>No password required - for testing only</small>
-      </div>
     </form>
 
     <div class="divider">

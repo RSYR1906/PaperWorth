@@ -49,18 +49,26 @@ export class HomePageComponent implements OnInit {
   }
   
   loadUserData(): void {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    // First, try to get user from Firebase auth service directly
+    const firebaseUser = this.firebaseAuthService.getCurrentUser();
     
-    if (currentUser && currentUser.name) {
-      this.userName = currentUser.name;
-    } else if (currentUser && currentUser.id) {
-      // If we have userId but no name, set a default name
-      this.userName = "User";
+    if (firebaseUser && firebaseUser.name) {
+      this.userName = firebaseUser.name;
     } else {
-      this.userName = "Guest";
+      // Fall back to localStorage if Firebase auth doesn't have the user
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      
+      if (currentUser && currentUser.name) {
+        this.userName = currentUser.name;
+      } else if (currentUser && currentUser.id) {
+        // If we have userId but no name, set a default name
+        this.userName = "User";
+      }
     }
     
     // Load budget data if user is logged in
+    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
     if (currentUser && currentUser.id) {
       this.isLoadingBudget = true;
       
@@ -85,7 +93,10 @@ export class HomePageComponent implements OnInit {
   }
   
   loadUserReceiptHistory(): void {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    // First, try to get user from Firebase auth service directly
+    const firebaseUser = this.firebaseAuthService.getCurrentUser();
+    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
     if (!currentUser || !currentUser.id) {
       // If no user is logged in, use fallback promotions
       this.getRecommendedPromotionsFromCategories([]);
@@ -258,7 +269,9 @@ export class HomePageComponent implements OnInit {
     }
   
     this.isProcessing = true;
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    // First, try to get user from Firebase auth service directly
+    const firebaseUser = this.firebaseAuthService.getCurrentUser();
+    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
     
     // Determine category based on merchant name
     const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
@@ -269,7 +282,6 @@ export class HomePageComponent implements OnInit {
       merchantName: this.extractedData.merchantName,
       totalAmount: this.extractedData.totalAmount,
       dateOfPurchase: this.extractedData.dateOfPurchase,
-      // scanDate: new Date().toISOString(), // Current time as scan date
       category: category,
       imageUrl: this.imagePreview, // Store the image preview URL
       items: this.extractedData.items || [], // Include items if available
@@ -439,6 +451,8 @@ export class HomePageComponent implements OnInit {
   
   // Helper method to determine category from merchant name
   determineCategoryFromMerchant(merchantName: string): string {
+    if (!merchantName) return 'Others';
+    
     merchantName = merchantName.toLowerCase();
     
     // Grocery stores
@@ -498,16 +512,16 @@ export class HomePageComponent implements OnInit {
   }
 
   // Update the logout method in HomePage component
-logout() {
-  this.firebaseAuthService.signOut()
-    .then(() => {
-      // The navigation is already handled in the FirebaseAuthService
-      console.log("User logged out");
-    })
-    .catch(error => {
-      console.error("Logout error:", error);
-    });
-}
+  logout() {
+    this.firebaseAuthService.signOut()
+      .then(() => {
+        // The navigation is already handled in the FirebaseAuthService
+        console.log("User logged out");
+      })
+      .catch(error => {
+        console.error("Logout error:", error);
+      });
+  }
   
   // Helper method to format currency values
   formatCurrency(value: number): string {

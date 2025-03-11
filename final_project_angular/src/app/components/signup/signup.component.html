@@ -115,7 +115,7 @@
         </div>
         <div class="validation-error" *ngIf="f['password'].touched && f['password'].errors">
           <span *ngIf="f['password'].errors['required']">Password is required</span>
-          <span *ngIf="f['password'].errors['minlength']">Password must be at least 8 characters</span>
+          <span *ngIf="f['password'].errors['minlength']">Password must be at least 8 characters, with uppercase and numeric characters</span>
         </div>
       </div>
       

@@ -59,10 +59,13 @@ public class FirebaseAuthController {
                     // User with email exists, link Firebase ID to this user
                     User user = userByEmail.get();
 
-                    // Update the existing user with the Firebase ID
+                    // Update the existing user with the Firebase ID and name
                     user.setFirebaseId(firebaseId);
                     if (name != null && !name.isEmpty()) {
                         user.setName(name); // Update name if provided
+                        userRepo.updateUserWithFirebase(user.getId(), firebaseId, name);
+                    } else {
+                        userRepo.updateFirebaseId(user.getId(), firebaseId);
                     }
 
                     // Update user in the database

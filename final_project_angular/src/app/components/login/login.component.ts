@@ -22,7 +22,7 @@ export class LoginComponent {
     private fb: FormBuilder
   ) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
@@ -50,35 +50,11 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const username = this.f['username'].value;
+    const email = this.f['email'].value;
     const password = this.f['password'].value;
 
-    // Check for demo/test credentials first
-    if (username === "demo@example.com" && password === "demo123") {
-      // Create a mock user response
-      const mockUserResponse = {
-        id: 1,
-        name: "Demo User",
-        email: "demo@example.com",
-        createdAt: new Date().toISOString()
-      };
-      
-      // Simulate a brief loading time for realism
-      setTimeout(() => {
-        // Store mock user data
-        localStorage.setItem('currentUser', JSON.stringify(mockUserResponse));
-        
-        // Navigate to homepage
-        this.router.navigate(['/homepage']);
-        
-        this.isLoading = false;
-      }, 800);
-      
-      return;
-    }
-
     // Regular authentication flow with Firebase
-    this.firebaseAuthService.signInWithEmailPassword(username, password)
+    this.firebaseAuthService.signInWithEmailandPassword(email, password)
       .then((user) => {
         console.log('Login successful:', user);
         this.router.navigate(['/homepage']);
@@ -97,15 +73,6 @@ export class LoginComponent {
         
         this.isLoading = false;
       });
-  }
-
-  // Demo login button handler
-  loginAsDemo() {
-    this.loginForm.setValue({
-      username: "demo@example.com",
-      password: "demo123"
-    });
-    this.login();
   }
 
   loginWithGoogle() {

@@ -104,4 +104,9 @@ public class UserRepository {
             return Optional.empty();
         }
     }
+
+    public int updateUserWithFirebase(Long userId, String firebaseId, String name) {
+        String sql = "UPDATE users SET firebase_id = ?, name = ? WHERE id = ?";
+        return jdbcTemplate.update(sql, firebaseId, name, userId);
+    }
 }
