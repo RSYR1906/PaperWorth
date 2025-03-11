@@ -149,13 +149,14 @@ async signInWithGoogle(): Promise<UserData | null> {
   }
 
   // Get user data from backend or create new user if not exists
+ // Fix for getUserData method in firebase-auth.service.ts
   private async getUserData(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
     if (!firebaseUser) throw new Error('No Firebase user');
-  
+
     // Use the provided displayName first, fall back to Firebase user's displayName, then default
     const name = displayName || firebaseUser.displayName || 'User';
     console.log('getUserData using name:', name);
-  
+
     // Prepare user data from Firebase auth
     const userData: UserData = {
       id: firebaseUser.uid,
@@ -165,7 +166,7 @@ async signInWithGoogle(): Promise<UserData | null> {
       emailVerified: firebaseUser.emailVerified,
       createdAt: new Date().toISOString()
     };
-  
+
     try {
       // Add a log to see what's being sent to backend
       console.log('Sending to backend:', {
@@ -173,7 +174,7 @@ async signInWithGoogle(): Promise<UserData | null> {
         email: userData.email,
         name: name
       });
-  
+
       // Send the explicit name to your backend
       const backendUser = await firstValueFrom(
         this.http.post<any>(`${environment.apiUrl}/users/firebase-auth`, {
@@ -222,9 +223,14 @@ async signInWithGoogle(): Promise<UserData | null> {
       if (displayName && credential.user) {
         console.log('Updating profile with displayName:', displayName);
         await updateProfile(credential.user, { displayName });
+        
+        // Wait for the profile update to complete - add this line
+        console.log('Profile update completed');
       }
       
       // Process and return the user data
+      // The key fix: Always pass the displayName parameter to getUserData
+      // This ensures it uses our form's name value directly and doesn't wait for Firebase
       return this.getUserData(credential.user, displayName);
     } catch (error: any) {
       console.error('Email/Password Sign-Up Error:', error.code, error.message);
