@@ -23,7 +23,7 @@ export class LoginComponent {
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
     });
   }
 
@@ -34,45 +34,28 @@ export class LoginComponent {
     this.showPassword = !this.showPassword;
   }
 
-  login() {
-    // Mark all fields as touched to trigger validation display
+  async login() {
     Object.keys(this.loginForm.controls).forEach(key => {
-      const control = this.loginForm.get(key);
-      control?.markAsTouched();
+      this.loginForm.get(key)?.markAsTouched();
     });
-
-    // Stop here if form is invalid
-    if (this.loginForm.invalid) {
-      return;
-    }
-
-    // Set loading state
+  
+    if (this.loginForm.invalid) return;
+  
     this.isLoading = true;
     this.errorMessage = '';
-
-    const email = this.f['email'].value;
-    const password = this.f['password'].value;
-
-    // Regular authentication flow with Firebase
-    this.firebaseAuthService.signInWithEmailandPassword(email, password)
-      .then((user) => {
-        console.log('Login successful:', user);
-        this.router.navigate(['/homepage']);
-        this.isLoading = false;
-      })
-      .catch((error) => {
-        console.error('Login error:', error);
-        
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          this.errorMessage = 'Invalid email or password';
-        } else if (error.code === 'auth/too-many-requests') {
-          this.errorMessage = 'Too many failed login attempts. Please try again later.';
-        } else {
-          this.errorMessage = 'An error occurred during login. Please try again.';
-        }
-        
-        this.isLoading = false;
-      });
+  
+    try {
+      const email = this.f['email'].value;
+      const password = this.f['password'].value;
+      const user = await this.firebaseAuthService.signInWithEmailandPassword(email, password);
+      
+      console.log('Login successful:', user);
+      this.router.navigate(['/homepage']);
+    } catch (error) {
+      this.handleLoginError(error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   loginWithGoogle() {
@@ -90,5 +73,17 @@ export class LoginComponent {
         this.errorMessage = 'An error occurred during Google login. Please try again.';
         this.isLoading = false;
       });
+  }
+
+  handleLoginError(error: any) {
+    console.error('Login error:', error);
+  
+    const errorMessages: { [key: string]: string } = {
+      'auth/user-not-found': 'Invalid email or password',
+      'auth/wrong-password': 'Invalid email or password',
+      'auth/too-many-requests': 'Too many failed login attempts. Please try again later.'
+    };
+  
+    this.errorMessage = errorMessages[error.code] || 'An error occurred during login. Please try again.';
   }
 }

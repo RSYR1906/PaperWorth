@@ -1,12 +1,14 @@
 <div class="login-page-container">
-  <!-- Logo Header - Added to top left corner -->
-  <div class="auth-logo-header">
+  <!-- Header with Logo -->
+  <header class="auth-logo-header">
     <div class="logo-container">
       <img src="/logo.png" alt="PaperWorth Logo" height="30">
       <h2 class="logo-text">PaperWorth</h2>
     </div>
-  </div>
-  <div class="login-container">
+  </header>
+
+  <!-- Login Form Container -->
+  <main class="login-container">
     <!-- Logo -->
     <div class="logo-container">
       <img src="/logo.png" alt="PaperWorth Logo" height="135">
@@ -20,13 +22,14 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Username & Password Login -->
+    <!-- Login Form -->
     <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <!-- Email Input -->
       <div class="form-group">
         <div class="input-with-icon">
           <span class="input-icon">✉️</span>
           <input 
-            type="text" 
+            type="email" 
             placeholder="Email" 
             formControlName="email" 
             [class.invalid]="f['email'].touched && f['email'].invalid"
@@ -37,7 +40,8 @@
           <span *ngIf="f['email'].errors['email']">Please enter a valid email address</span>
         </div>
       </div>
-      
+
+      <!-- Password Input -->
       <div class="form-group password-group">
         <div class="input-with-icon">
           <span class="input-icon">🔒</span>
@@ -52,6 +56,7 @@
               type="button" 
               class="password-toggle" 
               (click)="togglePasswordVisibility()"
+              aria-label="Toggle password visibility"
             >
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -62,7 +67,8 @@
           <span *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</span>
         </div>
       </div>
-      
+
+      <!-- Login Button -->
       <button 
         type="submit" 
         class="login-btn"
@@ -73,22 +79,30 @@
       </button>
     </form>
 
+    <!-- OR Divider -->
     <div class="divider">
       <span></span>
       <p>OR</p>
       <span></span>
     </div>
 
-    <!-- Social Login Buttons -->
+    <!-- Google Login -->
     <button class="google-login" (click)="loginWithGoogle()">
       <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
       <span>Login with Google</span>
     </button>
-    
-    <p class="register-text">Don't have an account? <a routerLink="/signup" routerLinkActive="active">Sign up</a></p>
-  
+
+    <!-- Signup Link -->
+    <p class="register-text">
+      Don't have an account? 
+      <a routerLink="/signup" routerLinkActive="active">Sign up</a>
+    </p>
+  </main>
+
   <!-- Decorative Elements -->
-  <div class="decorative-circle circle-1"></div>
-  <div class="decorative-circle circle-2"></div>
-  <div class="decorative-circle circle-3"></div>
+  <footer>
+    <div class="decorative-circle circle-1"></div>
+    <div class="decorative-circle circle-2"></div>
+    <div class="decorative-circle circle-3"></div>
+  </footer>
 </div>

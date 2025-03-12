@@ -152,12 +152,6 @@
   box-shadow: 0 4px 8px rgba(46, 49, 146, 0.2);
 }
 
-.category-button:hover:not(.active) {
-  background-color: #f8f9fa;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-}
-
 /* Promotions Section */
 .promotions {
   padding: 30px;
@@ -416,10 +410,6 @@
   font-family: sans-serif;
   opacity: 0;
   transition: opacity 0.2s;
-}
-
-.promo-detail-row .promo-code:hover::after {
-  opacity: 1;
 }
 
 .promo-detail-row .conditions {

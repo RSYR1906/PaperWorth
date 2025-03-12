@@ -29,13 +29,6 @@
           <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
         </select>
       </div>
-      
-      <div class="filter-group">
-        <label class="checkbox-label">
-          <input type="checkbox" [(ngModel)]="filters.hasPromotion">
-          <span>Has Promotions</span>
-        </label>
-      </div>
     </div>
   </div>
   

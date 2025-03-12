@@ -1,4 +1,3 @@
-// src/app/components/signup/signup.component.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,115 +11,100 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
 })
 export class SignupComponent {
   signupForm: FormGroup;
-  isLoading: boolean = false;
-  errorMessage: string = '';
-  passwordVisible: boolean = false;
-  confirmPasswordVisible: boolean = false;
+  isLoading = false;
+  errorMessage = '';
+  passwordVisible = false;
+  confirmPasswordVisible = false;
 
   constructor(
     private router: Router,
-    private formBuilder: FormBuilder,
+    private fb: FormBuilder,
     private firebaseAuthService: FirebaseAuthService
   ) {
-    this.signupForm = this.formBuilder.group({
-      name: ['',[Validators.required, Validators.minLength(2)]],
+    this.signupForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
       agreeTerms: [false, Validators.requiredTrue]
-    }, { validator: this.passwordMatchValidator });
+    }, { validators: this.passwordMatchValidator });
   }
 
-  // Custom validator to check if password and confirm password match
-  passwordMatchValidator(g: FormGroup) {
-    const password = g.get('password')?.value;
-    const confirmPassword = g.get('confirmPassword')?.value;
-    
-    if (password !== confirmPassword) {
-      g.get('confirmPassword')?.setErrors({ 'mismatch': true });
-    } else {
-      return null;
-    }
-    return null;
+  /** Custom validator to ensure password and confirm password match */
+  private passwordMatchValidator(g: FormGroup) {
+    return g.get('password')?.value === g.get('confirmPassword')?.value 
+      ? null 
+      : g.get('confirmPassword')?.setErrors({ mismatch: true });
   }
 
-  // Toggle password visibility
-  togglePasswordVisibility() {
-    this.passwordVisible = !this.passwordVisible;
-  }
-  
-  // Toggle confirm password visibility
-  toggleConfirmPasswordVisibility() {
-    this.confirmPasswordVisible = !this.confirmPasswordVisible;
-  }
-
-  // Convenience getter for easy access to form fields
+  /** Convenience getter for form fields */
   get f() { return this.signupForm.controls; }
 
-  // Handle form submission
-  onSubmit() {
-    // Mark all fields as touched to trigger validation
-    Object.keys(this.signupForm.controls).forEach(key => {
-      const control = this.signupForm.get(key);
-      control?.markAsTouched();
-    });
+  /** Toggles password visibility */
+  togglePasswordVisibility() { this.passwordVisible = !this.passwordVisible; }
 
-    if (this.signupForm.invalid) {
-      return;
+  /** Toggles confirm password visibility */
+  toggleConfirmPasswordVisibility() { this.confirmPasswordVisible = !this.confirmPasswordVisible; }
+
+  /** Handles form submission */
+  async onSubmit() {
+    this.markFormTouched();
+
+    if (this.signupForm.invalid) return;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    try {
+      const { name, email, password } = this.signupForm.value;
+      console.log('Signup name:', name);
+      const user = await this.firebaseAuthService.signUpWithEmailandPassword(email, password, name);
+
+      console.log('Registration successful:', user);
+      localStorage.setItem('registrationSuccess', 'true');
+      this.router.navigate(['/homepage']);
+    } catch (error) {
+      this.handleAuthError(error);
+    } finally {
+      this.isLoading = false;
     }
+  }
 
+  /** Handles Google Sign-Up */
+  async signUpWithGoogle() {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const name = this.signupForm.value.name;
-    const email = this.signupForm.value.email;
-    const password = this.signupForm.value.password;
-
-    console.log('Signup name:', name);
-
-
-    // Register user with Firebase
-    this.firebaseAuthService.signUpWithEmailandPassword(email, password, name)
-      .then((user) => {
-        console.log('Registration successful:', user);
-        localStorage.setItem('registrationSuccess', 'true');
-        this.router.navigate(['/homepage']);
-        this.isLoading = false;
-      })
-      .catch((error) => {
-        console.error('Registration error:', error);
-        
-        if (error.code === 'auth/email-already-in-use') {
-          this.errorMessage = 'Email already in use. Please try another email address.';
-        } else if (error.code === 'auth/weak-password') {
-          this.errorMessage = 'Password is too weak. Please choose a stronger password.';
-        } else {
-          this.errorMessage = 'Registration failed. Please try again.';
-        }
-        
-        this.isLoading = false;
-      });
+    try {
+      const user = await this.firebaseAuthService.signInWithGoogle();
+      console.log('Google signup successful:', user);
+      this.router.navigate(['/homepage']);
+    } catch (error) {
+      this.handleAuthError(error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  signUpWithGoogle() {
-    this.isLoading = true;
-    this.errorMessage = '';
-    
-    this.firebaseAuthService.signInWithGoogle()
-      .then((user) => {
-        console.log('Google signup successful:', user);
-        this.router.navigate(['/homepage']);
-        this.isLoading = false;
-      })
-      .catch((error) => {
-        console.error('Google signup error:', error);
-        this.errorMessage = 'An error occurred during Google signup. Please try again.';
-        this.isLoading = false;
-      });
-  }
-
-  // Navigate to login page
+  /** Navigates to login page */
   goToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  /** Marks all form fields as touched to trigger validation messages */
+  private markFormTouched() {
+    Object.values(this.signupForm.controls).forEach(control => control.markAsTouched());
+  }
+
+  /** Handles Firebase authentication errors */
+  private handleAuthError(error: any) {
+    console.error('Authentication error:', error);
+
+    const errorMessages: { [key: string]: string } = {
+      'auth/email-already-in-use': 'Email already in use. Please try another email address.',
+      'auth/weak-password': 'Password is too weak. Please choose a stronger password.'
+    };
+
+    this.errorMessage = errorMessages[error.code] || 'Registration failed. Please try again.';
   }
 }

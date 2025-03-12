@@ -188,41 +188,41 @@ export class ExpenseTrackerComponent implements OnInit {
     // In a real app, you would call a receipts API to get recent transactions
     // For now, we'll use sample data
     this.recentTransactions = [
-      { 
-        merchant: 'Cold Storage', 
-        category: 'Groceries', 
-        amount: 87.50, 
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-        icon: this.getCategoryIcon('Groceries')
-      },
-      { 
-        merchant: 'Starbucks', 
-        category: 'Cafes', 
-        amount: 15.80, 
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-        icon: this.getCategoryIcon('Cafes')
-      },
-      { 
-        merchant: 'McDonalds', 
-        category: 'Fast Food', 
-        amount: 22.40, 
-        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-        icon: this.getCategoryIcon('Fast Food')
-      },
-      { 
-        merchant: 'Uniqlo', 
-        category: 'Shopping', 
-        amount: 159.90, 
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-        icon: this.getCategoryIcon('Shopping')
-      },
-      { 
-        merchant: 'Guardian Pharmacy', 
-        category: 'Healthcare', 
-        amount: 42.25, 
-        date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
-        icon: this.getCategoryIcon('Healthcare')
-      }
+      // { 
+      //   merchant: 'Cold Storage', 
+      //   category: 'Groceries', 
+      //   amount: 87.50, 
+      //   date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+      //   icon: this.getCategoryIcon('Groceries')
+      // },
+      // { 
+      //   merchant: 'Starbucks', 
+      //   category: 'Cafes', 
+      //   amount: 15.80, 
+      //   date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+      //   icon: this.getCategoryIcon('Cafes')
+      // },
+      // { 
+      //   merchant: 'McDonalds', 
+      //   category: 'Fast Food', 
+      //   amount: 22.40, 
+      //   date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+      //   icon: this.getCategoryIcon('Fast Food')
+      // },
+      // { 
+      //   merchant: 'Uniqlo', 
+      //   category: 'Shopping', 
+      //   amount: 159.90, 
+      //   date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      //   icon: this.getCategoryIcon('Shopping')
+      // },
+      // { 
+      //   merchant: 'Guardian Pharmacy', 
+      //   category: 'Healthcare', 
+      //   amount: 42.25, 
+      //   date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+      //   icon: this.getCategoryIcon('Healthcare')
+      // }
     ];
   }
   

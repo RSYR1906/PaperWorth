@@ -11,17 +11,33 @@
 
 html, body {
   height: 100%;
-  margin: 0;
-}
-
-body {
   background-color: #f8f9fa;
-  color: #212529; /* Darker text color for better contrast */
+  color: #212529;
 }
 
-/* Hero Section Styles */
+/* Headers */
+h3 {
+  margin-bottom: 25px;
+  color: #212529;
+  font-size: 24px;
+  font-weight: 600;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+h3::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 4px;
+  background-color: #1c1e7a;
+}
+
+/* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #1c1e7a 0%, #1b93ff 100%); /* Darker gradient */
+  background: linear-gradient(135deg, #1c1e7a 0%, #1b93ff 100%);
   color: white;
   padding: 80px 30px;
   text-align: center;
@@ -46,7 +62,7 @@ body {
 
 .hero-button {
   background-color: white;
-  color: #1c1e7a; /* Updated to match darker blue */
+  color: #1c1e7a;
   border: none;
   padding: 15px 30px;
   border-radius: 50px;
@@ -54,43 +70,23 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .hero-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); /* Stronger shadow on hover */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
-/* Section Headers */
-h3 {
-  margin-bottom: 25px;
-  color: #212529; /* Darker for contrast */
-  font-size: 24px;
-  font-weight: 600;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-h3:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 4px; /* Thicker underline */
-  background-color: #1c1e7a; /* Darker blue */
-}
-
-/* Navbar Styles */
+/* Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  background-color: #1c1e7a; /* Darker blue background */
-  color: white; /* Text color */
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+  background-color: #1c1e7a;
+  color: white;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -105,9 +101,9 @@ h3:after {
 .logo-text {
   font-size: 22px;
   font-weight: 600;
-  color: white; /* Updated for dark navbar */
+  color: white;
   margin: 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Added for better contrast */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .nav-links {
@@ -117,7 +113,7 @@ h3:after {
 }
 
 .nav-links a {
-  color: rgba(255, 255, 255, 0.85); /* Light color for dark navbar */
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-weight: 500;
   font-size: 15px;
@@ -126,13 +122,10 @@ h3:after {
   position: relative;
 }
 
-.nav-links a:hover {
-  color: white;
-}
-
+.nav-links a:hover,
 .nav-links a.active {
   color: white;
-  font-weight: 700; /* Bolder for better contrast */
+  font-weight: 700;
 }
 
 .nav-links a.active::after {
@@ -141,12 +134,12 @@ h3:after {
   left: 0;
   bottom: -2px;
   width: 100%;
-  height: 3px; /* Thicker underline */
+  height: 3px;
   background-color: white;
 }
 
 .logout-button {
-  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent for contrast */
+  background-color: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   padding: 8px 16px;
@@ -171,12 +164,12 @@ h3:after {
   width: 65px;
   height: 65px;
   border-radius: 50%;
-  background-color: #1c1e7a; /* Darker blue for contrast */
+  background-color: #1c1e7a;
   color: white;
   border: none;
   font-size: 30px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,37 +179,41 @@ h3:after {
 
 .scan-button:hover {
   transform: scale(1.1) rotate(5deg);
-  background-color: #15166d; /* Even darker on hover */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
+  background-color: #15166d;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* Material Theme Overrides */
 .mat-toolbar.mat-primary {
-  background: #1c1e7a !important; /* Darker blue, forced override */
+  background: #1c1e7a !important;
 }
 
 .mat-drawer-content {
   overflow-x: hidden;
 }
 
-/* Material components */
-button.mat-button, button.mat-raised-button, button.mat-flat-button {
+/* Material Components */
+button.mat-button,
+button.mat-raised-button,
+button.mat-flat-button {
   font-weight: 500;
 }
 
-button.mat-raised-button.mat-primary, button.mat-flat-button.mat-primary {
-  background-color: #1c1e7a; /* Darker blue */
+button.mat-raised-button.mat-primary,
+button.mat-flat-button.mat-primary {
+  background-color: #1c1e7a;
 }
 
-button.mat-raised-button.mat-primary:hover, button.mat-flat-button.mat-primary:hover {
-  background-color: #15166d; /* Even darker on hover */
+button.mat-raised-button.mat-primary:hover,
+button.mat-flat-button.mat-primary:hover {
+  background-color: #15166d;
 }
 
 mat-icon {
   font-weight: 500;
 }
 
-/* Sidenav Styles */
+/* Sidenav */
 .sidenav-container {
   height: 100vh;
 }
@@ -246,35 +243,11 @@ mat-nav-list a.active {
   border-left: 4px solid #3f51b5;
 }
 
-.nav-label {
-  margin-left: 8px;
-}
-
 mat-nav-list mat-icon {
   margin-right: 8px;
 }
 
-/* Enhanced menu and logout buttons */
-.menu-button {
-  background-color: rgba(255, 255, 255, 0.2);
-  margin-right: 8px;
-  transition: background-color 0.3s;
-}
-
-.menu-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.logout-icon {
-  background-color: rgba(255, 255, 255, 0.2);
-  transition: background-color 0.3s;
-}
-
-.logout-icon:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Form elements */
+/* Form Elements */
 input, select, textarea {
   border: 1px solid #ced4da;
 }
@@ -285,55 +258,33 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
-/* Improved modal headers */
+/* Modal Headers */
 .modal-header h3 {
   font-weight: 700;
 }
 
-/* Improved buttons */
-.action-btn.primary, .action-button {
+/* Improved Buttons */
+.action-btn.primary,
+.action-button {
   background-color: #1c1e7a;
   font-weight: 600;
 }
 
-.action-btn.primary:hover, .action-button:hover {
+.action-btn.primary:hover,
+.action-button:hover {
   background-color: #15166d;
 }
 
-/* Adjustments for small screens */
+/* Responsive Adjustments */
 @media (max-width: 599px) {
-  .logo-text {
-    font-size: 18px;
-  }
-  
-  .hero h1 {
-    font-size: 32px;
-  }
-  
-  .hero p {
-    font-size: 16px;
-  }
+  .logo-text { font-size: 18px; }
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 16px; }
 }
 
 @media (max-width: 420px) {
-  .nav-links {
-    gap: 15px;
-  }
-  
-  .nav-links a {
-    font-size: 14px;
-  }
-  
-  .logout-button {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-  
-  .scan-button {
-    width: 55px;
-    height: 55px;
-    font-size: 24px;
-    right: 20px;
-    bottom: 20px;
-  }
+  .nav-links { gap: 15px; }
+  .nav-links a { font-size: 14px; }
+  .logout-button { padding: 6px 12px; font-size: 13px; }
+  .scan-button { width: 55px; height: 55px; font-size: 24px; right: 20px; bottom: 20px; }
 }

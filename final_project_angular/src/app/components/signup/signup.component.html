@@ -1,25 +1,27 @@
 <div class="signup-page-container">
-  <!-- Logo Header - Added to top left corner -->
-  <div class="auth-logo-header">
+  <!-- Logo Header -->
+  <header class="auth-logo-header">
     <div class="logo-container">
       <img src="/logo.png" alt="PaperWorth Logo" height="30">
       <h2 class="logo-text">PaperWorth</h2>
     </div>
-  </div>
-  <div class="signup-container">
-    <!-- Logo -->
+  </header>
+
+  <!-- Signup Content -->
+  <main class="signup-container">
+    <!-- Main Logo -->
     <div class="logo-container">
       <img src="/logo.png" alt="PaperWorth Logo" height="135">
     </div>
 
     <h2>Welcome to PaperWorth</h2>
     <p class="signup-subtitle">Start tracking your expenses and discovering promotions</p>
-    
+
     <!-- Error Message Display -->
     <div class="error-message" *ngIf="errorMessage">
       {{ errorMessage }}
     </div>
-    
+
     <!-- Signup Form -->
     <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
       <!-- Full Name -->
@@ -39,7 +41,7 @@
           <span *ngIf="f['name'].errors['minlength']">Username must be at least 2 characters</span>
         </div>
       </div>
-      
+
       <!-- Email -->
       <div class="form-group">
         <div class="input-with-icon">
@@ -57,7 +59,7 @@
           <span *ngIf="f['email'].errors['email']">Please enter a valid email address</span>
         </div>
       </div>
-      
+
       <!-- Password -->
       <div class="form-group password-group">
         <div class="input-with-icon">
@@ -74,6 +76,7 @@
               type="button" 
               class="password-toggle" 
               (click)="togglePasswordVisibility()"
+              aria-label="Toggle password visibility"
             >
               {{ passwordVisible ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -81,10 +84,12 @@
         </div>
         <div class="validation-error" *ngIf="f['password'].touched && f['password'].errors">
           <span *ngIf="f['password'].errors['required']">Password is required</span>
-          <span *ngIf="f['password'].errors['minlength']">Password must be at least 8 characters, with uppercase and numeric characters</span>
+          <span *ngIf="f['password'].errors['minlength']">
+            Password must be at least 8 characters, with uppercase and numeric characters
+          </span>
         </div>
       </div>
-      
+
       <!-- Confirm Password -->
       <div class="form-group password-group">
         <div class="input-with-icon">
@@ -101,6 +106,7 @@
               type="button" 
               class="password-toggle" 
               (click)="toggleConfirmPasswordVisibility()"
+              aria-label="Toggle confirm password visibility"
             >
               {{ confirmPasswordVisible ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -111,18 +117,20 @@
           <span *ngIf="f['confirmPassword'].errors['mismatch']">Passwords do not match</span>
         </div>
       </div>
-      
+
       <!-- Terms and Conditions -->
       <div class="form-group checkbox-group">
         <label class="checkbox-label">
           <input type="checkbox" formControlName="agreeTerms">
-          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+          <span>
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </span>
         </label>
         <div class="validation-error" *ngIf="f['agreeTerms'].touched && f['agreeTerms'].invalid">
           <span>You must agree to the terms and conditions</span>
         </div>
       </div>
-      
+
       <!-- Submit Button -->
       <button 
         type="submit" 
@@ -133,25 +141,27 @@
         <span>{{ isLoading ? 'Creating account...' : 'Create Account' }}</span>
       </button>
     </form>
-    
-    <!-- Already have an account -->
+
+    <!-- Login Navigation -->
     <p class="login-text">
-      Already have an account? <a routerLink="/login" routerLinkActive="active">Login</a>
+      Already have an account? 
+      <a routerLink="/login" routerLinkActive="active">Login</a>
     </p>
-    
-    <!-- Social Signup -->
+
+    <!-- Social Signup Section -->
     <div class="divider">
       <span></span>
       <p>OR</p>
       <span></span>
     </div>
-    
+
     <div class="social-signup">
       <button class="google-signup" (click)="signUpWithGoogle()">
         <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
         <span>Sign up with Google</span>
       </button>
     </div>
+  </main>
 
   <!-- Decorative Elements -->
   <div class="decorative-circle circle-1"></div>

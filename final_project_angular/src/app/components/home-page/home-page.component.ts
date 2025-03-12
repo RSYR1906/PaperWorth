@@ -12,24 +12,22 @@ import { PromotionService } from '../../services/promotions.service';
   styleUrls: ['./home-page.component.css']
 })
 export class HomePageComponent implements OnInit {
-  userName = ""; // Will be loaded from user data
-  monthlyExpenses = 0; // Will be fetched from budget service
-  extractedData: any = null;
+  userName = 'User';
+  monthlyExpenses = 0;
   selectedFile: File | null = null;
   imagePreview: string | ArrayBuffer | null = null;
-  ocrText: string = '';
-  isProcessing: boolean = false;
-  showFullText: boolean = false;
+  extractedData: any = null;
+  ocrText = '';
+  isProcessing = false;
+  showFullText = false;
   recentlySavedReceipt: any = null;
   matchingPromotions: any[] = [];
-  isLoadingPromotions: boolean = false;
+  isLoadingPromotions = false;
   userReceiptHistory: any[] = [];
   recommendedPromotions: any[] = [];
-  isLoadingRecommendations: boolean = false;
+  isLoadingRecommendations = false;
   selectedPromotion: any = null;
-  isLoadingBudget: boolean = false;
-
-  // Backup promotions in case no personalized recommendations are available
+  isLoadingBudget = false;
   fallbackPromotionsByCategory = [];
   
   constructor(
@@ -43,223 +41,145 @@ export class HomePageComponent implements OnInit {
   ngOnInit(): void {
     // Load user data
     this.loadUserData();
-    
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
   }
   
-  loadUserData(): void {
-    // First, try to get user from Firebase auth service directly
-    const firebaseUser = this.firebaseAuthService.getCurrentUser();
-    
-    if (firebaseUser && firebaseUser.name) {
-      this.userName = firebaseUser.name;
-    } else {
-      // Fall back to localStorage if Firebase auth doesn't have the user
-      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      
-      if (currentUser && currentUser.name) {
-        this.userName = currentUser.name;
-      } else if (currentUser && currentUser.id) {
-        // If we have userId but no name, set a default name
-        this.userName = "User";
-      }
+  private loadUserData(): void {
+    const currentUser = this.getCurrentUser();
+    if (currentUser?.name) {
+      this.userName = currentUser.name;
     }
-    
-    // Load budget data if user is logged in
-    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
-    if (currentUser && currentUser.id) {
+
+    if (currentUser?.id) {
       this.isLoadingBudget = true;
-      
-      // Get the current month in YYYY-MM format
-      const now = new Date();
-      const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      this.budgetService.loadUserBudget(currentUser.id, currentMonthYear)
-        .subscribe({
-          next: (budget) => {
-            if (budget) {
-              this.monthlyExpenses = budget.totalSpent;
-            }
-            this.isLoadingBudget = false;
-          },
-          error: (error) => {
-            console.error('Error loading budget data:', error);
-            this.isLoadingBudget = false;
-          }
-        });
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      this.budgetService.loadUserBudget(currentUser.id, currentMonth).subscribe({
+        next: (budget) => this.monthlyExpenses = budget?.totalSpent || 0,
+        error: (error) => console.error('Error loading budget data:', error),
+        complete: () => this.isLoadingBudget = false
+      });
     }
   }
+
+  private getCurrentUser() {
+    return this.firebaseAuthService.getCurrentUser() || JSON.parse(localStorage.getItem('currentUser') || '{}');
+  }
+
+  /** Determine category based on merchant name */
+  private getCategoryFromMerchant(merchantName: string): string {
+    if (!merchantName) return 'Others';
+    const name = merchantName.toLowerCase();
+
+    if (/cold storage|fairprice|ntuc|giant|sheng siong/.test(name)) return 'Groceries';
+    if (/mcdonald|burger king|kfc|subway|jollibee/.test(name)) return 'Fast Food';
+    if (/starbucks|coffee bean|toast box|ya kun|cafe/.test(name)) return 'Cafes';
+    if (/uniqlo|zara|h&m|cotton on/.test(name)) return 'Retail';
+    if (/guardian|watsons|unity|pharmacy/.test(name)) return 'Health & Beauty';
+
+    return 'Others';
+  }
   
-  loadUserReceiptHistory(): void {
-    // First, try to get user from Firebase auth service directly
-    const firebaseUser = this.firebaseAuthService.getCurrentUser();
-    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
-    if (!currentUser || !currentUser.id) {
-      // If no user is logged in, use fallback promotions
-      this.getRecommendedPromotionsFromCategories([]);
+  /** Load user's receipt history & fetch promotions */
+  private loadUserReceiptHistory(): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      this.getRecommendedPromotions([]);
       return;
     }
-    
+
     this.isLoadingRecommendations = true;
-    
-    // Fetch user's past receipts
-    this.http.get<any[]>(`http://localhost:8080/api/receipts/user/${currentUser.id}`)
-      .subscribe({
-        next: (receipts) => {
-          console.log('User receipt history:', receipts);
-          this.userReceiptHistory = receipts;
-          
-          // Generate categories based on user's receipt history
-          const frequentCategories = this.analyzeReceiptHistory(receipts);
-          
-          // Fetch promotions based on these categories
-          this.getRecommendedPromotionsFromCategories(frequentCategories);
-        },
-        error: (error) => {
-          console.error('Error fetching user receipt history:', error);
-          this.isLoadingRecommendations = false;
-          
-          // Fallback to default promotions
-          this.getRecommendedPromotionsFromCategories([]);
-        }
-      });
-  }
-  
-  analyzeReceiptHistory(receipts: any[]): string[] {
-    // Count occurrences of each category
-    const categoryCounts: {[key: string]: number} = {};
-    
-    receipts.forEach(receipt => {
-      // Look for category in receipt or additional fields
-      const category = receipt.category || 
-                       (receipt.additionalFields && receipt.additionalFields.category) || 
-                       this.determineCategoryFromMerchant(receipt.merchantName);
-      
-      if (category) {
-        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    this.http.get<any[]>(`http://localhost:8080/api/receipts/user/${currentUser.id}`).subscribe({
+      next: (receipts) => {
+        this.userReceiptHistory = receipts;
+        const categories = this.analyzeReceiptHistory(receipts);
+        this.getRecommendedPromotions(categories);
+      },
+      error: (error) => {
+        console.error('Error fetching receipt history:', error);
+        this.getRecommendedPromotions([]);
       }
     });
-    
-    // Sort categories by frequency (most frequent first)
-    const sortedCategories = Object.entries(categoryCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(entry => entry[0]);
-    
-    // Return top 3 categories, or fewer if there aren't enough
-    return sortedCategories.slice(0, 3);
   }
   
-  getRecommendedPromotionsFromCategories(categories: string[]): void {
-    if (categories.length === 0) {
-      // If no categories, use fallback promotions
+  /** Analyze receipts & determine frequent categories */
+  private analyzeReceiptHistory(receipts: any[]): string[] {
+    const categoryCounts: Record<string, number> = {};
+    receipts.forEach(({ category, merchantName, additionalFields }) => {
+      const detectedCategory = category || additionalFields?.category || this.getCategoryFromMerchant(merchantName);
+      if (detectedCategory) categoryCounts[detectedCategory] = (categoryCounts[detectedCategory] || 0) + 1;
+    });
+
+    return Object.entries(categoryCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([category]) => category);
+  }
+
+  /** Fetch promotions based on category */
+  private getRecommendedPromotions(categories: string[]): void {
+    if (!categories.length) {
       this.recommendedPromotions = this.fallbackPromotionsByCategory;
       this.isLoadingRecommendations = false;
       return;
     }
-    
-    // Create an array to store all the category groups with promotions
-    const categoryPromotionsArray: any[] = [];
-    
-    // Track how many requests have completed
+
     let completedRequests = 0;
-    
-    // Process each category
+    const categoryPromotions: any[] = [];
+
     categories.forEach(category => {
-      this.promotionService.getPromotionsByCategory(category)
-        .subscribe({
-          next: (promotions) => {
-            console.log(`Promotions for ${category}:`, promotions);
-            
-            // Group the promotions by category
-            if (promotions && promotions.length > 0) {
-              categoryPromotionsArray.push({
-                name: category,
-                deals: promotions
-              });
-            }
-          },
-          error: (error) => {
-            console.error(`Error fetching promotions for ${category}:`, error);
-          },
-          complete: () => {
-            // Increment completed count
-            completedRequests++;
-            
-            // If all requests are done, finalize the recommendations
-            if (completedRequests === categories.length) {
-              this.finalizeRecommendations(categoryPromotionsArray);
-            }
+      this.promotionService.getPromotionsByCategory(category).subscribe({
+        next: (promotions) => {
+          if (promotions?.length) {
+            categoryPromotions.push({ name: category, deals: promotions });
           }
-        });
+        },
+        complete: () => {
+          if (++completedRequests === categories.length) {
+            this.recommendedPromotions = categoryPromotions.length ? categoryPromotions : this.fallbackPromotionsByCategory;
+            this.isLoadingRecommendations = false;
+          }
+        }
+      });
     });
   }
-  
-  finalizeRecommendations(categoryPromotions: any[]): void {
-    // If we have promotions, use them
-    if (categoryPromotions.length > 0) {
-      this.recommendedPromotions = categoryPromotions;
-    } else {
-      // Otherwise fall back to defaults
-      this.recommendedPromotions = this.fallbackPromotionsByCategory;
-    }
-    
-    this.isLoadingRecommendations = false;
-  }
 
-  onFileSelected(event: any) {
+   /** File selection & preview */
+   onFileSelected(event: any): void {
     const file: File = event.target.files[0];
-
     if (file) {
       this.selectedFile = file;
-
-      // Show image preview
       const reader = new FileReader();
-      reader.onload = () => {
-        this.imagePreview = reader.result;
-      };
+      reader.onload = () => this.imagePreview = reader.result;
       reader.readAsDataURL(file);
-      
-      // Clear previous OCR results
       this.ocrText = '';
       this.extractedData = null;
     }
   }
 
-  uploadImage() {
-    if (!this.selectedFile) {
-      console.error("No file selected!");
-      return;
-    }
-  
+   /** Upload image for OCR */
+   uploadImage(): void {
+    if (!this.selectedFile) return console.error("No file selected!");
+    
     this.isProcessing = true;
-  
     const formData = new FormData();
     formData.append('file', this.selectedFile);
-  
-    // Upload image to OCR backend
-    this.http.post<any>('http://localhost:8080/api/ocr/scan', formData)
-      .subscribe({
-        next: (response) => {
-          this.isProcessing = false;
-          
-          // Ensure extractedData is only set from API response
-          if (response && response.merchantName && response.totalAmount && response.dateOfPurchase) {
-            this.extractedData = response;
-            this.ocrText = response.fullText || "No additional text extracted.";
-          } else {
-            console.error("Invalid response format:", response);
-            this.ocrText = "Error processing image. Please try again.";
-          }
-        },
-        error: (error) => {
-          this.isProcessing = false;
-          console.error('Error processing image:', error);
+
+    this.http.post<any>('http://localhost:8080/api/ocr/scan', formData).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+        if (response?.merchantName && response?.totalAmount && response?.dateOfPurchase) {
+          this.extractedData = response;
+          this.ocrText = response.fullText || "No additional text extracted.";
+        } else {
           this.ocrText = "Error processing image. Please try again.";
         }
-      });
+      },
+      error: () => {
+        this.isProcessing = false;
+        this.ocrText = "Error processing image. Please try again.";
+      }
+    });
   }
   
   saveReceipt() {
