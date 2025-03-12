@@ -9,6 +9,7 @@ import { PastReceiptsComponent } from './components/past-receipts/past-receipts.
 import { PromotionsComponent } from './components/promotions/promotions.component';
 import { SignupComponent } from './components/signup/signup.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RewardsComponent } from './components/rewards/rewards.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -37,6 +38,11 @@ const routes: Routes = [
   { 
     path: 'budget-settings', 
     component: BudgetSettingsComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'rewards', 
+    component: RewardsComponent,
     canActivate: [AuthGuard]
   },
   { path: '**', redirectTo: '/homepage' }

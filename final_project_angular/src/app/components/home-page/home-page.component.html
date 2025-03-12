@@ -14,6 +14,15 @@
     <h2>Welcome, {{ userName }}</h2>
     <p>Total Monthly Expenses: <strong>${{ monthlyExpenses }}</strong></p>
   </div>
+
+  <div class="rewards-promo">
+    <div class="rewards-icon">🎁</div>
+    <div class="rewards-text">
+      <h3>PaperWorth Rewards</h3>
+      <p>Earn points from scanning receipts and redeem for exciting rewards!</p>
+    </div>
+    <a routerLink="/rewards" class="view-rewards-btn">View Rewards</a>
+  </div>
 </div>
 
 <!-- Hidden File Input -->
@@ -201,17 +210,17 @@
 <!-- Floating Camera Button -->
 <button class="scan-button" (click)="triggerFileInput()">📸</button>
 
-    <!-- Success Notification -->
-    <div class="success-notification" *ngIf="showSuccessNotification">
-      <div class="success-content">
-        <div class="success-icon">✓</div>
-        <div class="success-message">
-          <h4>Receipt Saved Successfully!</h4>
-          <p>You can view it in your Past Receipts</p>
-        </div>
-        <button class="close-notification" (click)="closeSuccessNotification()">×</button>
-      </div>
-      <div class="timer-bar">
-        <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
-      </div>
+<!-- Success Notification -->
+<div class="success-notification" *ngIf="showSuccessNotification">
+  <div class="success-content">
+    <div class="success-icon">✓</div>
+    <div class="success-message">
+      <h4>{{ successNotificationMessage }}</h4>
+      <p>You can view it in your Past Receipts</p>
     </div>
+    <button class="close-notification" (click)="closeSuccessNotification()">×</button>
+  </div>
+  <div class="timer-bar">
+    <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+  </div>
+</div>

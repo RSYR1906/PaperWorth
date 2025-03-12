@@ -32,6 +32,8 @@ export class HomePageComponent implements OnInit {
   showSuccessNotification = false;
   notificationTimeRemaining = 100;
   notificationTimer: any = null;
+  successNotificationMessage: string = 'Receipt saved successfully!';
+
   
   constructor(
     private http: HttpClient, 
@@ -191,70 +193,77 @@ export class HomePageComponent implements OnInit {
     });
   }
   
-  saveReceipt() {
-    if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
-      alert("Incomplete receipt data. Please try again.");
-      return;
-    }
-  
-    this.isProcessing = true;
-    // First, try to get user from Firebase auth service directly
-    const firebaseUser = this.firebaseAuthService.getCurrentUser();
-    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
-    // Determine category based on merchant name
-    const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
-    
-    // Create receipt object based on our updated model
-    const receiptData = {
-      userId: currentUser.id || '1',
-      merchantName: this.extractedData.merchantName,
-      totalAmount: this.extractedData.totalAmount,
-      dateOfPurchase: this.extractedData.dateOfPurchase,
-      category: category,
-      imageUrl: this.imagePreview, // Store the image preview URL
-      items: this.extractedData.items || [], // Include items if available
-      additionalFields: {
-        fullText: this.extractedData.fullText || this.ocrText,
-        // Include any other fields from extracted data
-        ...Object.entries(this.extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
-          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
-      }
-    };
-  
-    this.http.post('http://localhost:8080/api/receipts', receiptData)
-      .subscribe({
-        next: (response) => {
-          console.log('Receipt saved:', response);
-          const receiptId = (response as any).id;
-          
-          // Store the recently saved receipt for reference
-          this.recentlySavedReceipt = {
-            ...receiptData,
-            id: receiptId
-          };
-          
-          // Update monthly expenses with the new receipt amount
-          this.monthlyExpenses += this.extractedData.totalAmount;
-          
-          // Instead of navigating, fetch matching promotions
-          this.fetchMatchingPromotions(this.extractedData.merchantName, category, receiptId);
-          
-          // Show the success notification
-           this.showNotification();
-
-          // Also refresh the recommended promotions as we have a new receipt
-          this.loadUserReceiptHistory();
-        },
-        error: (error) => {
-          console.error('Error saving receipt:', error);
-          alert('Failed to save receipt. Please try again.');
-          this.isProcessing = false;
-        }
-      });
+  // src/app/components/home-page/home-page.component.ts - Update saveReceipt method
+saveReceipt() {
+  if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
+    alert("Incomplete receipt data. Please try again.");
+    return;
   }
+
+  this.isProcessing = true;
+  // First, try to get user from Firebase auth service directly
+  const firebaseUser = this.firebaseAuthService.getCurrentUser();
+  const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
   
+  // Determine category based on merchant name
+  const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
+  
+  // Create receipt object based on our updated model
+  const receiptData = {
+    userId: currentUser.id || '1',
+    merchantName: this.extractedData.merchantName,
+    totalAmount: this.extractedData.totalAmount,
+    dateOfPurchase: this.extractedData.dateOfPurchase,
+    category: category,
+    imageUrl: this.imagePreview, // Store the image preview URL
+    items: this.extractedData.items || [], // Include items if available
+    additionalFields: {
+      fullText: this.extractedData.fullText || this.ocrText,
+      // Include any other fields from extracted data
+      ...Object.entries(this.extractedData)
+        .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
+        .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
+    }
+  };
+
+  this.http.post('http://localhost:8080/api/receipts', receiptData)
+    .subscribe({
+      next: (response: any) => {
+        console.log('Receipt saved:', response);
+        
+        // Extract receipt and points data from response
+        const savedReceipt = response.receipt;
+        const pointsAwarded = response.pointsAwarded || 0;
+        
+        // Store the recently saved receipt for reference
+        this.recentlySavedReceipt = {
+          ...receiptData,
+          id: savedReceipt.id
+        };
+        
+        // Update monthly expenses with the new receipt amount
+        this.monthlyExpenses += this.extractedData.totalAmount;
+        
+        // Customize notification message to include points
+        this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
+        
+        // Show the success notification
+        this.showNotification();
+
+        // Fetch matching promotions for the receipt
+        this.fetchMatchingPromotions(this.extractedData.merchantName, category, savedReceipt.id);
+        
+        // Also refresh the recommended promotions as we have a new receipt
+        this.loadUserReceiptHistory();
+      },
+      error: (error) => {
+        console.error('Error saving receipt:', error);
+        alert('Failed to save receipt. Please try again.');
+        this.isProcessing = false;
+      }
+    });
+}
+
   // Method to fetch matching promotions and add them to recommendations
   fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
     this.isLoadingPromotions = true;

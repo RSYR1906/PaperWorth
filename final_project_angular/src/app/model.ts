@@ -47,3 +47,56 @@ export interface Promotion {
   conditions?: string;
   imageUrl?: string;
   }
+
+  // src/app/model.ts - Add the following interfaces
+
+// Reward model
+export interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  pointsCost: number;
+  imageUrl: string;
+  category: string;
+  isAvailable: boolean;
+  quantity: number;
+  merchantName?: string;
+  termsConditions?: string;
+  expiryDate?: string;
+}
+
+// User Points model
+export interface UserPoints {
+  id: string;
+  userId: string;
+  totalPoints: number;
+  availablePoints: number;
+  spentPoints: number;
+  lastUpdated: string;
+}
+
+// User Reward model (for redemption history)
+export interface UserReward {
+  id: string;
+  userId: string;
+  rewardId: string;
+  rewardName: string;
+  pointsSpent: number;
+  redeemedDate: string;
+  status: string;
+  redemptionCode?: string;
+  deliveryInfo?: string;
+  expiryDate?: string;
+}
+
+// Point Transaction model
+export interface PointTransaction {
+  id: string;
+  userId: string;
+  points: number;
+  transactionType: string;
+  source: string;
+  referenceId: string;
+  transactionDate: string;
+  description: string;
+}

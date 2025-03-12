@@ -978,3 +978,58 @@
   background-color: #4CAF50;
   transition: width 0.1s linear;
 }
+
+.rewards-promo {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.rewards-promo:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.rewards-icon {
+  font-size: 36px;
+  margin-right: 20px;
+}
+
+.rewards-text {
+  flex: 1;
+}
+
+.rewards-text h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 5px;
+}
+
+.rewards-text p {
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.view-rewards-btn {
+  background-color: #2E3192;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 20px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.view-rewards-btn:hover {
+  background-color: #232578;
+  transform: translateY(-2px);
+}

@@ -1,8 +1,6 @@
 package sg.nus.iss.final_project.controller;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -20,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import sg.nus.iss.final_project.model.PointTransaction;
 import sg.nus.iss.final_project.model.Receipt;
 import sg.nus.iss.final_project.repo.ReceiptRepository;
 import sg.nus.iss.final_project.service.BudgetService;
+import sg.nus.iss.final_project.service.RewardsService;
 
 @RestController
 @RequestMapping("/api/receipts")
@@ -32,6 +32,9 @@ public class ReceiptController {
 
     @Autowired
     private BudgetService budgetService;
+
+    @Autowired
+    private RewardsService rewardsService;
 
     public ReceiptController(ReceiptRepository receiptRepository) {
         this.receiptRepository = receiptRepository;
@@ -119,7 +122,15 @@ public class ReceiptController {
                 budgetService.addExpenseToBudget(receipt.getUserId(), monthYear, category, totalAmount);
             }
 
-            return ResponseEntity.ok(savedReceipt);
+            // Award points for scanning the receipt
+            PointTransaction pointsAwarded = rewardsService.awardPointsForReceipt(savedReceipt.getId());
+
+            // Create response that includes both the receipt and points awarded
+            Map<String, Object> response = Map.of(
+                    "receipt", savedReceipt,
+                    "pointsAwarded", pointsAwarded != null ? pointsAwarded.getPoints() : 0);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace(); // Log the exception details
             return ResponseEntity.badRequest().body("Error saving receipt: " + e.getMessage());
@@ -184,25 +195,16 @@ public class ReceiptController {
         // Try the most common format for your receipts first (dd/MM/yyyy)
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            LocalDate date = LocalDate.parse(dateStr, formatter);
+            LocalDateTime date = LocalDateTime.parse(dateStr, formatter);
             System.out.println("Successfully parsed date with dd/MM/yyyy format: " + date);
-            return LocalDateTime.of(date, LocalTime.MIDNIGHT);
+            return date;
         } catch (DateTimeParseException e) {
             System.out.println("Failed to parse as dd/MM/yyyy format");
         }
 
-        // Try MM/dd/yyyy format (US style)
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            LocalDate date = LocalDate.parse(dateStr, formatter);
-            System.out.println("Successfully parsed date with MM/dd/yyyy format: " + date);
-            return LocalDateTime.of(date, LocalTime.MIDNIGHT);
-        } catch (DateTimeParseException e) {
-            System.out.println("Failed to parse as MM/dd/yyyy format");
-        }
-
         // Try other formats if needed
-        String[] otherFormats = {
+        String[] formats = {
+                "MM/dd/yyyy",
                 "yyyy-MM-dd",
                 "dd-MM-yyyy",
                 "MM-dd-yyyy",
@@ -210,12 +212,12 @@ public class ReceiptController {
                 "dd.MM.yyyy"
         };
 
-        for (String format : otherFormats) {
+        for (String format : formats) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-                LocalDate date = LocalDate.parse(dateStr, formatter);
+                LocalDateTime date = LocalDateTime.parse(dateStr, formatter);
                 System.out.println("Successfully parsed date with " + format + " format: " + date);
-                return LocalDateTime.of(date, LocalTime.MIDNIGHT);
+                return date;
             } catch (DateTimeParseException e) {
                 System.out.println("Failed to parse as " + format + " format");
             }

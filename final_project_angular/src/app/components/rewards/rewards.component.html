@@ -1,0 +1,295 @@
+<!-- src/app/components/rewards/rewards.component.html -->
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+      <h1>PaperWorth Rewards</h1>
+      <p>Earn points with every receipt you scan and redeem for exciting rewards!</p>
+    </div>
+  </section>
+  
+  <!-- Loading Indicator -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading your rewards data...</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="rewards-container" *ngIf="!isLoading">
+    <!-- Welcome Bonus Card - Only show for users who haven't claimed it -->
+    <div class="welcome-bonus-card" *ngIf="!hasClaimedWelcomeBonus">
+      <div class="welcome-bonus-content">
+        <div class="welcome-icon">🎁</div>
+        <div class="welcome-text">
+          <h3>Welcome to PaperWorth!</h3>
+          <p>Claim your 100 bonus points to get started with rewards.</p>
+        </div>
+        <button 
+          class="claim-bonus-btn" 
+          [disabled]="isClaimingBonus"
+          (click)="claimWelcomeBonus()"
+        >
+          {{ isClaimingBonus ? 'Claiming...' : 'Claim 100 Points' }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- Bonus Claimed Animation -->
+    <div class="bonus-animation" *ngIf="showBonusAnimation">
+      <div class="bonus-animation-content">
+        <div class="bonus-icon">🎉</div>
+        <div class="bonus-text">
+          <h3>Congratulations!</h3>
+          <p>You've claimed 100 bonus points!</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- User Points Summary -->
+    <div class="user-points-card">
+      <div class="points-header">
+        <div class="points-info">
+          <h3>Your Points</h3>
+          <div class="points-amount">{{ userPoints?.availablePoints || 0 }}</div>
+          <div class="points-summary">
+            <div>Total Earned: <span>{{ userPoints?.totalPoints || 0 }}</span></div>
+            <div>Total Spent: <span>{{ userPoints?.spentPoints || 0 }}</span></div>
+          </div>
+        </div>
+        <div class="tier-badge">
+          <div class="tier-icon tier-{{ userTier.toLowerCase() }}">{{ userTier[0] }}</div>
+          <div class="tier-name">{{ userTier }}</div>
+        </div>
+      </div>
+      
+      <!-- Tier Progress -->
+      <div class="tier-progress">
+        <div class="tier-label">
+          <span>{{ tierProgress }}% to {{ nextTierName }}</span>
+          <span>{{ pointsForNextTier }} points needed</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="tierProgress"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Rewards Catalog -->
+    <div class="rewards-catalog">
+      <h3>Rewards Catalog</h3>
+      
+      <!-- Categories Navigation -->
+      <div class="categories-nav">
+        <button 
+          *ngFor="let category of categories" 
+          [class.active]="selectedCategory === category.id"
+          (click)="selectCategory(category.id)"
+          class="category-btn"
+        >
+          {{ category.name }}
+        </button>
+      </div>
+      
+      <!-- Rewards Grid -->
+      <div class="rewards-grid">
+        <div class="reward-card" *ngFor="let reward of filteredRewards">
+          <div class="reward-image">
+            <img [src]="getRewardImageUrl(reward.imageUrl)" [alt]="reward.name">
+            <div class="reward-points">{{ reward.pointsCost }} pts</div>
+          </div>
+          <div class="reward-content">
+            <h4>{{ reward.name }}</h4>
+            <p class="reward-description">{{ reward.description }}</p>
+            <div class="reward-merchant" *ngIf="reward.merchantName">{{ reward.merchantName }}</div>
+            <div class="reward-quantity" *ngIf="reward.quantity <= 10">Only {{ reward.quantity }} left!</div>
+          </div>
+          <div class="reward-actions">
+            <button 
+              class="view-btn" 
+              (click)="viewRewardDetails(reward)"
+            >
+              View Details
+            </button>
+            <button 
+              class="redeem-btn" 
+              [class.disabled]="!canAfford(reward)"
+              [disabled]="!canAfford(reward)"
+              (click)="confirmRedeem(reward)"
+            >
+              Redeem Reward
+            </button>
+          </div>
+        </div>
+        
+        <!-- Empty state if no rewards are available -->
+        <div class="no-rewards-message" *ngIf="filteredRewards.length === 0">
+          <div class="empty-icon">🏆</div>
+          <p>No rewards available in this category at the moment.</p>
+          <p>Check back later for new additions!</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Points History & Redemptions -->
+    <div class="history-section">
+      <!-- Transactions Tab -->
+      <div class="history-tab">
+        <h3>Recent Point Transactions</h3>
+        <div class="transaction-list">
+          <div class="transaction-item" *ngFor="let transaction of recentTransactions.slice(0, 5)">
+            <div class="transaction-details">
+              <div class="transaction-title">{{ transaction.description }}</div>
+              <div class="transaction-date">{{ formatDate(transaction.transactionDate) }}</div>
+            </div>
+            <div class="transaction-points" [class]="getTransactionBadgeColor(transaction.transactionType)">
+              {{ transaction.transactionType === 'EARNED' ? '+' : '-' }}{{ transaction.points }} pts
+            </div>
+          </div>
+          
+          <!-- Empty state for transactions -->
+          <div class="empty-list" *ngIf="recentTransactions.length === 0">
+            <p>No recent transactions to display.</p>
+            <p>Scan receipts to start earning points!</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Redemptions Tab -->
+      <div class="history-tab">
+        <h3>Your Redemptions</h3>
+        <div class="redemption-list">
+          <div class="redemption-item" *ngFor="let redemption of redemptionHistory.slice(0, 5)">
+            <div class="redemption-details">
+              <div class="redemption-title">{{ redemption.rewardName }}</div>
+              <div class="redemption-date">{{ formatDate(redemption.redeemedDate) }}</div>
+            </div>
+            <div class="redemption-status">
+              <span class="status-badge" [class]="getStatusBadgeColor(redemption.status)">
+                {{ redemption.status }}
+              </span>
+              <span class="redemption-points">-{{ redemption.pointsSpent }} pts</span>
+            </div>
+          </div>
+          
+          <!-- Empty state for redemptions -->
+          <div class="empty-list" *ngIf="redemptionHistory.length === 0">
+            <p>You haven't redeemed any rewards yet.</p>
+            <p>Browse the catalog and redeem your first reward!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reward Details Modal -->
+  <div class="modal-overlay" *ngIf="selectedReward" (click)="closeRewardDetails()"></div>
+  <div class="reward-modal" *ngIf="selectedReward">
+    <div class="modal-header">
+      <h3>{{ selectedReward.name }}</h3>
+      <button class="close-button" (click)="closeRewardDetails()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img [src]="getRewardImageUrl(selectedReward.imageUrl)" [alt]="selectedReward.name">
+        <div class="reward-cost">{{ selectedReward.pointsCost }} points</div>
+      </div>
+      
+      <div class="reward-info">
+        <h4>Description</h4>
+        <p>{{ selectedReward.description }}</p>
+        
+        <div class="reward-details">
+          <div class="detail-row" *ngIf="selectedReward.merchantName">
+            <div class="detail-label">Merchant:</div>
+            <div class="detail-value">{{ selectedReward.merchantName }}</div>
+          </div>
+          
+          <div class="detail-row" *ngIf="selectedReward.category">
+            <div class="detail-label">Category:</div>
+            <div class="detail-value">{{ selectedReward.category }}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div class="detail-label">Available:</div>
+            <div class="detail-value">{{ selectedReward.quantity }} in stock</div>
+          </div>
+          
+          <div class="detail-row" *ngIf="selectedReward.expiryDate">
+            <div class="detail-label">Valid Until:</div>
+            <div class="detail-value">{{ formatDate(selectedReward.expiryDate) }}</div>
+          </div>
+        </div>
+        
+        <div class="terms-conditions" *ngIf="selectedReward.termsConditions">
+          <h4>Terms & Conditions</h4>
+          <p>{{ selectedReward.termsConditions }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeRewardDetails()">Close</button>
+      <button 
+        class="redeem-btn" 
+        [class.disabled]="!canAfford(selectedReward)"
+        [disabled]="!canAfford(selectedReward)"
+        (click)="confirmRedeem(selectedReward)"
+      >
+        Redeem for {{ selectedReward.pointsCost }} points
+      </button>
+    </div>
+  </div>
+  
+  <!-- Redemption Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showConfirmationModal" (click)="closeConfirmationModal()"></div>
+  <div class="confirmation-modal" *ngIf="showConfirmationModal">
+    <div class="modal-header">
+      <h3>Confirm Redemption</h3>
+      <button class="close-button" (click)="closeConfirmationModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirmation-icon">🎁</div>
+      <p class="confirmation-title">You're about to redeem:</p>
+      <p class="confirmation-reward">{{ rewardToRedeem?.name }}</p>
+      <p class="confirmation-points">This will cost <strong>{{ rewardToRedeem?.pointsCost }} points</strong> from your account.</p>
+      <p class="confirmation-balance">Your remaining balance will be <strong>{{ (userPoints?.availablePoints || 0) - (rewardToRedeem?.pointsCost || 0) }} points</strong>.</p>
+      <p>Are you sure you want to proceed?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeConfirmationModal()">Cancel</button>
+      <button class="confirm-btn" [disabled]="isRedeeming" (click)="redeemReward()">
+        {{ isRedeeming ? 'Processing...' : 'Confirm Redemption' }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- Redemption Success Modal -->
+  <div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()"></div>
+  <div class="success-modal" *ngIf="showSuccessModal">
+    <div class="modal-header">
+      <h3>Redemption Successful!</h3>
+      <button class="close-button" (click)="closeSuccessModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="success-icon">✓</div>
+      <p class="success-title">Congratulations!</p>
+      <p class="success-message">You have successfully redeemed:</p>
+      <p class="success-reward">{{ redeemedReward?.rewardName }}</p>
+      
+      <div class="redemption-details" *ngIf="redeemedReward?.redemptionCode">
+        <p class="redemption-code-label">Your redemption code:</p>
+        <div class="redemption-code">{{ redeemedReward?.redemptionCode }}</div>
+      </div>
+      
+      <div class="success-info">
+        <p *ngIf="redeemedReward?.status === 'FULFILLED'">
+          Your reward is ready to use! If it's a voucher, you can find the code above.
+        </p>
+        <p *ngIf="redeemedReward?.status === 'PENDING'">
+          Your reward redemption is being processed. You'll receive an update soon.
+        </p>
+        <p>You can view your redemption history in the "Your Redemptions" section.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="success-btn" (click)="closeSuccessModal()">Done</button>
+    </div>
+  </div>
