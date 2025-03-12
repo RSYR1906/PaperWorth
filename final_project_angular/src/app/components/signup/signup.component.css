@@ -13,6 +13,19 @@ body, html {
   z-index: 10;
 }
 
+.auth-logo-header .logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-logo-header .logo-container img {
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
 .auth-logo-header .logo-text {
   font-size: 25px;
   font-weight: 600;
@@ -371,9 +384,10 @@ input.invalid {
   transform: scale(1.05);
 }
 
-.logo-container svg {
-  max-width: 180px;
-  height: auto;
+.signup-container .logo-container img {
+  max-height: 135px;
+  width: auto;
+  object-fit: contain;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
@@ -425,6 +439,14 @@ input.invalid {
     top: 10px;
     left: 15px;
   }
+  
+  .auth-logo-header .logo-container img {
+    max-height: 35px;
+  }
+  
+  .signup-container .logo-container img {
+    max-height: 110px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -447,6 +469,10 @@ input.invalid {
   
   .feature-icon {
     margin-bottom: 0;
+  }
+  
+  .auth-logo-header .logo-container img {
+    max-height: 28px;
   }
   
   .auth-logo-header .logo-text {
@@ -472,5 +498,9 @@ input.invalid {
   .signup-btn {
     height: 55px;
     font-size: 16px;
+  }
+  
+  .signup-container .logo-container img {
+    max-height: 90px;
   }
 }

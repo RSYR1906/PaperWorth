@@ -238,6 +238,34 @@
   font-weight: 600;
 }
 
+/* Logo styling in auth header */
+.auth-logo-header {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  z-index: 10;
+}
+
+.auth-logo-header .logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-logo-header .logo-container img {
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.auth-logo-header .logo-text {
+  font-size: 25px;
+  font-weight: 600;
+  color: #2E3192;
+  margin: 0 0 0 8px;
+}
+
 /* Floating Scan Button */
 .scan-button {
   position: fixed;
@@ -809,6 +837,15 @@
   .promo-detail-actions {
     flex-direction: column;
   }
+  
+  .auth-logo-header {
+    top: 10px;
+    left: 15px;
+  }
+  
+  .auth-logo-header .logo-container img {
+    max-height: 35px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -843,5 +880,13 @@
     font-size: 24px;
     right: 20px;
     bottom: 20px;
+  }
+  
+  .auth-logo-header .logo-container img {
+    max-height: 28px;
+  }
+  
+  .auth-logo-header .logo-text {
+    font-size: 16px;
   }
 }
