@@ -31,4 +31,13 @@ export class AppComponent {
         console.error("Logout error:", error);
       });
   }
+  
+  /**
+   * Check if the current route is an authentication route (login or signup)
+   * to conditionally show/hide the navigation bar
+   */
+  isAuthRoute(): boolean {
+    const currentUrl = this.router.url;
+    return currentUrl.includes('/login') || currentUrl.includes('/signup');
+  }
 }

@@ -5,6 +5,21 @@ body, html {
   font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* New styles for the logo header in the top left corner */
+.auth-logo-header {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  z-index: 10;
+}
+
+.auth-logo-header .logo-text {
+  font-size: 25px;
+  font-weight: 600;
+  color: #2E3192;
+  margin: 0 0 0 8px;
+}
+
 .login-page-container {
   width: 100%;
   min-height: 100vh;
@@ -23,6 +38,36 @@ body, html {
   border-radius: 50%;
   background: rgba(46, 49, 146, 0.05);
   z-index: 0;
+}
+
+.circle-1 {
+  top: -100px;
+  right: -100px;
+  width: 300px;
+  height: 300px;
+  animation: float 15s infinite ease-in-out;
+}
+
+.circle-2 {
+  bottom: -100px;
+  left: -100px;
+  width: 200px;
+  height: 200px;
+  animation: float 18s infinite ease-in-out reverse;
+}
+
+.circle-3 {
+  top: 50%;
+  left: 10%;
+  width: 150px;
+  height: 150px;
+  animation: float 12s infinite ease-in-out;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(30px, 30px) rotate(5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 .login-container {
@@ -102,45 +147,6 @@ body, html {
   outline: none;
   border-color: #2E3192;
   box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.2);
-}
-
-/* Remember me & Forgot password */
-.remember-forgot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  font-size: 14px;
-  margin-top: -10px;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.remember-me input {
-  margin-right: 8px;
-  height: auto;
-  width: auto;
-  padding: 0;
-}
-
-.remember-me span {
-  color: #6c757d;
-}
-
-.forgot-password {
-  color: #2E3192;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.forgot-password:hover {
-  color: #1a1e5a;
-  text-decoration: underline;
 }
 
 /* Password field */
@@ -235,34 +241,6 @@ input.invalid {
 
 .btn-icon {
   font-size: 20px;
-}
-
-.demo-login {
-  margin-top: 15px;
-  text-align: center;
-}
-
-.demo-login-btn {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 15px;
-  height: 48px;
-}
-
-.demo-login-btn:hover {
-  background-color: #5a6268;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
-}
-
-.demo-login small {
-  display: block;
-  margin-top: 5px;
-  color: #6c757d;
-  font-size: 12px;
 }
 
 /* Divider */
@@ -400,6 +378,11 @@ input.invalid {
   .features-highlight {
     gap: 15px;
   }
+  
+  .auth-logo-header {
+    top: 10px;
+    left: 15px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -441,5 +424,9 @@ input.invalid {
   
   .feature-icon {
     margin-bottom: 0;
+  }
+  
+  .auth-logo-header .logo-text {
+    font-size: 16px;
   }
 }
