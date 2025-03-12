@@ -15,24 +15,6 @@
   
   <!-- Main Content -->
   <div class="rewards-container" *ngIf="!isLoading">
-    <!-- Welcome Bonus Card - Only show for users who haven't claimed it -->
-    <div class="welcome-bonus-card" *ngIf="!hasClaimedWelcomeBonus">
-      <div class="welcome-bonus-content">
-        <div class="welcome-icon">🎁</div>
-        <div class="welcome-text">
-          <h3>Welcome to PaperWorth!</h3>
-          <p>Claim your 100 bonus points to get started with rewards.</p>
-        </div>
-        <button 
-          class="claim-bonus-btn" 
-          [disabled]="isClaimingBonus"
-          (click)="claimWelcomeBonus()"
-        >
-          {{ isClaimingBonus ? 'Claiming...' : 'Claim 100 Points' }}
-        </button>
-      </div>
-    </div>
-    
     <!-- Bonus Claimed Animation -->
     <div class="bonus-animation" *ngIf="showBonusAnimation">
       <div class="bonus-animation-content">
@@ -100,7 +82,8 @@
             <h4>{{ reward.name }}</h4>
             <p class="reward-description">{{ reward.description }}</p>
             <div class="reward-merchant" *ngIf="reward.merchantName">{{ reward.merchantName }}</div>
-            <div class="reward-quantity" *ngIf="reward.quantity <= 10">Only {{ reward.quantity }} left!</div>
+            <div class="reward-quantity" *ngIf="reward.quantity <= 10 && reward.id !== 'welcome-bonus'">Only {{ reward.quantity }} left!</div>
+            <div class="reward-quantity special-offer" *ngIf="reward.id === 'welcome-bonus'">Special Offer!</div>
           </div>
           <div class="reward-actions">
             <button 
@@ -115,7 +98,7 @@
               [disabled]="!canAfford(reward)"
               (click)="confirmRedeem(reward)"
             >
-              Redeem Reward
+              {{ reward.id === 'welcome-bonus' ? 'Claim Bonus' : 'Redeem Reward' }}
             </button>
           </div>
         </div>
@@ -208,7 +191,7 @@
             <div class="detail-value">{{ selectedReward.category }}</div>
           </div>
           
-          <div class="detail-row">
+          <div class="detail-row" *ngIf="selectedReward.id !== 'welcome-bonus'">
             <div class="detail-label">Available:</div>
             <div class="detail-value">{{ selectedReward.quantity }} in stock</div>
           </div>
@@ -233,7 +216,7 @@
         [disabled]="!canAfford(selectedReward)"
         (click)="confirmRedeem(selectedReward)"
       >
-        Redeem for {{ selectedReward.pointsCost }} points
+        {{ selectedReward.id === 'welcome-bonus' ? 'Claim Bonus' : 'Redeem for ' + selectedReward.pointsCost + ' points' }}
       </button>
     </div>
   </div>

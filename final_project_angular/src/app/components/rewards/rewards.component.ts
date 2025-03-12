@@ -18,7 +18,7 @@ export class RewardsComponent implements OnInit {
   
   // Rewards data
   availableRewards: Reward[] = [];
-  selectedCategory: string = 'all';
+  selectedCategory: string = 'WELCOME';
   selectedReward: Reward | null = null;
   
   // Redemption history
@@ -50,6 +50,7 @@ export class RewardsComponent implements OnInit {
   
   // Filter categories
   categories = [
+    { id: 'WELCOME', name: 'Welcome Bonus'},
     { id: 'all', name: 'All Rewards' },
     { id: 'VOUCHER', name: 'Vouchers' },
     { id: 'ELECTRONICS', name: 'Electronics' },

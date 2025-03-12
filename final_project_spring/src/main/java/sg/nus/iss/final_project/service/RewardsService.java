@@ -40,7 +40,7 @@ public class RewardsService {
     private ReceiptRepository receiptRepository;
 
     // Point calculation constants
-    private static final int BASE_POINTS_PER_RECEIPT = 50;
+    private static final int BASE_POINTS_PER_RECEIPT = 0;
     private static final double POINTS_PER_DOLLAR = 1.0;
 
     // Get available rewards
