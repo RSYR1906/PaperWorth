@@ -1,25 +1,15 @@
-/* Login Page Styles */
+/* Mobile-Optimized Login Page Styles */
 body, html {
   height: 100%;
   margin: 0;
+  padding: 0;
   font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  -webkit-text-size-adjust: 100%; /* Prevent font size adjust after orientation change */
+  touch-action: manipulation; /* Better touch handling */
 }
 
-/* New styles for the header in the top left corner */
-.auth-logo-header {
-  position: absolute;
-  top: 20px;
-  left: 30px;
-  z-index: 10;
-}
-
-.auth-logo-header .logo-text {
-  font-size: 25px;
-  font-weight: 600;
-  color: #2E3192;
-  margin-left: 8px;
-}
-
+/* Container for the entire login page */
 .login-page-container {
   width: 100%;
   min-height: 100vh;
@@ -29,48 +19,83 @@ body, html {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   position: relative;
   overflow: hidden;
-  padding: 20px;
+  padding: 0; /* Remove padding to maximize space */
 }
 
-/* Decorative circles */
+/* Logo header in the top left */
+.auth-logo-header {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.auth-logo-header .logo-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.auth-logo-header img {
+  height: 24px;
+  width: auto;
+}
+
+.auth-logo-header .logo-text {
+  font-size: 25px;
+  font-weight: 600;
+  color: #2E3192;
+  margin-left: 8px;
+}
+
+/* Decorative circles - smaller and less obtrusive */
 .decorative-circle {
   position: absolute;
   border-radius: 50%;
   background: rgba(46, 49, 146, 0.05);
   z-index: 0;
-  animation: float 15s infinite ease-in-out;
+  opacity: 0.6; /* Make them more subtle */
 }
 
 .circle-1 {
-  top: -100px; right: -100px; width: 300px; height: 300px;
+  top: -50px; right: -50px; width: 150px; height: 150px;
+  animation: float 20s infinite ease-in-out;
 }
 
 .circle-2 {
-  bottom: -100px; left: -100px; width: 200px; height: 200px;
+  bottom: -50px; left: -50px; width: 120px; height: 120px;
+  animation: float 25s infinite ease-in-out reverse;
 }
 
 .circle-3 {
-  top: 50%; left: 10%; width: 150px; height: 150px;
+  top: 50%; left: 10%; width: 80px; height: 80px;
+  animation: float 18s infinite ease-in-out;
 }
 
 @keyframes float {
   0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(25px, 25px); }
+  50% { transform: translate(15px, 15px); }
 }
 
+/* Main login container */
 .login-container {
   position: relative;
   z-index: 1;
-  max-width: 450px;
+  width: 90%; /* Use percentage instead of fixed width */
+  max-width: 400px;
   margin: 20px auto;
-  padding: 40px;
+  padding: 30px 25px;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   text-align: center;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   animation: fadeIn 0.5s ease-out;
+  overflow: hidden; /* Prevent content from causing scrollbars */
 }
 
 @keyframes fadeIn {
@@ -78,24 +103,62 @@ body, html {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Logo container */
+.login-container .logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.login-container .logo-container img {
+  height: 100px; /* Smaller logo for mobile */
+  width: auto;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Headings and text */
 .login-container h2 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #2E3192;
   font-weight: 600;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .login-subtitle {
   color: #6c757d;
-  margin-bottom: 25px;
-  font-size: 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 
+/* Error message */
+.error-message {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Form styles */
 .login-container form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 25px;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 0;
 }
 
 .input-with-icon {
@@ -113,16 +176,19 @@ body, html {
   z-index: 1;
 }
 
+/* Input fields with increased touch target size */
 .login-container input {
   padding: 16px 16px 16px 45px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
   font-size: 16px;
   transition: border-color 0.3s, box-shadow 0.3s;
   width: 100%;
-  height: 55px;
+  height: 54px;
   box-sizing: border-box;
   background-color: #ffffff;
+  -webkit-appearance: none; /* Remove default iOS styles */
+  appearance: none;
 }
 
 .login-container input:focus {
@@ -131,26 +197,38 @@ body, html {
   box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.2);
 }
 
+/* Password field with toggle button */
+.password-input-container {
+  position: relative;
+  width: 100%;
+}
+
 .password-toggle {
   position: absolute;
-  right: 15px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 20px;
   cursor: pointer;
   color: #6c757d;
   padding: 10px;
   transition: color 0.2s;
   z-index: 1;
+  /* Increased touch target size */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.password-toggle:hover {
+.password-toggle:hover, .password-toggle:active {
   color: #2E3192;
 }
 
-/* Validation and errors */
+/* Validation errors */
 input.invalid {
   border-color: #dc3545;
   background-color: rgba(220, 53, 69, 0.05);
@@ -158,27 +236,40 @@ input.invalid {
 
 .validation-error {
   color: #dc3545;
-  font-size: 13px;
-  margin-top: 8px;
+  font-size: 12px;
+  margin-top: 6px;
   text-align: left;
   font-weight: 500;
 }
 
+/* Login button with improved touch response */
 .login-btn {
   background-color: #2E3192;
   color: white;
   border: none;
-  padding: 16px;
-  font-size: 18px;
-  height: 60px;
-  border-radius: 12px; /* Added rounded corners */
-
+  padding: 0;
+  font-size: 17px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.login-btn:hover {
+.login-btn:hover, .login-btn:focus {
   background-color: #232578;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(46, 49, 146, 0.2);
+}
+
+.login-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(46, 49, 146, 0.2);
 }
 
 .login-btn:disabled {
@@ -186,17 +277,39 @@ input.invalid {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  opacity: 0.8;
 }
 
 .btn-icon {
-  font-size: 20px;
+  font-size: 18px;
+}
+
+/* Animated ripple effect for button on click */
+.login-btn::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  top: 0;
+  left: 0;
+  opacity: 0;
+  border-radius: 12px;
+  transform: scale(0);
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.login-btn:active::after {
+  transform: scale(2);
+  opacity: 0;
+  transition: 0s;
 }
 
 /* Divider */
 .divider {
   display: flex;
   align-items: center;
-  margin: 25px 0;
+  margin: 22px 0;
 }
 
 .divider span {
@@ -206,89 +319,134 @@ input.invalid {
 }
 
 .divider p {
-  margin: 0 15px;
+  margin: 0 12px;
   color: #6c757d;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* Google login */
+/* Google login button */
 .google-login {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 14px;
+  padding: 0;
   margin-bottom: 15px;
   border: 1px solid #e0e0e0;
-  border-radius: 10px;
+  border-radius: 12px;
   background-color: white;
   font-weight: 500;
   font-size: 16px;
-  height: 55px;
+  height: 54px;
   cursor: pointer;
   transition: all 0.3s ease;
   color: #343a40;
+  position: relative;
+  overflow: hidden;
 }
 
-.google-login:hover {
+.google-login:active {
   background-color: #f5f5f5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(1px);
 }
 
 .google-login img {
-  width: 24px;
-  height: 24px;
-  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
 
-/* Logo */
-.logo-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-  transform: scale(1);
-  transition: transform 0.3s ease;
+/* Register link */
+.register-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6c757d;
 }
 
-.logo-container img {
-  border-radius: 20px; /* Added rounded corners */
+.register-text a {
+  color: #2E3192;
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+.register-text a:active {
+  background-color: rgba(46, 49, 146, 0.1);
+}
+
+/* Specific optimizations for different mobile devices */
+@media (max-width: 360px) {
+  /* Extra small devices */
   .login-container {
-    padding: 30px 25px;
-  }
-  
-  .decorative-circle {
-    opacity: 0.4;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-container {
-    max-width: 100%;
-    margin: 15px;
     padding: 25px 20px;
   }
   
   .login-container h2 {
-    font-size: 24px;
+    font-size: 22px;
+  }
+  
+  .login-container .logo-container img {
+    height: 85px;
+  }
+}
+
+@media (max-height: 700px) {
+  /* For smaller height screens */
+  .login-container {
+    padding: 20px;
+    margin: 10px auto;
+  }
+  
+  .login-container .logo-container img {
+    height: 80px;
+  }
+  
+  .login-container h2 {
+    margin-bottom: 5px;
   }
   
   .login-subtitle {
-    font-size: 14px;
+    margin-bottom: 15px;
   }
-  
-  .login-container input, 
-  .google-login {
-    height: 50px;
-    font-size: 15px;
-  }
-  
+}
+
+/* Fix for iOS devices to properly handle input fields */
+@supports (-webkit-touch-callout: none) {
+  .login-container input,
+  .google-login,
   .login-btn {
-    height: 55px;
-    font-size: 16px;
+    /* iOS-specific padding fix */
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .input-icon {
+    /* Adjust icon position for iOS */
+    left: 12px;
+  }
+}
+
+/* Active states for mobile touch */
+@media (hover: none) {
+  .login-btn:hover,
+  .google-login:hover,
+  .password-toggle:hover,
+  .register-text a:hover {
+    /* Disable hover effects on mobile */
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Use active states instead */
+  .login-btn:active {
+    background-color: #232578;
+    transform: scale(0.98);
+  }
+  
+  .google-login:active {
+    background-color: #f5f5f5;
+    transform: scale(0.98);
   }
 }

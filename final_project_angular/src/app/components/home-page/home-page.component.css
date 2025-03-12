@@ -890,3 +890,91 @@
     font-size: 16px;
   }
 }
+
+/* Success Notification Styles */
+.success-notification {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 350px;
+  z-index: 2000;
+  overflow: hidden;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.success-content {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+}
+
+.success-icon {
+  background-color: #4CAF50;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.success-message {
+  flex: 1;
+}
+
+.success-message h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.success-message p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.close-notification {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+  padding: 0 0 0 10px;
+  line-height: 1;
+}
+
+.close-notification:hover {
+  color: #333;
+}
+
+.timer-bar {
+  height: 4px;
+  background-color: #f1f1f1;
+  width: 100%;
+}
+
+.timer-progress {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.1s linear;
+}

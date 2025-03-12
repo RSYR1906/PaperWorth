@@ -37,11 +37,13 @@ export interface ReceiptItem {
 
 // src/app/models/promotion.model.ts
 export interface Promotion {
-    id: string;
-    merchantName: string;
-    description: string;
-    expiryDate: string;
-    status: string;
-    category: string;
-    location: string;
+  id: string;
+  merchant: string;
+  description: string;
+  category: string;
+  expiry: string;
+  location?: string;
+  code?: string;
+  conditions?: string;
+  imageUrl?: string;
   }

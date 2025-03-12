@@ -197,6 +197,21 @@
     </div>
   </div>
 </div>
-  
+
 <!-- Floating Camera Button -->
 <button class="scan-button" (click)="triggerFileInput()">📸</button>
+
+    <!-- Success Notification -->
+    <div class="success-notification" *ngIf="showSuccessNotification">
+      <div class="success-content">
+        <div class="success-icon">✓</div>
+        <div class="success-message">
+          <h4>Receipt Saved Successfully!</h4>
+          <p>You can view it in your Past Receipts</p>
+        </div>
+        <button class="close-notification" (click)="closeSuccessNotification()">×</button>
+      </div>
+      <div class="timer-bar">
+        <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+      </div>
+    </div>

@@ -1,7 +1,9 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import { BudgetService } from '../../services/budget.service';
 
 @Component({
@@ -11,7 +13,9 @@ import { BudgetService } from '../../services/budget.service';
   styleUrls: ['./expense-tracker.component.css']
 })
 export class ExpenseTrackerComponent implements OnInit {
-  userName: string = 'Demo User';
+  private apiUrl = environment.apiUrl;
+  
+  userName: string = '';
   currentMonth: string = '';
   isLoading: boolean = true;
   
@@ -35,7 +39,8 @@ export class ExpenseTrackerComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private budgetService: BudgetService
+    private budgetService: BudgetService,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -99,7 +104,7 @@ export class ExpenseTrackerComponent implements OnInit {
         // Process all budgets for history
         this.processBudgetHistory(budgets);
         
-        // Get sample transactions (in a real app, these would come from a receipts API)
+        // Get recent transactions from the API
         this.loadRecentTransactions(userId);
         
         this.isLoading = false;
@@ -185,45 +190,43 @@ export class ExpenseTrackerComponent implements OnInit {
   
   // Load recent transactions
   loadRecentTransactions(userId: string): void {
-    // In a real app, you would call a receipts API to get recent transactions
-    // For now, we'll use sample data
-    this.recentTransactions = [
-      // { 
-      //   merchant: 'Cold Storage', 
-      //   category: 'Groceries', 
-      //   amount: 87.50, 
-      //   date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      //   icon: this.getCategoryIcon('Groceries')
-      // },
-      // { 
-      //   merchant: 'Starbucks', 
-      //   category: 'Cafes', 
-      //   amount: 15.80, 
-      //   date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-      //   icon: this.getCategoryIcon('Cafes')
-      // },
-      // { 
-      //   merchant: 'McDonalds', 
-      //   category: 'Fast Food', 
-      //   amount: 22.40, 
-      //   date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-      //   icon: this.getCategoryIcon('Fast Food')
-      // },
-      // { 
-      //   merchant: 'Uniqlo', 
-      //   category: 'Shopping', 
-      //   amount: 159.90, 
-      //   date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-      //   icon: this.getCategoryIcon('Shopping')
-      // },
-      // { 
-      //   merchant: 'Guardian Pharmacy', 
-      //   category: 'Healthcare', 
-      //   amount: 42.25, 
-      //   date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
-      //   icon: this.getCategoryIcon('Healthcare')
-      // }
-    ];
+    // Call API to get recent transaction data
+    this.http.get<any[]>(`${this.apiUrl}/receipts/user/${userId}/recent`)
+      .pipe(
+        catchError(error => {
+          console.error('Error loading recent transactions:', error);
+          // Return empty array on error
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (transactions) => {
+          // Transform transactions data if needed
+          this.recentTransactions = transactions.map(transaction => ({
+            merchant: transaction.merchantName,
+            category: transaction.category,
+            amount: transaction.totalExpense,
+            date: transaction.dateOfPurchase,
+            icon: this.getCategoryIcon(transaction.category)
+          }));
+        },
+        error: (error) => {
+          console.error('Error processing transactions:', error);
+          this.recentTransactions = []; // Set to empty array on error
+        }
+      });
+  }
+  
+  // Calculate the height for chart bars based on amount
+  getChartBarHeight(amount: number): number {
+    const maxAmount = Math.max(...this.monthlyHistory.map(month => month.amount));
+    const maxHeight = 180; // Maximum height in pixels for the chart bars
+    
+    // If max amount is 0, return a minimal height
+    if (maxAmount === 0) return 10;
+    
+    // Calculate proportional height
+    return (amount / maxAmount) * maxHeight;
   }
   
   // Helper function to get previous N months in YYYY-MM format
@@ -242,17 +245,15 @@ export class ExpenseTrackerComponent implements OnInit {
   
   // Helper function to get category icons
   getCategoryIcon(category: string): string {
-    const lowerCategory = category.toLowerCase();
+    const lowerCategory = category?.toLowerCase() || '';
     
     if (lowerCategory.includes('grocery') || lowerCategory.includes('groceries')) return '🛒';
     if (lowerCategory.includes('dining')) return '🍔';
     if (lowerCategory.includes('fast food')) return '🍟';
     if (lowerCategory.includes('cafe')) return '☕';
-    if (lowerCategory.includes('shopping')) return '🛍️';
     if (lowerCategory.includes('retail')) return '👕';
     if (lowerCategory.includes('health') || lowerCategory.includes('pharmacy')) return '💊';
-    if (lowerCategory.includes('transportation')) return '🚗';
-    if (lowerCategory.includes('entertainment')) return '🎬';
+
     
     // Default icon
     return '💰';
@@ -260,17 +261,15 @@ export class ExpenseTrackerComponent implements OnInit {
   
   // Helper function to get category colors
   getCategoryColor(category: string): string {
-    const lowerCategory = category.toLowerCase();
+    const lowerCategory = category?.toLowerCase() || '';
     
     if (lowerCategory.includes('grocery') || lowerCategory.includes('groceries')) return '#4CAF50';
     if (lowerCategory.includes('dining')) return '#FF9800';
     if (lowerCategory.includes('fast food')) return '#F44336';
     if (lowerCategory.includes('cafe')) return '#795548';
-    if (lowerCategory.includes('shopping')) return '#2196F3';
     if (lowerCategory.includes('retail')) return '#3F51B5';
     if (lowerCategory.includes('health') || lowerCategory.includes('pharmacy')) return '#00BCD4';
-    if (lowerCategory.includes('transportation')) return '#9C27B0';
-    if (lowerCategory.includes('entertainment')) return '#E91E63';
+
     
     // Default color
     return '#607D8B';

@@ -28,24 +28,28 @@
   
 <!-- Promotions Container -->
 <div class="promotions" *ngIf="!isLoading">
+  <!-- Empty State -->
+  <div *ngIf="!filteredPromotions.length" class="no-promotions">
+    <p>No promotions found for this category.</p>
+  </div>
+
+  <!-- Category Groups -->
   <div *ngFor="let categoryGroup of filteredPromotions">
     <h3>{{ categoryGroup.category }}</h3>
     
     <div class="promo-list">
       <div *ngFor="let promo of categoryGroup.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
-        <img [src]="promo.imageUrl" alt="Promo Image" onerror="this.src='promotions/placeholder-image.jpg'">
+        <img [src]="promo.imageUrl" 
+             alt="{{ promo.merchant }} promotion" 
+             onerror="this.src='promotions/placeholder-image.jpg'">
         <div class="promo-content">
-          <div class="promo-merchant">{{ promo.merchantName }}</div>
+          <div class="promo-merchant">{{ promo.merchant }}</div>
           <p class="promo-description">{{ promo.description }}</p>
-          <p class="promo-location">{{ promo.location }}</p>
-          <p class="promo-expiry">Valid until: {{ promo.expiry }}</p>
+          <p class="promo-location" *ngIf="promo.location">{{ promo.location }}</p>
+          <p class="promo-expiry" *ngIf="promo.expiry">Valid until: {{ promo.expiry }}</p>
         </div>
       </div>
     </div>
-  </div>
-  
-  <div *ngIf="filteredPromotions.length === 0" class="no-promotions">
-    <p>No promotions found for this category.</p>
   </div>
 </div>
   
@@ -54,31 +58,34 @@
   <div class="modal-overlay" (click)="closePromotionDetails()"></div>
   <div class="modal-content">
     <div class="modal-header">
-      <h3>{{ selectedPromotion.merchantName }}</h3>
+      <h3>{{ selectedPromotion.merchant }}</h3>
       <button class="close-button" (click)="closePromotionDetails()">×</button>
     </div>
     
-    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='promotions/placeholder-image.jpg'">
+    <img [src]="selectedPromotion.imageUrl" 
+         alt="Promotion Image" 
+         class="promo-detail-image" 
+         onerror="this.src='promotions/placeholder-image.jpg'">
     
     <div class="promo-detail-info">
       <h4>{{ selectedPromotion.description }}</h4>
       
-      <div class="promo-detail-row">
+      <div class="promo-detail-row" *ngIf="selectedPromotion.location">
         <span class="label">Location:</span>
         <span>{{ selectedPromotion.location }}</span>
       </div>
       
-      <div class="promo-detail-row">
+      <div class="promo-detail-row" *ngIf="selectedPromotion.expiry">
         <span class="label">Valid Until:</span>
         <span>{{ selectedPromotion.expiry }}</span>
       </div>
       
-      <div class="promo-detail-row">
+      <div class="promo-detail-row" *ngIf="selectedPromotion.code">
         <span class="label">Promotion Code:</span>
         <span class="promo-code">{{ selectedPromotion.code }}</span>
       </div>
       
-      <div class="promo-detail-row">
+      <div class="promo-detail-row" *ngIf="selectedPromotion.conditions">
         <span class="label">Conditions:</span>
         <span class="conditions">{{ selectedPromotion.conditions }}</span>
       </div>
@@ -92,4 +99,4 @@
 </div>
   
 <!-- Floating Scan Button -->
-<button class="scan-button" routerLink="/scan">📸</button>
+<button class="scan-button" routerLink="/homepage">📸</button>

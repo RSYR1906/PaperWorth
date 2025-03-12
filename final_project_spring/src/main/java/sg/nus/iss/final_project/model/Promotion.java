@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Promotion {
     @Id
     private String id;
-    private String merchantName;
+    private String merchant;
     private String description;
     private String expiry; // Changed from LocalDateTime to match the data structure
     private String imageUrl; // Changed to match property name in the data
@@ -26,11 +26,11 @@ public class Promotion {
     }
 
     public String getMerchant() {
-        return merchantName;
+        return merchant;
     }
 
-    public void setMerchant(String merchantName) {
-        this.merchantName = merchantName;
+    public void setMerchant(String merchant) {
+        this.merchant = merchant;
     }
 
     public String getDescription() {
@@ -99,7 +99,7 @@ public class Promotion {
 
     @Override
     public String toString() {
-        return "Promotion [id=" + id + ", merchantName=" + merchantName + ", description=" + description + ", expiry="
+        return "Promotion [id=" + id + ", merchant=" + merchant + ", description=" + description + ", expiry="
                 + expiry + ", imageUrl=" + imageUrl + ", location=" + location + ", code=" + code + ", conditions="
                 + conditions + ", category=" + category + ", promotionId=" + promotionId + "]";
     }

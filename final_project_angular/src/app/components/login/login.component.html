@@ -1,17 +1,17 @@
 <div class="login-page-container">
   <!-- Header with Logo -->
-  <header class="auth-logo-header">
+  <!-- <header class="auth-logo-header">
     <div class="logo-container">
-      <img src="/logo.png" alt="PaperWorth Logo" height="30">
+      <img src="logo.png" alt="PaperWorth Logo">
       <h2 class="logo-text">PaperWorth</h2>
     </div>
-  </header>
+  </header> -->
 
   <!-- Login Form Container -->
   <main class="login-container">
     <!-- Logo -->
     <div class="logo-container">
-      <img src="/logo.png" alt="PaperWorth Logo" height="135">
+      <img src="logo.png" alt="PaperWorth Logo">
     </div>
 
     <h2>Welcome to PaperWorth</h2>
@@ -32,6 +32,7 @@
             type="email" 
             placeholder="Email" 
             formControlName="email" 
+            autocomplete="email"
             [class.invalid]="f['email'].touched && f['email'].invalid"
           >
         </div>
@@ -42,7 +43,7 @@
       </div>
 
       <!-- Password Input -->
-      <div class="form-group password-group">
+      <div class="form-group">
         <div class="input-with-icon">
           <span class="input-icon">🔒</span>
           <div class="password-input-container">
@@ -50,6 +51,7 @@
               [type]="showPassword ? 'text' : 'password'" 
               placeholder="Password" 
               formControlName="password"
+              autocomplete="current-password"
               [class.invalid]="f['password'].touched && f['password'].invalid"
             >
             <button 
@@ -72,7 +74,7 @@
       <button 
         type="submit" 
         class="login-btn"
-        [disabled]="isLoading"
+        [disabled]="isLoading || loginForm.invalid"
       >
         <span class="btn-icon">🔐</span>
         <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
@@ -87,9 +89,8 @@
     </div>
 
     <!-- Google Login -->
-    <button class="google-login" (click)="loginWithGoogle()">
-      <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">
-      <span>Login with Google</span>
+    <button type="button" class="google-login" (click)="loginWithGoogle()">
+      <img src="https://cdn-icons-png.flaticon.com/512/281/281764.png" alt="Google Icon">      <span>Login with Google</span>
     </button>
 
     <!-- Signup Link -->
@@ -100,9 +101,7 @@
   </main>
 
   <!-- Decorative Elements -->
-  <footer>
-    <div class="decorative-circle circle-1"></div>
-    <div class="decorative-circle circle-2"></div>
-    <div class="decorative-circle circle-3"></div>
-  </footer>
+  <div class="decorative-circle circle-1"></div>
+  <div class="decorative-circle circle-2"></div>
+  <div class="decorative-circle circle-3"></div>
 </div>

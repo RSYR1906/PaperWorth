@@ -29,6 +29,9 @@ export class HomePageComponent implements OnInit {
   selectedPromotion: any = null;
   isLoadingBudget = false;
   fallbackPromotionsByCategory = [];
+  showSuccessNotification = false;
+  notificationTimeRemaining = 100;
+  notificationTimer: any = null;
   
   constructor(
     private http: HttpClient, 
@@ -43,6 +46,12 @@ export class HomePageComponent implements OnInit {
     this.loadUserData();
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
+  }
+
+  ngOnDestroy() {
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
   }
   
   private loadUserData(): void {
@@ -232,6 +241,9 @@ export class HomePageComponent implements OnInit {
           // Instead of navigating, fetch matching promotions
           this.fetchMatchingPromotions(this.extractedData.merchantName, category, receiptId);
           
+          // Show the success notification
+           this.showNotification();
+
           // Also refresh the recommended promotions as we have a new receipt
           this.loadUserReceiptHistory();
         },
@@ -478,5 +490,32 @@ export class HomePageComponent implements OnInit {
   // Add this method to save a promotion
   savePromotion(promotion: any) {
     alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
+  }
+
+  showNotification() {
+    this.showSuccessNotification = true;
+    this.notificationTimeRemaining = 100;
+    
+    // Clear any existing timer
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
+    
+    // Create timer that decreases the progress bar
+    this.notificationTimer = setInterval(() => {
+      this.notificationTimeRemaining -= 2;
+      
+      if (this.notificationTimeRemaining <= 0) {
+        this.closeSuccessNotification();
+      }
+    }, 100); // Update every 100ms, will take ~5 seconds to complete
+  }
+
+  closeSuccessNotification() {
+    this.showSuccessNotification = false;
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
+    }
   }
 }

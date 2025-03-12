@@ -1,6 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
+import { Promotion } from '../../model';
+
+
+interface CategoryGroup {
+  category: string;
+  deals: Promotion[];
+}
 
 @Component({
   selector: 'app-promotions',
@@ -10,26 +19,26 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class PromotionsComponent implements OnInit {
   receivedReceiptId: string | null = null;
-  isLoading: boolean = false;
-  selectedCategory: string = 'all';
-  allPromotions: any[] = [];
-  promotionsByCategory: any[] = [];
+  isLoading = false;
+  selectedCategory = 'all';
+  allPromotions: Promotion[] = [];
+  promotionsByCategory: CategoryGroup[] = [];
   
   // Categories for filter
-  categories = [
+  readonly categories = [
     { id: 'all', name: 'All Categories' },
     { id: 'fastfood', name: 'Fast Food' },
     { id: 'groceries', name: 'Groceries' },
     { id: 'retail', name: 'Retail' },
     { id: 'cafes', name: 'Cafes' },
-    { id: 'entertainment', name: 'Entertainment' },
-    { id: 'electronics', name: 'Electronics' },
-    { id: 'healthbeauty', name: 'Health & Beauty' },
-    { id: 'travel', name: 'Travel' }
+    { id: 'dining', name: 'Dining' },
+    { id: 'health&beauty', name: 'Health & Beauty' }
   ];
 
   // Selected promotion for details view
-  selectedPromotion: any = null;
+  selectedPromotion: Promotion | null = null;
+
+  private readonly apiBaseUrl = 'http://localhost:8080/api/promotions';
 
   constructor(
     private route: ActivatedRoute,
@@ -40,119 +49,137 @@ export class PromotionsComponent implements OnInit {
   ngOnInit(): void {
     this.isLoading = true;
     
-    // Check if we received query parameters
     this.route.queryParams.subscribe(params => {
       this.receivedReceiptId = params['receiptId'];
       const merchant = params['merchant'];
       const category = params['category'];
       
       if (this.receivedReceiptId) {
-        // First check for merchant and category parameters
         if (merchant && category) {
-          console.log(`Fetching promotions for merchant: ${merchant}, category: ${category}`);
-          
-          // New endpoint to get promotions by merchant and category
-          this.http.get<any[]>(`http://localhost:8080/api/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
-            .subscribe({
-              next: (data) => {
-                console.log('Received matched promotions:', data);
-                this.allPromotions = data;
-                this.organizePromotionsByCategory();
-                this.setDefaultCategory();
-                this.isLoading = false;
-              },
-              error: (error) => {
-                console.error('Error fetching matching promotions:', error);
-                // Fall back to receipt ID based matching
-                if (this.receivedReceiptId) {
-                  this.fetchPromotionsByReceiptId(this.receivedReceiptId);
-                } else {
-                  this.fetchAllPromotions(); // Fallback if somehow receiptId became null
-                }
-              }
-            });
+          this.fetchPromotionsByMerchantAndCategory(merchant, category);
         } else {
-          // Fallback to receipt ID if merchant/category not provided
           this.fetchPromotionsByReceiptId(this.receivedReceiptId);
         }
       } else {
-        // Fetch all promotions if no receipt context
         this.fetchAllPromotions();
       }
     });
   }
   
-  fetchPromotionsByReceiptId(receiptId: string) {
-    this.http.get<any[]>(`http://localhost:8080/api/promotions/receipt/${receiptId}`)
-      .subscribe({
-        next: (data) => {
-          console.log('Received data from receipt ID:', data);
-          this.allPromotions = data;
-          this.organizePromotionsByCategory();
-          this.setDefaultCategory();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error fetching promotions by receipt ID:', error);
-          this.isLoading = false;
-          this.fetchAllPromotions(); // Fallback
+  fetchPromotionsByMerchantAndCategory(merchant: string, category: string): void {
+    const url = `${this.apiBaseUrl}/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`;
+    this.fetchPromotions(url, 'by merchant and category')
+      .subscribe(promotions => {
+        this.processPromotions(promotions);
+      });
+  }
+  
+  fetchPromotionsByReceiptId(receiptId: string): void {
+    const url = `${this.apiBaseUrl}/receipt/${receiptId}`;
+    this.fetchPromotions(url, 'by receipt ID')
+      .subscribe(promotions => {
+        this.processPromotions(promotions);
+        
+        // If no promotions were found, fall back to all promotions
+        if (promotions.length === 0) {
+          this.fetchAllPromotions();
         }
       });
   }
   
-  fetchAllPromotions() {
-    this.http.get<any[]>('http://localhost:8080/api/promotions')
-      .subscribe({
-        next: (data) => {
-          console.log('Received all promotions:', data);
-          this.allPromotions = data;
-          this.organizePromotionsByCategory();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error fetching promotions:', error);
-          this.isLoading = false;
-          // You can keep your original hardcoded data as a fallback
-        }
+  fetchAllPromotions(): void {
+    this.fetchPromotions(this.apiBaseUrl, 'all')
+      .subscribe(promotions => {
+        this.processPromotions(promotions);
       });
+  }
+  
+  private fetchPromotions(url: string, source: string): Observable<Promotion[]> {
+    this.isLoading = true;
+    
+    return this.http.get<Promotion[]>(url).pipe(
+      catchError(error => {
+        console.error(`Error fetching ${source} promotions:`, error);
+        return of([]);
+      }),
+      finalize(() => {
+        this.isLoading = false;
+      })
+    );
+  }
+  
+  private processPromotions(promotions: Promotion[]): void {
+    this.allPromotions = this.normalizePromotions(promotions);
+    this.organizePromotionsByCategory();
+    
+    if (promotions.length > 0) {
+      this.setDefaultCategory();
+    }
+  }
+  
+  // Normalize promotions data to ensure consistent field names
+  private normalizePromotions(promotions: Promotion[]): Promotion[] {
+    return promotions.map(promo => {
+      // Auto-categorize health & beauty items
+      if (!promo.category) {
+        const merchantText = (promo.merchant || '').toLowerCase();
+        const descriptionText = (promo.description || '').toLowerCase();
+        
+        if (merchantText.includes('unity') || 
+            merchantText.includes('watson') || 
+            merchantText.includes('pharmacy') || 
+            merchantText.includes('guardian') ||
+            descriptionText.includes('health') || 
+            descriptionText.includes('pharmacy')) {
+          promo.category = 'Health & Beauty';
+        } else {
+          promo.category = 'Uncategorized';
+        }
+      }
+      
+      return promo;
+    });
   }
   
   // Organize promotions by category
-  organizePromotionsByCategory() {
-    // Group the flattened promotions by category
-    const categoryMap = new Map<string, any[]>();
+  private organizePromotionsByCategory(): void {
+    const categoryMap = new Map<string, Promotion[]>();
     
     this.allPromotions.forEach(promo => {
       const category = promo.category || 'Uncategorized';
+      
       if (!categoryMap.has(category)) {
         categoryMap.set(category, []);
       }
+      
       categoryMap.get(category)?.push(promo);
     });
     
-    // Convert map to array of category objects
     this.promotionsByCategory = Array.from(categoryMap.entries()).map(([category, promos]) => ({
-      category: category,
+      category,
       deals: promos
     }));
-    
-    console.log('Organized promotions by category:', this.promotionsByCategory);
   }
   
-  setDefaultCategory() {
-    if (this.allPromotions && this.allPromotions.length > 0) {
+  private setDefaultCategory(): void {
+    if (this.allPromotions.length > 0) {
       const firstCategory = this.allPromotions[0]?.category;
+      
       if (firstCategory) {
-        // Convert category name to ID format
         const categoryId = firstCategory.toLowerCase().replace(/\s+/g, '');
-        this.selectedCategory = categoryId;
+        
+        // Only set if the category exists in our predefined categories
+        const categoryExists = this.categories.some(c => c.id === categoryId);
+        if (categoryExists) {
+          this.selectedCategory = categoryId;
+        }
       }
     }
   }
   
   // Get promotions filtered by selected category
-  get filteredPromotions() {
-    if (!this.promotionsByCategory || this.promotionsByCategory.length === 0) {
+  get filteredPromotions(): CategoryGroup[] {
+    if (!this.promotionsByCategory.length) {
       return [];
     }
     
@@ -167,26 +194,26 @@ export class PromotionsComponent implements OnInit {
   }
   
   // Select category for filtering
-  selectCategory(categoryId: string) {
+  selectCategory(categoryId: string): void {
     this.selectedCategory = categoryId;
   }
   
   // View promotion details
-  viewPromotionDetails(promotion: any) {
+  viewPromotionDetails(promotion: Promotion): void {
     this.selectedPromotion = promotion;
   }
   
   // Close promotion details
-  closePromotionDetails() {
+  closePromotionDetails(): void {
     this.selectedPromotion = null;
   }
   
   // Save promotion (would integrate with backend)
-  savePromotion(promotion: any) {
+  savePromotion(promotion: Promotion): void {
     alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
   }
   
-  logout() {
+  logout(): void {
     localStorage.removeItem('currentUser');
     this.router.navigate(['/login']);
   }
