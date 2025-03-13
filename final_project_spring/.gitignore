@@ -34,3 +34,4 @@ build/
 
 ### Google Cloud API ###
 **/google-credentials.json
+**/firebase-service-account.json
