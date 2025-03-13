@@ -50,8 +50,8 @@ ENV GOOGLE_CLOUD_CREDENTIALS_PATH=/app/google-credentials.json
 RUN mkdir -p /app/config && chown -R spring:spring /app/config
 
 # Configure the container to run as a non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# RUN addgroup -S spring && adduser -S spring -G spring
+# USER spring:spring
 
 # Expose the port your application will run on
 EXPOSE 8080
