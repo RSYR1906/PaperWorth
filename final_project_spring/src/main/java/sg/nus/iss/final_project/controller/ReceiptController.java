@@ -26,7 +26,7 @@ import sg.nus.iss.final_project.service.RewardsService;
 
 @RestController
 @RequestMapping("/api/receipts")
-// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
+@CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class ReceiptController {
     private final ReceiptRepository receiptRepository;
 

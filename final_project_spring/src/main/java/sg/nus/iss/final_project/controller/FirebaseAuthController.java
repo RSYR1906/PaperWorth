@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,16 +14,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+
 import sg.nus.iss.final_project.model.User;
 import sg.nus.iss.final_project.repo.UserRepository;
 
 @RestController
 @RequestMapping("/api/users")
-// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
+@CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class FirebaseAuthController {
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired
+    private FirebaseAuth firebaseAuth;
 
     @PostMapping("/firebase-auth")
     public ResponseEntity<?> firebaseAuthentication(@RequestBody Map<String, String> payload) {
@@ -30,7 +38,8 @@ public class FirebaseAuthController {
         String firebaseId = payload.get("firebaseId");
         String email = payload.get("email");
         String name = payload.get("name");
-        
+        String idToken = payload.get("idToken");
+
         // Debug logs for incoming request data
         System.out.println("==== Firebase Auth Request ====");
         System.out.println("firebaseId: " + firebaseId);
@@ -47,13 +56,24 @@ public class FirebaseAuthController {
         }
 
         try {
+
+            // Verify the ID token
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(idToken);
+            String uid = decodedToken.getUid();
+
+            // Check if the UID in the token matches the provided Firebase ID
+            if (!uid.equals(firebaseId)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token");
+            }
+
             // Check if user with this Firebase ID already exists
             Optional<User> existingUserByFirebaseId = findUserByFirebaseId(firebaseId);
 
             if (existingUserByFirebaseId.isPresent()) {
                 // User exists, update the name if provided
                 User user = existingUserByFirebaseId.get();
-                System.out.println("Found existing user by Firebase ID: " + user.getId() + " with name: '" + user.getName() + "'");
+                System.out.println(
+                        "Found existing user by Firebase ID: " + user.getId() + " with name: '" + user.getName() + "'");
 
                 // THIS IS THE KEY FIX: Always update the name if it's provided and different
                 if (name != null && !name.isEmpty() && !name.equals(user.getName())) {
@@ -76,7 +96,8 @@ public class FirebaseAuthController {
                 if (userByEmail.isPresent()) {
                     // User with email exists, link Firebase ID to this user
                     User user = userByEmail.get();
-                    System.out.println("Found existing user by email: " + user.getId() + " with name: '" + user.getName() + "'");
+                    System.out.println(
+                            "Found existing user by email: " + user.getId() + " with name: '" + user.getName() + "'");
 
                     // Update the existing user with the Firebase ID and name
                     user.setFirebaseId(firebaseId);
@@ -86,7 +107,8 @@ public class FirebaseAuthController {
                         user.setName(name);
                         userRepo.updateUserWithFirebase(user.getId(), firebaseId, name);
                     } else {
-                        System.out.println("Name is null, empty, or unchanged, keeping existing name: '" + user.getName() + "'");
+                        System.out.println(
+                                "Name is null, empty, or unchanged, keeping existing name: '" + user.getName() + "'");
                         userRepo.updateFirebaseId(user.getId(), firebaseId);
                     }
 
@@ -102,7 +124,7 @@ public class FirebaseAuthController {
                     System.out.println("Creating new user with email: " + email);
                     String finalName = name != null && !name.isEmpty() ? name : "User";
                     System.out.println("Setting name to: '" + finalName + "'");
-                    
+
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName(finalName);
@@ -120,7 +142,8 @@ public class FirebaseAuthController {
 
                         if (createdUser.isPresent()) {
                             User user = createdUser.get();
-                            System.out.println("Created user successfully. ID: " + user.getId() + ", Name: '" + user.getName() + "'");
+                            System.out.println("Created user successfully. ID: " + user.getId() + ", Name: '"
+                                    + user.getName() + "'");
 
                             Map<String, Object> response = new HashMap<>();
                             response.put("id", user.getId());
@@ -152,7 +175,8 @@ public class FirebaseAuthController {
                 // Update the Firebase ID for this user
                 // SIMILAR FIX: Always update name if provided
                 if (name != null && !name.isEmpty() && !name.equals(user.getName())) {
-                    System.out.println("Updating user name after duplicate key from '" + user.getName() + "' to '" + name + "'");
+                    System.out.println(
+                            "Updating user name after duplicate key from '" + user.getName() + "' to '" + name + "'");
                     user.setName(name);
                     userRepo.updateUserWithFirebase(user.getId(), firebaseId, name);
                 } else {
@@ -170,6 +194,9 @@ public class FirebaseAuthController {
                 System.out.println("ERROR: Couldn't find user by email after DuplicateKeyException: " + email);
                 return ResponseEntity.status(500).body("Error handling existing email: " + e.getMessage());
             }
+        } catch (FirebaseAuthException e) {
+            System.out.println("ERROR: Token verification failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token verification failed: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("ERROR: Unexpected exception: " + e.getMessage());
             e.printStackTrace();

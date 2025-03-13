@@ -66,6 +66,18 @@ export class FirebaseAuthService {
     this.auth.onAuthStateChanged(user => user ? this.syncUserWithBackend(user) : this.saveUser(null));
   }
 
+  async getIdToken(): Promise<string | null> {
+    const user = this.auth.currentUser;
+    if (!user) return null;
+    
+    try {
+      return await user.getIdToken();
+    } catch (error) {
+      console.error('Error getting ID token:', error);
+      return null;
+    }
+  }
+
   /** Handles Google redirect sign-in */
   private async handleRedirectResult(): Promise<void> {
     if (this.isProcessingRedirect) return;
@@ -108,7 +120,6 @@ export class FirebaseAuthService {
     }
   }
 
-  /** Sign out the user */
   async signOut(): Promise<void> {
     await signOut(this.auth);
     this.saveUser(null);
@@ -116,20 +127,19 @@ export class FirebaseAuthService {
     this.router.navigate(['/login']);
   }
 
-  /** Get the current authenticated user */
   getCurrentUser(): UserData | null {
     return this.currentUserSubject.value;
   }
 
-  /** Check if user is authenticated */
   isAuthenticated(): boolean {
     return !!this.currentUserSubject.value;
   }
 
-  /** Sync user with backend */
   private async syncUserWithBackend(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
     if (!firebaseUser) throw new Error('No Firebase user');
-
+  
+    const idToken = await firebaseUser.getIdToken();
+    
     const userData: UserData = {
       id: firebaseUser.uid,
       name: displayName || firebaseUser.displayName || 'User',
@@ -138,23 +148,24 @@ export class FirebaseAuthService {
       emailVerified: firebaseUser.emailVerified,
       createdAt: new Date().toISOString()
     };
-
+  
     try {
       const backendUser = await firstValueFrom(
         this.http.post<any>(`${environment.apiUrl}/users/firebase-auth`, {
           firebaseId: userData.id,
           email: userData.email,
-          name: userData.name
+          name: userData.name,
+          idToken: idToken // Send the ID token to the backend
         })
       );
-
+  
       const mergedUser: UserData = {
         ...userData,
         id: backendUser.id,
         createdAt: backendUser.createdAt || userData.createdAt,
         name: backendUser.name !== 'User' ? backendUser.name : userData.name
       };
-
+  
       this.saveUser(mergedUser);
       return mergedUser;
     } catch (error) {
