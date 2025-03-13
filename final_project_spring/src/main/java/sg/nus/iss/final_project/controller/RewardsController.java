@@ -26,7 +26,6 @@ import sg.nus.iss.final_project.service.RewardsService;
 
 @RestController
 @RequestMapping("/api/rewards")
-// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class RewardsController {
 
     @Autowired

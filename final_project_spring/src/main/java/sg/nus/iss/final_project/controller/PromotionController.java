@@ -21,7 +21,6 @@ import sg.nus.iss.final_project.repo.PromotionRepository;
 
 @RestController
 @RequestMapping("/api/promotions")
-// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class PromotionController {
 
     private final MongoTemplate mongoTemplate;

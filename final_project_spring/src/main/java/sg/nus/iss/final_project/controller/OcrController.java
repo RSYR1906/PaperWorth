@@ -15,7 +15,6 @@ import sg.nus.iss.final_project.service.OcrService;
 
 @RestController
 @RequestMapping("/api/ocr")
-// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class OcrController {
 
     private final OcrService ocrService;

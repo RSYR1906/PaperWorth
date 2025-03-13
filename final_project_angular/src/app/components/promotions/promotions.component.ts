@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { Promotion } from '../../model';
+import { environment } from '../../../environments/environment.prod';
 
 
 interface CategoryGroup {
@@ -38,8 +39,8 @@ export class PromotionsComponent implements OnInit {
   // Selected promotion for details view
   selectedPromotion: Promotion | null = null;
 
-  private readonly apiBaseUrl = 'http://localhost:8080/api/promotions';
-
+  private readonly apiBaseUrl = environment.apiUrl + '/promotions';
+  
   constructor(
     private route: ActivatedRoute,
     private router: Router,
