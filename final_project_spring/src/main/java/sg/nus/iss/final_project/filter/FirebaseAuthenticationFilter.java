@@ -22,12 +22,16 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
     private FirebaseAuth firebaseAuth;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         // Skip authentication for login and public endpoints
         String path = request.getRequestURI();
-        if (path.contains("/public/") || path.contains("/login") || path.contains("/firebase-auth")) {
+        if (request.getMethod().equals("OPTIONS") ||
+                path.contains("/public/") ||
+                path.contains("/login") ||
+                path.contains("/firebase-auth")) {
             filterChain.doFilter(request, response);
             return;
         }

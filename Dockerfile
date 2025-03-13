@@ -1,51 +1,29 @@
-FROM node:18 AS angular-build
-
-# Set working directory for Angular
-WORKDIR /app/angular
-
-# Copy Angular application files
-COPY final_project_angular/package*.json ./
-RUN npm install
-
-# Copy source code
-COPY final_project_angular/ ./
-
-# Build Angular app
-RUN npm run build -- --configuration production
-
-# Use Maven to build Spring Boot app
-FROM maven:3.9.5-eclipse-temurin-21-alpine AS maven-build
+# Stage 1: Build Spring Boot application
+FROM maven:3.9.9-eclipse-temurin-23 AS maven-build
 
 # Set working directory for Spring Boot
-WORKDIR /app/spring
+WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Copy Maven dependencies and install them
 COPY final_project_spring/pom.xml ./
 RUN mvn dependency:go-offline -B
 
-# Copy source code and the Angular build output
-COPY final_project_spring/src ./src/
-COPY --from=angular-build /app/angular/dist/final_project_angular/ ./src/main/resources/static/
+# Copy the entire Spring Boot source code
+COPY final_project_spring/ ./
 
-# Package the application
-RUN mvn package -DskipTests
+# Build the Spring Boot application without running tests
+RUN mvn clean package -DskipTests
 
-# Final stage: Setup runtime environment
-FROM eclipse-temurin:21-jre-alpine
+# Stage 2: Final runtime image (Use lightweight JDK instead of Maven)
+FROM eclipse-temurin:23-jdk
 
 WORKDIR /app
 
-# Copy the jar file from Maven stage
-COPY --from=maven-build /app/spring/target/*.jar app.jar
+# Copy the built JAR file from the build stage
+COPY --from=maven-build /app/target/*.jar app.jar
 
-# Create directory for Google credentials
-RUN mkdir -p /app/config
-
-# Environment variable for Google Cloud API credentials
-ENV GOOGLE_CLOUD_CREDENTIALS_PATH=/app/config/google-credentials.json
-
-# Expose the port your application will run on
+# Expose the port (Railway automatically sets an internal port)
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+CMD ["java", "-jar", "/app/app.jar"]

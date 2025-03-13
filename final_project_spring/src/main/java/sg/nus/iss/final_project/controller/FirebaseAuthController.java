@@ -23,7 +23,7 @@ import sg.nus.iss.final_project.repo.UserRepository;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
+// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for frontend
 public class FirebaseAuthController {
 
     @Autowired
