@@ -1,7 +1,11 @@
 package sg.nus.iss.final_project.config;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,11 +22,24 @@ public class GoogleCloudConfig {
 
 	@Bean
 	public GoogleCredentials googleCredentials() throws IOException {
-		try (FileInputStream inputStream = new FileInputStream(credentialsPath)) {
-			return GoogleCredentials.fromStream(inputStream)
-					.createScoped("https://www.googleapis.com/auth/cloud-platform");
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to load Google Cloud credentials", e);
+		// First check if credentials file exists
+		File credentialsFile = new File(credentialsPath);
+		if (credentialsFile.exists()) {
+			try (FileInputStream inputStream = new FileInputStream(credentialsFile)) {
+				return GoogleCredentials.fromStream(inputStream)
+						.createScoped("https://www.googleapis.com/auth/cloud-platform");
+			}
+		} else {
+			// Fallback to environment variable if file doesn't exist
+			String encodedCredentials = System.getenv("GOOGLE_CREDENTIALS");
+			if (encodedCredentials != null && !encodedCredentials.isEmpty()) {
+				byte[] decodedCredentials = Base64.getDecoder().decode(encodedCredentials);
+				try (InputStream inputStream = new ByteArrayInputStream(decodedCredentials)) {
+					return GoogleCredentials.fromStream(inputStream)
+							.createScoped("https://www.googleapis.com/auth/cloud-platform");
+				}
+			}
+			throw new IOException("No Google credentials found");
 		}
 	}
 

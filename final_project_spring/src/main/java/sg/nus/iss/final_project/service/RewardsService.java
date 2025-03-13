@@ -323,6 +323,16 @@ public class RewardsService {
                 userId,
                 "Welcome bonus for joining PaperWorth!");
 
+        // Create a UserReward for the welcome bonus, explicitly set as FULFILLED
+        UserReward welcomeBonus = new UserReward(
+                userId,
+                "welcome-bonus", // Use a special ID for welcome bonus
+                "Welcome Bonus",
+                0, // No points spent
+                "FULFILLED");
+        welcomeBonus.setRedemptionCode("WELCOME100"); // Optional: add a fixed redemption code
+        userRewardRepository.save(welcomeBonus);
+
         return pointTransactionRepository.save(transaction);
     }
 }

@@ -20,7 +20,7 @@ import sg.nus.iss.final_project.service.BudgetService;
 
 @RestController
 @RequestMapping("/api/budgets")
-@CrossOrigin(origins = "http://localhost:4200") // Enable CORS for Angular frontend
+// @CrossOrigin(origins = "http://localhost:4200") // Enable CORS for Angular frontend
 public class BudgetController {
 
     @Autowired
