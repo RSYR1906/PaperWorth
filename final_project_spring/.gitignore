@@ -34,4 +34,5 @@ build/
 
 ### Google Cloud API ###
 **/google-credentials.json
-**/firebase-service-account.json
+
+final_project_spring/src/main/resources/firebase-service-account.json
