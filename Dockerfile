@@ -38,20 +38,11 @@ WORKDIR /app
 # Copy the jar file from Maven stage
 COPY --from=maven-build /app/spring/target/*.jar app.jar
 
-# Environment variables for database connections
-# ENV SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/final_project
-# ENV SPRING_DATASOURCE_USERNAME=user
-# ENV SPRING_DATASOURCE_PASSWORD=user
-# ENV SPRING_DATA_MONGODB_URI=mongodb://localhost:27017/final_project
+# Create directory for Google credentials
+RUN mkdir -p /app/config
 
 # Environment variable for Google Cloud API credentials
-ENV GOOGLE_CLOUD_CREDENTIALS_PATH=/app/google-credentials.json
-
-RUN mkdir -p /app/config && chown -R spring:spring /app/config
-
-# Configure the container to run as a non-root user
-# RUN addgroup -S spring && adduser -S spring -G spring
-# USER spring:spring
+ENV GOOGLE_CLOUD_CREDENTIALS_PATH=/app/config/google-credentials.json
 
 # Expose the port your application will run on
 EXPOSE 8080
