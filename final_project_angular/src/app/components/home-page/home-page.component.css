@@ -1,4 +1,4 @@
-/* Homepage Styles */
+/* src/app/components/home-page/home-page.component.css */
 
 /* Hero Section */
 .hero {
@@ -131,166 +131,6 @@
   color: #2E3192;
   font-weight: 600;
   font-size: 18px;
-}
-
-/* Promotions Section */
-.promotions {
-  padding: 30px;
-  animation: fadeIn 1s ease-out;
-}
-
-.promotions h3 {
-  margin-bottom: 25px;
-  color: #343a40;
-  font-size: 24px;
-  font-weight: 600;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.promotions h3:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background-color: #2E3192;
-}
-
-.promotions h4 {
-  color: #6c757d;
-  margin: 20px 0 15px;
-  font-size: 18px;
-}
-
-.promo-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
-}
-
-.promo-card {
-  background-color: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-  cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.promo-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-}
-
-.promo-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-bottom: 1px solid #f1f1f1;
-}
-
-.promo-content {
-  padding: 20px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.promo-title {
-  font-size: 15px;
-  margin-bottom: 15px;
-  color: #343a40;
-  flex: 1;
-  line-height: 1.4;
-}
-
-.promo-merchant {
-  font-weight: 700;
-  font-size: 16px;
-  color: #2E3192;
-  margin-bottom: 5px;
-}
-
-.expiry {
-  font-size: 13px;
-  color: #dc3545;
-}
-
-.promo-code {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #6c757d;
-}
-
-.promo-code span {
-  background-color: #f8f9fa;
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-  color: #2E3192;
-  font-weight: 600;
-}
-
-/* Logo styling in auth header */
-.auth-logo-header {
-  position: absolute;
-  top: 20px;
-  left: 30px;
-  z-index: 10;
-}
-
-.auth-logo-header .logo-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.auth-logo-header .logo-container img {
-  max-height: 40px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-}
-
-.auth-logo-header .logo-text {
-  font-size: 25px;
-  font-weight: 600;
-  color: #2E3192;
-  margin: 0 0 0 8px;
-}
-
-/* Floating Scan Button */
-.scan-button {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 65px;
-  height: 65px;
-  border-radius: 50%;
-  background-color: #2E3192;
-  color: white;
-  border: none;
-  font-size: 30px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-  z-index: 99;
-}
-
-.scan-button:hover {
-  transform: scale(1.1) rotate(5deg);
-  background-color: #232578;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* Modal Styles - Shared between receipt and promotion modals */
@@ -557,6 +397,111 @@
   text-align: center;
 }
 
+/* Promotions Section */
+.promotions {
+  padding: 30px;
+  animation: fadeIn 1s ease-out;
+}
+
+.promotions h3 {
+  margin-bottom: 25px;
+  color: #343a40;
+  font-size: 24px;
+  font-weight: 600;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.promotions h3:after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background-color: #2E3192;
+}
+
+.promotions h4 {
+  color: #6c757d;
+  margin: 20px 0 15px;
+  font-size: 18px;
+}
+
+.promo-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.promo-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.promo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.promo-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.promo-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.promo-title {
+  font-size: 15px;
+  margin-bottom: 15px;
+  color: #343a40;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.promo-merchant {
+  font-weight: 700;
+  font-size: 16px;
+  color: #2E3192;
+  margin-bottom: 5px;
+}
+
+.expiry {
+  font-size: 13px;
+  color: #dc3545;
+}
+
+.promo-code {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.promo-code span {
+  background-color: #f8f9fa;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #2E3192;
+  font-weight: 600;
+}
+
 /* Loading Indicators */
 .loading-promotions {
   display: flex;
@@ -660,15 +605,6 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-.promotion-details-modal .modal-header {
-  padding: 20px 25px;
-  border-bottom: 1px solid #eee;
-}
-
-.promotion-details-modal .modal-header h3 {
-  font-size: 20px;
-}
-
 .promo-detail-image {
   width: 100%;
   height: 220px;
@@ -720,22 +656,6 @@
   background-color: #e9ecef;
 }
 
-.promo-detail-row .promo-code::after {
-  content: "Click to copy";
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  font-size: 10px;
-  color: #6c757d;
-  font-family: sans-serif;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.promo-detail-row .promo-code:hover::after {
-  opacity: 1;
-}
-
 .promo-detail-row .conditions {
   font-size: 14px;
   line-height: 1.5;
@@ -774,262 +694,4 @@
 
 .action-button::before {
   content: "💾";
-  font-size: 16px;
-}
-
-.action-button.secondary {
-  background-color: #f1f3f5;
-  color: #343a40;
-  border: 1px solid #e0e0e0;
-}
-
-.action-button.secondary:hover {
-  background-color: #e9ecef;
-  border-color: #d0d0d0;
-}
-
-.action-button.secondary::before {
-  content: "📤";
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .navbar {
-    padding: 15px;
-    flex-wrap: wrap;
-  }
-  
-  .logo-container {
-    margin-bottom: 10px;
-  }
-  
-  .nav-links {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    margin-top: 10px;
-    overflow-x: auto;
-    padding-bottom: 5px;
-  }
-  
-  .hero h1 {
-    font-size: 32px;
-  }
-  
-  .hero p {
-    font-size: 16px;
-  }
-  
-  .dashboard, .promotions {
-    margin: 15px;
-    padding: 20px;
-  }
-  
-  .promo-detail-row {
-    flex-direction: column;
-  }
-  
-  .promo-detail-row .label {
-    margin-bottom: 5px;
-    width: auto;
-  }
-  
-  .promo-detail-actions {
-    flex-direction: column;
-  }
-  
-  .auth-logo-header {
-    top: 10px;
-    left: 15px;
-  }
-  
-  .auth-logo-header .logo-container img {
-    max-height: 35px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    padding: 60px 20px;
-  }
-  
-  .hero h1 {
-    font-size: 28px;
-  }
-  
-  .hero-button {
-    padding: 12px 25px;
-    font-size: 15px;
-  }
-  
-  .promo-list {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-  }
-  
-  .modal-footer .action-btn {
-    width: 100%;
-  }
-  
-  .scan-button {
-    width: 55px;
-    height: 55px;
-    font-size: 24px;
-    right: 20px;
-    bottom: 20px;
-  }
-  
-  .auth-logo-header .logo-container img {
-    max-height: 28px;
-  }
-  
-  .auth-logo-header .logo-text {
-    font-size: 16px;
-  }
-}
-
-/* Success Notification Styles */
-.success-notification {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  width: 350px;
-  z-index: 2000;
-  overflow: hidden;
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translate(-50%, 20px);
-  }
-  to { 
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-.success-content {
-  display: flex;
-  align-items: center;
-  padding: 15px 20px;
-}
-
-.success-icon {
-  background-color: #4CAF50;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  margin-right: 15px;
-  flex-shrink: 0;
-}
-
-.success-message {
-  flex: 1;
-}
-
-.success-message h4 {
-  margin: 0 0 5px 0;
-  font-size: 16px;
-  color: #333;
-}
-
-.success-message p {
-  margin: 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.close-notification {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #999;
-  padding: 0 0 0 10px;
-  line-height: 1;
-}
-
-.close-notification:hover {
-  color: #333;
-}
-
-.timer-bar {
-  height: 4px;
-  background-color: #f1f1f1;
-  width: 100%;
-}
-
-.timer-progress {
-  height: 100%;
-  background-color: #4CAF50;
-  transition: width 0.1s linear;
-}
-
-.rewards-promo {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.rewards-promo:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-}
-
-.rewards-icon {
-  font-size: 36px;
-  margin-right: 20px;
-}
-
-.rewards-text {
-  flex: 1;
-}
-
-.rewards-text h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #343a40;
-  margin-bottom: 5px;
-}
-
-.rewards-text p {
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0;
-}
-
-.view-rewards-btn {
-  background-color: #2E3192;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  margin-left: 20px;
-  transition: background-color 0.3s, transform 0.3s;
-}
-
-.view-rewards-btn:hover {
-  background-color: #232578;
-  transform: translateY(-2px);
 }

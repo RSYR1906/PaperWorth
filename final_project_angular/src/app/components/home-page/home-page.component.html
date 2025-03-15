@@ -1,3 +1,4 @@
+<!-- src/app/components/home-page/home-page.component.html -->
 
 <!-- Hero Section -->
 <section class="hero">
@@ -140,7 +141,7 @@
             <img 
               [src]="promo.imageUrl" 
               alt="Promo Image" 
-              onerror="this.src='promotions/placeholder-image.jpg'"
+              onerror="this.src='assets/images/placeholder-image.jpg'"
             >
             <div class="promo-content">
               <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
@@ -174,7 +175,7 @@
       <button class="close-button" (click)="closePromotionDetails()">×</button>
     </div>
     
-    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='promotions/placeholder-image.jpg'">
+    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='assets/images/placeholder-image.jpg'">
     
     <div class="promo-detail-info">
       <h4>{{ selectedPromotion.description }}</h4>
@@ -206,9 +207,6 @@
     </div>
   </div>
 </div>
-
-<!-- Floating Camera Button -->
-<button class="scan-button" (click)="triggerFileInput()">📸</button>
 
 <!-- Success Notification -->
 <div class="success-notification" *ngIf="showSuccessNotification">

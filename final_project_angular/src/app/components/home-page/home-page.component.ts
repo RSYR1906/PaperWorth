@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
@@ -12,7 +12,7 @@ import { PromotionService } from '../../services/promotions.service';
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.css']
 })
-export class HomePageComponent implements OnInit {
+export class HomePageComponent implements OnInit, OnDestroy {
   userName = 'User';
   monthlyExpenses = 0;
   selectedFile: File | null = null;
