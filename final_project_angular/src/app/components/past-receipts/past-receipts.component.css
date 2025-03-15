@@ -1,10 +1,10 @@
-/* src/app/components/past-receipts/past-receipts.component.css */
+/* Past Receipts Page Styles */
 
-/* Mobile-first Hero Section */
+/* Hero Section */
 .hero {
   background: linear-gradient(135deg, #2E3192 0%, #1b93ff 100%);
   color: white;
-  padding: 80px 30px;
+  padding: 60px 30px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
@@ -43,15 +43,15 @@
 }
 
 .hero h1 {
-  font-size: 40px;
-  margin-bottom: 20px;
+  font-size: 36px;
+  margin-bottom: 15px;
   font-weight: 700;
   animation: fadeInUp 0.8s ease-out;
 }
 
 .hero p {
   font-size: 18px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   opacity: 0.9;
   animation: fadeInUp 1s ease-out;
 }
@@ -67,35 +67,56 @@
   }
 }
 
-/* Search and Filters */
-.search-filters-container {
-  padding: 16px;
+/* Receipts Container Styles */
+.receipts-container {
   background-color: white;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin: 30px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.8s ease-out;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.receipts-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Search and Filters */
+.receipts-controls {
+  margin-bottom: 30px;
 }
 
 .search-bar {
   position: relative;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.search-input {
+.search-bar input {
   width: 100%;
-  height: 48px;
-  padding: 12px 16px 12px 40px;
+  padding: 14px 20px 14px 45px;
   border: 1px solid #e0e0e0;
-  border-radius: 24px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s;
   background-color: #f8f9fa;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.search-input:focus {
+.search-bar input:focus {
   outline: none;
-  border-color: #1c1e7a;
-  box-shadow: 0 0 0 3px rgba(28, 30, 122, 0.1);
-  background-color: white;
+  border-color: #2E3192;
+  box-shadow: 0 0 0 3px rgba(46, 49, 146, 0.1);
+  background-color: #ffffff;
 }
 
 .search-icon {
@@ -104,175 +125,513 @@
   top: 50%;
   transform: translateY(-50%);
   color: #6c757d;
-  font-size: 16px;
-}
-
-/* Filter Chips */
-.filter-chips {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.filter-chips::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-.filter-chip {
-  border: 1px solid #e0e0e0;
-  background-color: white;
-  color: #343a40;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.filter-chip.active {
-  background-color: #1c1e7a;
-  color: white;
-  border-color: #1c1e7a;
-}
-
-/* Category Select */
-.category-filter {
-  margin-bottom: 8px;
-}
-
-.category-select {
-  width: 100%;
-  height: 48px;
-  padding: 12px 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 16px;
-  background-color: white;
-  color: #343a40;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-}
-
-.category-select:focus {
-  outline: none;
-  border-color: #1c1e7a;
-  box-shadow: 0 0 0 3px rgba(28, 30, 122, 0.1);
-}
-
-/* Receipts List */
-.receipts-list {
-  padding: 0 16px 80px; /* Bottom padding for navigation bar */
-}
-
-.receipt-card {
-  display: flex;
-  align-items: center;
-  background-color: white;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.receipt-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.receipt-icon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  background-color: #f1f3f5;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
   font-size: 18px;
 }
 
-.receipt-details {
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+}
+
+.filter-group label {
+  margin-right: 10px;
+  font-size: 14px;
+  color: #343a40;
+  font-weight: 500;
+}
+
+.filter-group select {
   flex: 1;
-  min-width: 0; /* Fix for text overflow */
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #2E3192;
+  box-shadow: 0 0 0 3px rgba(46, 49, 146, 0.1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input {
+  margin-right: 8px;
+  accent-color: #2E3192;
+}
+
+.checkbox-label span {
+  font-size: 14px;
+  color: #343a40;
+  font-weight: 500;
+}
+
+/* Table Styles */
+.receipts-table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.receipts-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.receipts-table th {
+  background-color: #f8f9fa;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #343a40;
+  border-bottom: 2px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.receipts-table td {
+  padding: 18px 15px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.receipt-row {
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.receipt-row:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
 .receipt-merchant {
   font-weight: 600;
   color: #343a40;
-  font-size: 16px;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.receipt-info {
-  display: flex;
-  gap: 12px;
 }
 
 .receipt-category {
-  font-size: 13px;
   color: #6c757d;
+  font-size: 14px;
 }
 
 .receipt-date {
-  font-size: 13px;
   color: #6c757d;
+  font-size: 14px;
 }
 
 .receipt-amount {
-  font-weight: 700;
-  font-size: 16px;
-  color: #1c1e7a;
-  margin-left: 12px;
+  font-weight: 600;
+  color: #2E3192;
 }
 
-.promo-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.promo-column {
+  width: 60px;
+  text-align: center;
+}
+
+.receipt-promo-cell {
+  text-align: center;
+}
+
+.receipt-promo {
+  width: 30px;
+  height: 30px;
+  background-color: #fff3cd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
+  margin: 0 auto;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-/* Loading Container */
-.loading-container {
+.no-receipts {
+  text-align: center;
+  padding: 50px 0;
+  color: #6c757d;
+}
+
+.scan-btn {
+  display: inline-block;
+  background-color: #2E3192;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(46, 49, 146, 0.2);
+}
+
+.scan-btn:hover {
+  background-color: #232578;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(46, 49, 146, 0.3);
+}
+
+/* Fixed positioning for modal to prevent page shaking */
+.receipt-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.3s ease-out;
+  will-change: opacity;
+  pointer-events: auto;
+}
+
+.receipt-details-modal.closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  position: relative;
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1001;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+.closing .modal-content {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+/* Fix navbar positioning and prevent layout shifts */
+.navbar {
+  position: relative;
+  z-index: 10;
+  background-color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Make sure navbar links don't cause layout shifts when hovered */
+.nav-links a {
+  position: relative;
+  text-decoration: none;
+  color: #343a40;
+  font-weight: 500;
+  padding: 8px 12px;
+  margin: 0 5px;
+  transition: color 0.3s ease;
+}
+
+/* Prevent shifts when hovering nav links */
+.nav-links a:hover {
+  color: #2E3192;
+}
+
+/* Avoid possible causes of layout shifts in logo */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+/* Close button styling */
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: relative;
+  z-index: 5;
+}
+
+.close-button:hover {
+  color: #343a40;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: none;
+}
+
+/* Add a fixed height to the receipt image container */
+.receipt-image-container {
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  min-height: 100px;
+}
+
+/* Make sure the image doesn't cause layout shifts */
+.receipt-image {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateZ(0);
+}
+
+/* Receipt Info Section */
+.receipt-info {
+  padding: 20px 25px;
+  border-bottom: 1px solid #eee;
+}
+
+.receipt-info-row {
+  display: flex;
+  margin-bottom: 15px;
+  align-items: flex-start;
+}
+
+.receipt-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.receipt-info-row span:first-child {
+  width: 120px;
+  color: #6c757d;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.receipt-info-row span:last-child {
+  flex: 1;
+  font-weight: 600;
+  color: #343a40;
+}
+
+/* Receipt Items Section */
+.receipt-items {
+  padding: 20px 25px;
+}
+
+.receipt-items h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #343a40;
+  line-height: 1.4;
+}
+
+.receipt-item-header {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr;
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.receipt-item-row {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.receipt-item-row:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #343a40;
+  padding-right: 10px;
+}
+
+.item-qty {
+  text-align: center;
+  color: #6c757d;
+}
+
+.item-price {
+  text-align: right;
+  font-weight: 600;
+  color: #2E3192;
+}
+
+.receipt-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 0 0;
+  font-weight: 700;
+  font-size: 16px;
+  color: #343a40;
+  margin-top: 15px;
+  border-top: 2px solid #e9ecef;
+}
+
+.receipt-total span:last-child {
+  color: #2E3192;
+}
+
+/* Receipt Actions */
+.receipt-actions {
+  padding: 20px 25px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.action-button {
+  flex: 1;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2E3192;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.action-button:hover {
+  background-color: #232578;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 49, 146, 0.2);
+}
+
+.action-button::before {
+  content: "💾";
+  font-size: 16px;
+}
+
+.action-button.secondary {
+  background-color: #f1f3f5;
+  color: #343a40;
+  border: 1px solid #e0e0e0;
+}
+
+.action-button.secondary:hover {
+  background-color: #e9ecef;
+  border-color: #d0d0d0;
+}
+
+.action-button.secondary::before {
+  content: "📤";
+}
+
+/* Different icon for different buttons */
+.action-button[routerLink^="/promotions"]::before {
+  content: "🎁";
+}
+
+/* Loading Indicator */
+.loading-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  background-color: white;
-  border-radius: 12px;
-  margin: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 40px 0;
+  color: #6c757d;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #f1f3f5;
-  border-top: 3px solid #1c1e7a;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2E3192;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
@@ -280,370 +639,164 @@
   100% { transform: rotate(360deg); }
 }
 
-.loading-container p {
-  color: #6c757d;
-  font-size: 14px;
-}
-
-/* Error & Empty States */
-.error-message, .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background-color: white;
-  border-radius: 12px;
-  margin: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+/* Error Message */
+.error-message {
   text-align: center;
+  padding: 40px 0;
+  color: #dc3545;
+  background-color: #f8d7da;
+  border-radius: 8px;
+  margin: 20px 0;
 }
 
 .error-message p {
-  color: #dc3545;
-  margin-bottom: 16px;
-}
-
-.empty-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #343a40;
-}
-
-.empty-state p {
-  color: #6c757d;
-  margin-bottom: 16px;
-}
-
-/* Modal Styles */
-.mobile-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: white;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(100%);
-  transition: transform 0.3s ease-out;
-}
-
-.mobile-modal.visible {
-  transform: translateY(0);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  background-color: white;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  flex: 1;
-  margin: 0;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #6c757d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.modal-close:active {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.modal-body {
-  padding: 16px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  flex: 1;
-}
-
-.modal-footer {
-  padding: 16px;
-  display: flex;
-  gap: 10px;
-  border-top: 1px solid #f0f0f0;
-  background-color: white;
-}
-
-.modal-footer button {
-  flex: 1;
-}
-
-/* Receipt Image */
-.receipt-image-container {
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.receipt-image {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Receipt Info Card */
-.receipt-info-card {
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.info-value {
-  font-weight: 600;
-  color: #343a40;
-  text-align: right;
-}
-
-.info-time {
-  display: block;
-  font-size: 12px;
-  font-weight: normal;
-  color: #6c757d;
-  margin-top: 2px;
-}
-
-.info-total {
-  color: #1c1e7a;
-  font-size: 18px;
-}
-
-/* Receipt Items */
-.receipt-items-list {
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.receipt-items-list h4 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 12px;
-  color: #343a40;
-}
-
-.item-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.item-row:last-of-type {
-  border-bottom: none;
-}
-
-.item-name {
-  flex: 1;
-  font-weight: 500;
-  color: #343a40;
-  padding-right: 8px;
-}
-
-.item-details {
-  white-space: nowrap;
-}
-
-.item-qty {
-  color: #6c757d;
-  font-size: 14px;
-  margin-right: 4px;
-}
-
-.item-price {
-  font-weight: 600;
-  color: #1c1e7a;
-}
-
-.items-total {
-  display: flex;
-  justify-content: space-between;
-  border-top: 2px solid rgba(0,0,0,0.1);
-  padding-top: 12px;
-  margin-top: 12px;
-  font-weight: 600;
-}
-
-.items-total span:last-child {
-  color: #1c1e7a;
-}
-
-/* Promotions Badge */
-.promotions-badge {
-  display: flex;
-  align-items: center;
-  background-color: #fff8e1;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 20px;
-}
-
-.badge-icon {
-  font-size: 24px;
-  margin-right: 12px;
-}
-
-.badge-content {
-  flex: 1;
-}
-
-.badge-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: #343a40;
-  margin-bottom: 4px;
-}
-
-.badge-content p {
-  font-size: 13px;
-  color: #6c757d;
-  margin: 0;
-}
-
-.badge-action {
-  background-color: #1c1e7a;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 14px;
+  margin-bottom: 15px;
   font-weight: 500;
 }
 
-/* Action Buttons */
 .action-btn {
+  background-color: #2E3192;
+  color: white;
   border: none;
-  padding: 14px 16px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  min-height: 48px;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
+}
+
+.action-btn:hover {
+  background-color: #232578;
+}
+
+/* Floating Scan Button */
+.scan-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background-color: #2E3192;
+  color: white;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s;
+  z-index: 99;
+  backface-visibility: hidden;
 }
 
-.action-btn.primary {
-  background-color: #1c1e7a;
-  color: white;
+.scan-button:hover {
+  transform: scale(1.1) rotate(5deg);
+  background-color: #232578;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-.action-btn.primary:active {
-  background-color: #151566;
-}
-
-.action-btn.secondary {
-  background-color: #f1f3f5;
-  color: #343a40;
-  border: 1px solid #e0e0e0;
-}
-
-.action-btn.secondary:active {
-  background-color: #e9ecef;
-}
-
-.action-btn.danger {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
-}
-
-.action-btn.danger:active {
-  background-color: rgba(220, 53, 69, 0.2);
-}
-
-/* Media Queries for larger screens */
-@media (min-width: 768px) {
-  .hero {
-    padding: 60px 30px;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 15px;
+    flex-wrap: wrap;
   }
   
-  .hero h1 {
-    font-size: 32px;
+  .logo-container {
+    margin-bottom: 10px;
   }
   
-  .hero p {
-    font-size: 18px;
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    gap: 15px;
   }
   
-  .search-filters-container {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  .receipts-container {
+    margin: 15px;
     padding: 20px;
   }
   
-  .search-bar {
-    flex: 1;
-    margin-bottom: 0;
+  .filters {
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
   }
   
-  .filter-chips {
-    margin-bottom: 0;
+  .filter-group {
+    width: 100%;
   }
   
-  .category-filter {
-    margin-bottom: 0;
-    width: 200px;
+  .receipt-actions {
+    flex-direction: column;
   }
   
-  .receipts-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 16px;
-    padding: 0 20px 20px;
+  .action-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .receipts-table th:not(:first-child):not(:last-child),
+  .receipts-table td:not(:first-child):not(:last-child) {
+    display: none;
   }
   
-  .receipt-card {
-    margin-bottom: 0;
+  .receipts-table {
+    table-layout: fixed;
   }
+  
+  .receipts-table th:first-child,
+  .receipts-table td:first-child {
+    width: 70%;
+  }
+  
+  .receipts-table th:last-child,
+  .receipts-table td:last-child {
+    width: 30%;
+  }
+  
+  .receipt-merchant {
+    font-size: 15px;
+  }
+  
+  .receipt-amount {
+    font-size: 14px;
+  }
+  
+  .scan-button {
+    width: 55px;
+    height: 55px;
+    font-size: 24px;
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+}
+
+/* Fix for Chrome rendering issues */
+.modal-content,
+.receipt-image,
+.action-button,
+.navbar {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Ensure content behind modal doesn't shift */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }

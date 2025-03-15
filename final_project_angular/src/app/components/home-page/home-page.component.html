@@ -1,4 +1,3 @@
-<!-- src/app/components/home-page/home-page.component.html -->
 
 <!-- Hero Section -->
 <section class="hero">
@@ -62,8 +61,19 @@
       <button class="close-btn" (click)="resetScanner()">×</button>
     </div>
     <div class="modal-body">
-      <!-- Basic Receipt Information -->
-      <div class="data-container">
+      <!-- Loading Indicator for Save Process -->
+      <div class="save-loading-container" *ngIf="isProcessing">
+        <div class="spinner"></div>
+        <p class="processing-message">{{ processingMessage || 'Processing...' }}</p>
+        <div class="processing-steps">
+          <div class="step" [class.active]="processingMessage === 'Saving your receipt...'" [class.completed]="processingMessage === 'Finding matching promotions...' || processingMessage === 'Searching for more promotions...' || processingMessage === 'Completing...'">Saving Receipt</div>
+          <div class="step" [class.active]="processingMessage === 'Finding matching promotions...' || processingMessage === 'Searching for more promotions...'" [class.completed]="processingMessage === 'Completing...'">Finding Promotions</div>
+          <div class="step" [class.active]="processingMessage === 'Completing...'">Completing</div>
+        </div>
+      </div>
+
+      <!-- Basic Receipt Information (Only show when not processing) -->
+      <div class="data-container" *ngIf="!isProcessing">
         <div class="data-row">
           <span class="data-label">Merchant:</span>
           <span class="data-value">{{ extractedData.merchantName }}</span>
@@ -82,8 +92,8 @@
         </div>
       </div>
       
-      <!-- Items Section (if available) -->
-      <div class="items-container" *ngIf="extractedData.items && extractedData.items.length > 0">
+      <!-- Items Section (if available and not processing) -->
+      <div class="items-container" *ngIf="extractedData.items && extractedData.items.length > 0 && !isProcessing">
         <h4 class="items-header">Items</h4>
         <div class="items-table-header">
           <span class="item-name-header">Item</span>
@@ -97,8 +107,8 @@
         </div>
       </div>
       
-      <!-- OCR Result (collapsible) -->
-      <div class="ocr-result-container">
+      <!-- OCR Result (collapsible and not shown when processing) -->
+      <div class="ocr-result-container" *ngIf="!isProcessing">
         <button class="toggle-ocr-btn" (click)="showFullText = !showFullText">
           {{ showFullText ? 'Hide' : 'Show' }} Full Extracted Text
         </button>
@@ -108,8 +118,12 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="action-btn secondary" (click)="resetScanner()">Cancel</button>
-      <button class="action-btn primary save-btn" (click)="saveReceipt()">Save Receipt</button>
+      <button class="action-btn secondary" [disabled]="isProcessing" (click)="resetScanner()">
+        {{ isProcessing ? 'Please wait...' : 'Cancel' }}
+      </button>
+      <button class="action-btn primary save-btn" [disabled]="isProcessing" (click)="saveReceipt()">
+        {{ isProcessing ? 'Saving...' : 'Save Receipt' }}
+      </button>
     </div>
   </div>
 </div>
@@ -141,7 +155,7 @@
             <img 
               [src]="promo.imageUrl" 
               alt="Promo Image" 
-              onerror="this.src='assets/images/placeholder-image.jpg'"
+              onerror="this.src='promotions/placeholder-image.jpg'"
             >
             <div class="promo-content">
               <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
@@ -175,7 +189,7 @@
       <button class="close-button" (click)="closePromotionDetails()">×</button>
     </div>
     
-    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='assets/images/placeholder-image.jpg'">
+    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='promotions/placeholder-image.jpg'">
     
     <div class="promo-detail-info">
       <h4>{{ selectedPromotion.description }}</h4>
@@ -203,10 +217,12 @@
     
     <div class="promo-detail-actions">
       <button class="action-button" (click)="savePromotion(selectedPromotion)">Save Promotion</button>
-      <button class="action-button secondary">Share</button>
     </div>
   </div>
 </div>
+
+<!-- Floating Camera Button -->
+<button class="scan-button" (click)="triggerFileInput()">📸</button>
 
 <!-- Success Notification -->
 <div class="success-notification" *ngIf="showSuccessNotification">

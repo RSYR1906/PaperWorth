@@ -64,57 +64,57 @@ export class ExpenseTrackerComponent implements OnInit {
     }
   }
   
-  // Load all user data including budget history
-  loadUserData(userId: string): void {
-    this.isLoading = true;
-    
-    // Get the current month in YYYY-MM format
-    const now = new Date();
-    const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Generate the past 6 months in YYYY-MM format
-    const months = this.getPreviousMonths(6);
-    
-    // Create an array of budget loading observables for each month
-    const budgetObservables = months.map(month => 
-      this.budgetService.loadUserBudget(userId, month).pipe(
-        catchError(error => {
-          console.error(`Error loading budget for ${month}:`, error);
-          // Return a placeholder empty budget on error
-          return of({
-            userId,
-            monthYear: month,
-            totalBudget: 0,
-            totalSpent: 0,
-            categories: []
-          });
-        })
-      )
-    );
-    
-    // Load all budgets in parallel
-    forkJoin(budgetObservables).subscribe({
-      next: (budgets) => {
-        // Process the current month's budget
-        const currentBudget = budgets.find(b => b.monthYear === currentMonthYear);
-        if (currentBudget) {
-          this.processCurrentBudget(currentBudget);
-        }
-        
-        // Process all budgets for history
-        this.processBudgetHistory(budgets);
-        
-        // Get recent transactions from the API
-        this.loadRecentTransactions(userId);
-        
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading user data:', error);
-        this.isLoading = false;
+// Update this method in your ExpenseTrackerComponent
+loadUserData(userId: string): void {
+  this.isLoading = true;
+  
+  // Get the current month in YYYY-MM format
+  const now = new Date();
+  const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
+  // Generate the past 3 months in YYYY-MM format instead of 6
+  const months = this.getPreviousMonths(3);
+  
+  // Create an array of budget loading observables for each month
+  const budgetObservables = months.map(month => 
+    this.budgetService.loadUserBudget(userId, month).pipe(
+      catchError(error => {
+        console.error(`Error loading budget for ${month}:`, error);
+        // Return a placeholder empty budget on error
+        return of({
+          userId,
+          monthYear: month,
+          totalBudget: 0,
+          totalSpent: 0,
+          categories: []
+        });
+      })
+    )
+  );
+  
+  // Load all budgets in parallel
+  forkJoin(budgetObservables).subscribe({
+    next: (budgets) => {
+      // Process the current month's budget
+      const currentBudget = budgets.find(b => b.monthYear === currentMonthYear);
+      if (currentBudget) {
+        this.processCurrentBudget(currentBudget);
       }
-    });
-  }
+      
+      // Process all budgets for history
+      this.processBudgetHistory(budgets);
+      
+      // Get recent transactions from the API
+      this.loadRecentTransactions(userId);
+      
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error loading user data:', error);
+      this.isLoading = false;
+    }
+  });
+}
   
   // Process the current month's budget
   processCurrentBudget(budget: any): void {
@@ -160,7 +160,7 @@ export class ExpenseTrackerComponent implements OnInit {
       // Convert YYYY-MM to Month Year format
       const [year, month] = budget.monthYear.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1);
-      const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       
       return {
         month: monthName,
@@ -168,7 +168,7 @@ export class ExpenseTrackerComponent implements OnInit {
       };
     });
     
-    // Prepare savings trend data
+    // Prepare savings trend data (if you still want to use this)
     this.savingsTrend = budgets.map(budget => {
       // Convert YYYY-MM to short month format
       const [year, month] = budget.monthYear.split('-');

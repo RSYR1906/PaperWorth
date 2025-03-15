@@ -1,20 +1,20 @@
 <!-- src/app/components/budget-settings/budget-settings.component.html -->
 
-<!-- Mobile-optimized Hero Section -->
+<!-- Attractive Hero Section with Animation -->
 <section class="hero">
   <div class="hero-content">
     <h1>Budget Settings</h1>
-    <p>Customize your monthly budget</p>
+    <p>Customize your monthly budget allocation</p>
   </div>
 </section>
 
-<!-- Loading Container -->
+<!-- Loading Container with Improved Spinner -->
 <div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading your budget data...</p>
 </div>
 
-<!-- Error & Success Messages -->
+<!-- Enhanced Success & Error Messages -->
 <div class="message success-message" *ngIf="successMessage">
   <div class="message-icon">✓</div>
   <div class="message-content">{{ successMessage }}</div>
@@ -25,18 +25,19 @@
   <div class="message-content">{{ errorMessage }}</div>
 </div>
 
-<!-- Budget Form -->
+<!-- Budget Form with Enhanced UI -->
 <form [formGroup]="budgetForm" (ngSubmit)="saveBudget()" *ngIf="!isLoading" class="settings-form">
   <!-- Total Budget Section -->
   <div class="settings-section">
     <div class="section-header">
       <h3>Monthly Budget</h3>
-      <p>Set your total monthly budget</p>
+      <p>Set your overall monthly spending limit</p>
     </div>
     
     <div class="form-group">
-      <label for="totalBudget">Total Budget ($)</label>
+      <label for="totalBudget">Total Budget</label>
       <div class="input-container">
+        <span class="currency-symbol">$</span>
         <input 
           type="number" 
           id="totalBudget" 
@@ -46,25 +47,32 @@
           (change)="onTotalBudgetChange()"
           inputmode="numeric"
           class="form-input"
+          placeholder="Enter amount"
         >
       </div>
       <div class="validation-error" *ngIf="budgetForm.get('totalBudget')?.invalid && budgetForm.get('totalBudget')?.touched">
-        Total budget must be at least $1
+        <span *ngIf="budgetForm.get('totalBudget')?.errors?.['required']">Total budget is required</span>
+        <span *ngIf="budgetForm.get('totalBudget')?.errors?.['min']">Total budget must be at least $1</span>
       </div>
     </div>
   </div>
   
-  <!-- Category Allocations Section -->
+  <!-- Category Allocations Section with Improved Visual Hierarchy -->
   <div class="settings-section">
     <div class="section-header">
       <h3>Category Allocations</h3>
-      <p>Adjust budget allocation across categories</p>
+      <p>Distribute your budget across spending categories</p>
     </div>
     
     <div class="categories-list">
-      <div class="category-item" *ngFor="let category of categories">
+      <div class="category-item" *ngFor="let category of categories" [class.changed]="hasChanged(category.category)">
         <div class="category-header">
-          <span class="category-name">{{ category.category }}</span>
+          <div class="category-name-container">
+            <span class="category-icon">
+              {{ getCategoryIcon(category.category) }}
+            </span>
+            <span class="category-name">{{ category.category }}</span>
+          </div>
           <span class="category-percentage">
             {{ calculatePercentage(budgetForm.get('category_' + category.category)?.value) }}%
           </span>
@@ -79,6 +87,7 @@
             min="0"
             step="10"
             inputmode="numeric"
+            [placeholder]="'Amount for ' + category.category"
           >
         </div>
         
@@ -89,13 +98,26 @@
             [style.backgroundColor]="getCategoryColor(category.category)"
           ></div>
         </div>
+        
+        <!-- Added spent amount indicator -->
+        <div class="category-stats" *ngIf="category.spentAmount > 0">
+          <span class="spent-amount">Spent: ${{ category.spentAmount.toFixed(2) }}</span>
+          <span class="remaining-amount">Remaining: ${{ (budgetForm.get('category_' + category.category)?.value - category.spentAmount).toFixed(2) }}</span>
+        </div>
       </div>
     </div>
   </div>
   
-  <!-- Form Actions -->
+  <!-- Form Actions with Enhanced Buttons -->
   <div class="form-actions">
-    <button type="button" class="action-btn secondary" (click)="goBack()">Cancel</button>
-    <button type="submit" class="action-btn primary" [disabled]="budgetForm.invalid">Save Budget</button>
+    <button type="button" class="action-btn secondary" (click)="goBack()">
+      <span class="btn-icon">←</span>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="action-btn primary" [disabled]="budgetForm.invalid || isSubmitting">
+      <span class="btn-icon" *ngIf="!isSubmitting">💾</span>
+      <span class="spinner-small" *ngIf="isSubmitting"></span>
+      <span>{{ isSubmitting ? 'Saving...' : 'Save Budget' }}</span>
+    </button>
   </div>
 </form>

@@ -14,9 +14,11 @@ export class BudgetSettingsComponent implements OnInit {
   budgetForm: FormGroup;
   currentBudget: any = null;
   isLoading: boolean = true;
+  isSubmitting: boolean = false;
   categories: any[] = [];
   successMessage: string = '';
   errorMessage: string = '';
+  originalValues: Map<string, number> = new Map();
 
   constructor(
     private router: Router,
@@ -51,12 +53,18 @@ export class BudgetSettingsComponent implements OnInit {
           totalBudget: budget.totalBudget
         });
         
+        // Store original values for change detection
+        this.originalValues.set('totalBudget', budget.totalBudget);
+        
         // Add category form controls dynamically
         this.categories.forEach(category => {
           this.budgetForm.addControl(
             `category_${category.category}`,
             this.formBuilder.control(category.budgetAmount, [Validators.required, Validators.min(0)])
           );
+          
+          // Store original category budget values
+          this.originalValues.set(category.category, category.budgetAmount);
         });
         
         this.isLoading = false;
@@ -76,6 +84,7 @@ export class BudgetSettingsComponent implements OnInit {
       return;
     }
 
+    this.isSubmitting = true;
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -96,6 +105,14 @@ export class BudgetSettingsComponent implements OnInit {
         Promise.all(updatePromises).then(() => {
           this.successMessage = 'Budget updated successfully!';
           this.isLoading = false;
+          this.isSubmitting = false;
+          
+          // Update original values for change detection
+          this.originalValues.set('totalBudget', totalBudget);
+          this.categories.forEach(category => {
+            const categoryBudget = this.budgetForm.get(`category_${category.category}`)?.value;
+            this.originalValues.set(category.category, categoryBudget);
+          });
           
           // Navigate back to expense tracker
           setTimeout(() => {
@@ -105,12 +122,14 @@ export class BudgetSettingsComponent implements OnInit {
           console.error('Error updating category budgets:', error);
           this.errorMessage = 'Failed to update category budgets. Please try again.';
           this.isLoading = false;
+          this.isSubmitting = false;
         });
       },
       error: (error) => {
         console.error('Error updating total budget:', error);
         this.errorMessage = 'Failed to update budget. Please try again.';
         this.isLoading = false;
+        this.isSubmitting = false;
       }
     });
   }
@@ -118,7 +137,7 @@ export class BudgetSettingsComponent implements OnInit {
   // Calculate the percentage of the total budget for a category
   calculatePercentage(categoryBudget: number): number {
     if (!this.currentBudget || this.currentBudget.totalBudget <= 0) return 0;
-    return Math.round((categoryBudget / this.currentBudget.totalBudget) * 100);
+    return Math.round((categoryBudget / this.budgetForm.get('totalBudget')?.value) * 100);
   }
 
   // When total budget changes, recalculate all category budgets proportionally
@@ -162,5 +181,43 @@ export class BudgetSettingsComponent implements OnInit {
     
     // Default color
     return '#607D8B';
+  }
+  
+  // Get appropriate icons for categories
+  getCategoryIcon(category: string): string {
+    const lowerCategory = category.toLowerCase();
+    
+    if (lowerCategory.includes('grocery') || lowerCategory.includes('groceries')) return '🛒';
+    if (lowerCategory.includes('dining')) return '🍽️';
+    if (lowerCategory.includes('fast food')) return '🍔';
+    if (lowerCategory.includes('cafe')) return '☕';
+    if (lowerCategory.includes('shopping')) return '🛍️';
+    if (lowerCategory.includes('retail')) return '👕';
+    if (lowerCategory.includes('health') || lowerCategory.includes('pharmacy')) return '💊';
+    if (lowerCategory.includes('transportation')) return '🚗';
+    if (lowerCategory.includes('entertainment')) return '🎬';
+    
+    // Default icon
+    return '💰';
+  }
+  
+  // Check if a category value has changed from original
+  hasChanged(categoryName: string): boolean {
+    const currentValue = this.budgetForm.get(`category_${categoryName}`)?.value;
+    const originalValue = this.originalValues.get(categoryName);
+    
+    return originalValue !== undefined && Math.abs(originalValue - currentValue) > 0.01;
+  }
+  
+  // Get percentage class based on value
+  getPercentageClass(percentage: number): string {
+    if (percentage > 30) return 'high';
+    if (percentage > 15) return 'medium';
+    return 'low';
+  }
+  
+  // Format number as currency
+  formatCurrency(value: number): string {
+    return value.toFixed(2);
   }
 }

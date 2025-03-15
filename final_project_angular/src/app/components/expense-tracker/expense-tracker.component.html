@@ -1,158 +1,119 @@
-<!-- src/app/components/expense-tracker/expense-tracker.component.html -->
-
-<!-- Mobile-optimized Hero Section -->
+<!-- Hero Section -->
 <section class="hero">
   <div class="hero-content">
     <h1>Expense Tracker</h1>
-    <p>Track and manage your spending</p>
+    <p>Understand your spending habits and save more</p>
   </div>
 </section>
 
-<!-- Loading State -->
+<!-- Loading Indicator -->
 <div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading your budget data...</p>
 </div>
 
-<!-- Main Content -->
+<!-- Main Content Area (only shown when not loading) -->
 <div *ngIf="!isLoading">
-  <!-- Budget Summary Card -->
-  <div class="budget-card">
-    <div class="card-header">
-      <h3>{{ currentMonth }} Budget</h3>
-      <a routerLink="/budget-settings" class="settings-link">
-        <span class="settings-icon">⚙️</span>
-        <span class="settings-text">Settings</span>
-      </a>
+  <!-- Budget Overview -->
+  <div class="budget-overview">
+    <div class="budget-header">
+      <h3>{{ currentMonth }} Budget Overview</h3>
+      <a routerLink="/budget-settings" class="budget-settings-link">Budget Settings</a>
     </div>
     
-    <!-- Budget Stats Grid -->
-    <div class="budget-stats">
-      <div class="stat-item">
-        <div class="stat-label">Total Spent</div>
-        <div class="stat-value">${{ totalSpent.toFixed(2) }}</div>
+    <div class="budget-cards">
+      <div class="budget-card">
+        <div class="budget-title">Total Spent</div>
+        <div class="budget-amount">${{ totalSpent.toFixed(2) }}</div>
       </div>
       
-      <div class="stat-item">
-        <div class="stat-label">Monthly Budget</div>
-        <div class="stat-value">${{ monthlyBudget.toFixed(2) }}</div>
+      <div class="budget-card">
+        <div class="budget-title">Monthly Budget</div>
+        <div class="budget-amount">${{ monthlyBudget.toFixed(2) }}</div>
       </div>
       
-      <div class="stat-item">
-        <div class="stat-label">Remaining</div>
-        <div class="stat-value" [class.text-danger]="isBudgetAtRisk()">
-          ${{ remainingBudget.toFixed(2) }}
-        </div>
+      <div class="budget-card">
+        <div class="budget-title">Remaining Budget</div>
+        <div class="budget-amount" [class.budget-risk]="isBudgetAtRisk()">${{ remainingBudget.toFixed(2) }}</div>
       </div>
     </div>
     
-    <!-- Budget Progress Bar -->
-    <div class="progress-container">
+    <div class="budget-progress">
       <div class="progress-bar">
-        <div 
-          class="progress-fill" 
-          [style.width.%]="percentageUsed" 
-          [class.high]="percentageUsed > 80"
-          [class.medium]="percentageUsed > 60 && percentageUsed <= 80"
-        ></div>
+        <div class="progress-fill" [style.width.%]="percentageUsed" [class.almost-full]="isBudgetAtRisk()"></div>
       </div>
       <div class="progress-label">{{ percentageUsed }}% of budget used</div>
     </div>
   </div>
-
-  <!-- Categories Section -->
-  <div class="categories-section" *ngIf="expenseCategories.length > 0">
-    <div class="section-header">
-      <h3>Spending by Category</h3>
-    </div>
-    
-    <!-- Categories Grid -->
-    <div class="categories-grid">
-      <div 
-        *ngFor="let category of expenseCategories" 
-        class="category-card"
-      >
-        <div class="category-icon" [style.background-color]="category.color">
-          {{ category.icon }}
-        </div>
-        <div class="category-details">
-          <div class="category-header">
-            <span class="category-name">{{ category.name }}</span>
-            <span class="category-amount">${{ category.amount.toFixed(2) }}</span>
-          </div>
-          <div class="category-progress">
-            <div 
-              class="category-bar" 
-              [style.width.%]="category.percentage"
-              [style.background-color]="category.color"
-            ></div>
-          </div>
-          <div class="category-stats">
-            <span>{{ category.percentage }}% of total</span>
-            <span>{{ category.transactions }} transactions</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
   
-  <!-- No Categories Message -->
-  <div class="empty-state" *ngIf="expenseCategories.length === 0">
-    <div class="empty-icon">📊</div>
-    <h3>No Spending Data</h3>
-    <p>Scan receipts to start tracking your expenses</p>
-    <button class="action-btn primary" routerLink="/homepage">Scan Receipt</button>
-  </div>
-
-  <!-- Recent Transactions -->
-  <div class="transactions-section" *ngIf="recentTransactions.length > 0">
-    <div class="section-header">
-      <h3>Recent Transactions</h3>
-    </div>
-    
-    <div class="transactions-list">
-      <div 
-        *ngFor="let transaction of recentTransactions" 
-        class="transaction-card"
-        routerLink="/past-receipts"
-      >
-        <div class="transaction-icon">
-          {{ transaction.icon }}
-        </div>
-        <div class="transaction-details">
-          <div class="transaction-merchant">{{ transaction.merchant }}</div>
-          <div class="transaction-info">
-            <span class="transaction-category">{{ transaction.category }}</span>
-            <span class="transaction-date">{{ getFormattedDate(transaction.date) }}</span>
-          </div>
-        </div>
-        <div class="transaction-amount">${{ transaction.amount.toFixed(2) }}</div>
-      </div>
-    </div>
-    
-    <a routerLink="/past-receipts" class="view-all-link">
-      <span>View All Transactions</span>
-      <span class="arrow-icon">→</span>
-    </a>
-  </div>
+<!-- Expense Categories (only shown if categories exist) -->
+<div class="expense-categories" *ngIf="expenseCategories.length > 0">
+  <h3>Spending by Category</h3>
   
-  <!-- Monthly Spending History -->
-  <div class="history-section" *ngIf="monthlyHistory.length > 0">
-    <div class="section-header">
-      <h3>Monthly Spending</h3>
-    </div>
-    
-    <div class="chart-container">
-      <div class="chart-bars">
-        <div *ngFor="let month of monthlyHistory" class="chart-bar">
-          <div 
-            class="bar-fill" 
-            [style.height.px]="getChartBarHeight(month.amount)"
-          ></div>
-          <div class="bar-label">{{ month.month.split(' ')[0].substring(0, 3) }}</div>
-          <div class="bar-value">${{ month.amount.toFixed(0) }}</div>
+  <div class="category-list">
+    <div class="category-card" *ngFor="let category of expenseCategories">
+      <div class="category-icon" [style.background-color]="category.color">{{ category.icon }}</div>
+      <div class="category-details">
+        <div class="category-header">
+          <span class="category-name">{{ category.name }}</span>
+          <span class="category-amount">${{ category.amount.toFixed(2) }}</span>
+        </div>
+        <div class="category-bar">
+          <div class="category-progress" [style.width.%]="category.percentage" [style.background-color]="category.color"></div>
+        </div>
+        <div class="category-stats">
+          <span>{{ category.percentage }}%</span>
+          <span>{{ category.transactions }} items</span>
         </div>
       </div>
     </div>
   </div>
 </div>
+  
+  <!-- No Categories Message -->
+  <div class="no-data-message" *ngIf="expenseCategories.length === 0">
+    <p>No spending categories yet. Start by adding some receipts!</p>
+    <button class="action-btn" routerLink="/homepage">Scan a Receipt</button>
+  </div>
+  
+  <!-- Recent Transactions (only shown if transactions exist) -->
+  <div class="recent-transactions" *ngIf="recentTransactions.length > 0">
+    <h3>Recent Transactions</h3>
+    
+    <div class="transaction-list">
+      <div class="transaction-item" *ngFor="let transaction of recentTransactions">
+        <div class="transaction-icon">{{ transaction.icon }}</div>
+        <div class="transaction-details">
+          <div class="transaction-merchant">{{ transaction.merchant }}</div>
+          <div class="transaction-category">{{ transaction.category }}</div>
+        </div>
+        <div class="transaction-date">{{ getFormattedDate(transaction.date) }}</div>
+        <div class="transaction-amount">${{ transaction.amount.toFixed(2) }}</div>
+      </div>
+    </div>
+    
+    <a routerLink="/past-receipts" class="view-all">View All Transactions <span class="arrow-icon">→</span></a>
+  </div>
+  
+  <!-- Monthly Spending History (only shown if history exists) -->
+<div class="history-section" *ngIf="monthlyHistory.length > 0">
+  <div class="section-header">
+    <h3>Last 3 Months Spending</h3>
+  </div>
+  
+  <div class="chart-container">
+    <div class="chart-bars">
+      <div *ngFor="let month of monthlyHistory" class="chart-bar">
+        <div 
+          class="bar-fill" 
+          [style.height.px]="getChartBarHeight(month.amount)"
+        ></div>
+        <div class="bar-label">{{ month.month }}</div>
+        <div class="bar-value">${{ month.amount.toFixed(0) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+<!-- Floating Scan Button -->
+<button class="scan-button" routerLink="/homepage">📸</button>

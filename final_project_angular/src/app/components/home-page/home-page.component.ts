@@ -33,6 +33,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   showSuccessNotification = false;
   notificationTimeRemaining = 100;
   notificationTimer: any = null;
+  processingMessage: string = '';
   successNotificationMessage: string = 'Receipt saved successfully!';
 
   
@@ -196,78 +197,84 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
   
-  // src/app/components/home-page/home-page.component.ts - Update saveReceipt method
-saveReceipt() {
-  if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
-    alert("Incomplete receipt data. Please try again.");
-    return;
-  }
-
-  this.isProcessing = true;
-  // First, try to get user from Firebase auth service directly
-  const firebaseUser = this.firebaseAuthService.getCurrentUser();
-  const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
-  
-  // Determine category based on merchant name
-  const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
-  
-  // Create receipt object based on our updated model
-  const receiptData = {
-    userId: currentUser.id || '1',
-    merchantName: this.extractedData.merchantName,
-    totalAmount: this.extractedData.totalAmount,
-    dateOfPurchase: this.extractedData.dateOfPurchase,
-    category: category,
-    imageUrl: this.imagePreview, // Store the image preview URL
-    items: this.extractedData.items || [], // Include items if available
-    additionalFields: {
-      fullText: this.extractedData.fullText || this.ocrText,
-      // Include any other fields from extracted data
-      ...Object.entries(this.extractedData)
-        .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
-        .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
+  saveReceipt() {
+    if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
+      alert("Incomplete receipt data. Please try again.");
+      return;
     }
-  };
-
-  this.http.post(`${this.apiUrl}/receipts`, receiptData)
-    .subscribe({
-      next: (response: any) => {
-        console.log('Receipt saved:', response);
-        
-        // Extract receipt and points data from response
-        const savedReceipt = response.receipt;
-        const pointsAwarded = response.pointsAwarded || 0;
-        
-        // Store the recently saved receipt for reference
-        this.recentlySavedReceipt = {
-          ...receiptData,
-          id: savedReceipt.id
-        };
-        
-        // Update monthly expenses with the new receipt amount
-        this.monthlyExpenses += this.extractedData.totalAmount;
-        
-        // Customize notification message to include points
-        this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
-        
-        // Show the success notification
-        this.showNotification();
-
-        // Fetch matching promotions for the receipt
-        this.fetchMatchingPromotions(this.extractedData.merchantName, category, savedReceipt.id);
-        
-        // Also refresh the recommended promotions as we have a new receipt
-        this.loadUserReceiptHistory();
-      },
-      error: (error) => {
-        console.error('Error saving receipt:', error);
-        alert('Failed to save receipt. Please try again.');
-        this.isProcessing = false;
+  
+    this.isProcessing = true;
+    // Show a more specific processing message
+    this.processingMessage = "Saving your receipt...";
+    
+    // First, try to get user from Firebase auth service directly
+    const firebaseUser = this.firebaseAuthService.getCurrentUser();
+    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    // Determine category based on merchant name
+    const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
+    
+    // Create receipt object based on our updated model
+    const receiptData = {
+      userId: currentUser.id || '1',
+      merchantName: this.extractedData.merchantName,
+      totalAmount: this.extractedData.totalAmount,
+      dateOfPurchase: this.extractedData.dateOfPurchase,
+      category: category,
+      imageUrl: this.imagePreview, // Store the image preview URL
+      items: this.extractedData.items || [], // Include items if available
+      additionalFields: {
+        fullText: this.extractedData.fullText || this.ocrText,
+        // Include any other fields from extracted data
+        ...Object.entries(this.extractedData)
+          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
+          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
       }
-    });
-}
-
-  // Method to fetch matching promotions and add them to recommendations
+    };
+  
+    this.http.post(`${this.apiUrl}/receipts`, receiptData)
+      .subscribe({
+        next: (response: any) => {
+          console.log('Receipt saved:', response);
+          
+          // Update the processing message to show next step
+          this.processingMessage = "Finding matching promotions...";
+          
+          // Extract receipt and points data from response
+          const savedReceipt = response.receipt;
+          const pointsAwarded = response.pointsAwarded || 0;
+          
+          // Store the recently saved receipt for reference
+          this.recentlySavedReceipt = {
+            ...receiptData,
+            id: savedReceipt.id
+          };
+          
+          // Update monthly expenses with the new receipt amount
+          this.monthlyExpenses += this.extractedData.totalAmount;
+          
+          // Customize notification message to include points
+          this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
+          
+          // Show the success notification
+          this.showNotification();
+  
+          // Fetch matching promotions for the receipt
+          this.fetchMatchingPromotions(this.extractedData.merchantName, category, savedReceipt.id);
+          
+          // Also refresh the recommended promotions as we have a new receipt
+          this.loadUserReceiptHistory();
+        },
+        error: (error) => {
+          console.error('Error saving receipt:', error);
+          alert('Failed to save receipt. Please try again.');
+          this.isProcessing = false;
+          this.processingMessage = "";
+        }
+      });
+  }
+  
+  // Updated fetchMatchingPromotions method to properly clear loading state
   fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
     this.isLoadingPromotions = true;
     
@@ -287,16 +294,23 @@ saveReceipt() {
             
             this.isLoadingPromotions = false;
             this.isProcessing = false;
+            this.processingMessage = "";
             
             // Clear the receipt data
             this.resetScanner();
           } else {
+            // Update processing message for fallback attempt
+            this.processingMessage = "Searching for more promotions...";
+            
             // If no promotions found, try fallback to receipt-based API
             this.fetchPromotionsByReceiptId(receiptId);
           }
         },
         error: (error) => {
           console.error('Error fetching matching promotions:', error);
+          // Update processing message for fallback attempt
+          this.processingMessage = "Searching for more promotions...";
+          
           // Try fallback to receipt-based API
           this.fetchPromotionsByReceiptId(receiptId);
         }
@@ -338,16 +352,25 @@ saveReceipt() {
               this.addPromotionsToRecommendations(group.name, group.deals);
             });
           }
-          this.isLoadingPromotions = false;
-          this.isProcessing = false;
           
-          // Clear the receipt data
-          this.resetScanner();
+          // Set final processing message before completion
+          this.processingMessage = "Completing...";
+          
+          // Short timeout to show the final step before clearing
+          setTimeout(() => {
+            this.isLoadingPromotions = false;
+            this.isProcessing = false;
+            this.processingMessage = "";
+            
+            // Clear the receipt data
+            this.resetScanner();
+          }, 500);
         },
         error: (error) => {
           console.error('Error fetching promotions by receipt ID:', error);
           this.isLoadingPromotions = false;
           this.isProcessing = false;
+          this.processingMessage = "";
           
           // Even if promotions fail, clear the scanner
           this.resetScanner();
