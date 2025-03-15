@@ -1,6 +1,8 @@
-// src/app/app.component.ts
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+// app.component.ts
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { MatSidenav } from '@angular/material/sidenav';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { FirebaseAuthService } from './services/firebase-auth.service';
 
 @Component({
@@ -9,13 +11,45 @@ import { FirebaseAuthService } from './services/firebase-auth.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'PaperWorth';
+  isMobile: boolean = false;
+  
+  @ViewChild('sidenav') sidenav!: MatSidenav;
+  @ViewChild('fileInput') fileInput!: ElementRef;
   
   constructor(
     private firebaseAuthService: FirebaseAuthService,
     private router: Router
-  ) {}
+  ) {
+    // Listen for authentication state changes
+    this.firebaseAuthService.currentUser$.subscribe(() => {
+      // Handle any UI updates needed when auth state changes
+    });
+    
+    // Close sidenav when navigating on mobile
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      if (this.isMobile && this.sidenav?.opened) {
+        this.sidenav.close();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Check screen size on initialization
+    this.checkScreenSize();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any): void {
+    this.checkScreenSize();
+  }
+
+  checkScreenSize(): void {
+    this.isMobile = window.innerWidth < 600;
+  }
 
   isAuthenticated(): boolean {
     return this.firebaseAuthService.isAuthenticated();
@@ -41,21 +75,21 @@ export class AppComponent {
     return currentUrl.includes('/login') || currentUrl.includes('/signup');
   }
 
-  // Add this to app.component.ts
-triggerFileInput() {
-  const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
-  if (fileInput) {
-    fileInput.click();
+  triggerFileInput() {
+    const fileInput = this.fileInput.nativeElement;
+    if (fileInput) {
+      fileInput.click();
+    }
   }
-}
 
-onFileSelected(event: any) {
-  // Handle the selected file - you may need to adjust this
-  // to match your existing implementation
-  const file = event.target.files[0];
-  if (file) {
-    // Process the selected file (scan receipt)
-    // This should match the logic you already have in your HomePageComponent
+  onFileSelected(event: any) {
+    // Handle the selected file
+    const file = event.target.files[0];
+    if (file) {
+      // Use your existing logic to process the file
+      console.log('File selected:', file.name);
+      // Reset file input
+      event.target.value = '';
+    }
   }
-}
 }
