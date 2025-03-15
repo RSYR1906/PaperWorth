@@ -48,6 +48,9 @@ export class RewardsComponent implements OnInit {
   isClaimingBonus: boolean = false;
   showBonusAnimation: boolean = false;
   
+  // Tab selection for mobile
+  activeTab: string = 'transactions';
+  
   // Filter categories
   categories = [
     { id: 'WELCOME', name: 'Welcome Bonus'},
@@ -93,7 +96,8 @@ export class RewardsComponent implements OnInit {
         this.hasClaimedWelcomeBonus = transactions.some(t => 
           t.source === 'WELCOME_BONUS' && t.transactionType === 'EARNED'
         );
-      }
+      },
+      error: (error) => console.error('Error checking welcome bonus status:', error)
     });
   }
   
@@ -132,6 +136,9 @@ export class RewardsComponent implements OnInit {
         setTimeout(() => {
           this.showBonusAnimation = false;
         }, 3000);
+        
+        // Close the reward details modal if it's open
+        this.closeRewardDetails();
       },
       error: (error) => {
         console.error('Error claiming welcome bonus:', error);
@@ -153,8 +160,7 @@ export class RewardsComponent implements OnInit {
         this.userPoints = points;
         this.determineUserTier(points.totalPoints);
       },
-      error: (error) => console.error('Error fetching user points:', error),
-      complete: () => this.loadAvailableRewards()
+      error: (error) => console.error('Error fetching user points:', error)
     });
     
     // Get redemption history
@@ -176,6 +182,9 @@ export class RewardsComponent implements OnInit {
       },
       error: (error) => console.error('Error fetching transactions:', error)
     });
+    
+    // Load available rewards
+    this.loadAvailableRewards();
   }
   
   // Load available rewards
@@ -183,6 +192,21 @@ export class RewardsComponent implements OnInit {
     this.rewardsService.getAvailableRewards().subscribe({
       next: (rewards) => {
         this.availableRewards = rewards;
+        
+        // Add welcome bonus if not claimed
+        if (!this.hasClaimedWelcomeBonus && !this.availableRewards.some(r => r.id === 'welcome-bonus')) {
+          this.availableRewards.unshift({
+            id: 'welcome-bonus',
+            name: 'Welcome Bonus',
+            description: 'Claim your 100 points welcome bonus for joining PaperWorth!',
+            pointsCost: 0,
+            imageUrl: '/assets/images/welcome-bonus.jpg',
+            category: 'WELCOME',
+            isAvailable: true,
+            quantity: 1
+          });
+        }
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -257,17 +281,32 @@ export class RewardsComponent implements OnInit {
   
   // Filter rewards by selected category
   get filteredRewards(): Reward[] {
-    if (this.selectedCategory === 'all') {
-      return this.availableRewards;
+    // Special case for welcome bonus tab
+    if (this.selectedCategory === 'WELCOME') {
+      return this.availableRewards.filter(reward => 
+        reward.id === 'welcome-bonus' && !this.hasClaimedWelcomeBonus
+      );
     }
     
+    // All rewards
+    if (this.selectedCategory === 'all') {
+      // Don't show welcome bonus in all rewards tab
+      return this.availableRewards.filter(reward => reward.id !== 'welcome-bonus');
+    }
+    
+    // Filter by category
     return this.availableRewards.filter(reward => 
-      reward.category === this.selectedCategory
+      reward.category === this.selectedCategory && reward.id !== 'welcome-bonus'
     );
   }
   
   // Check if user can afford a reward
   canAfford(reward: Reward): boolean {
+    // Special case for welcome bonus
+    if (reward.id === 'welcome-bonus') {
+      return !this.hasClaimedWelcomeBonus;
+    }
+    
     if (!this.userPoints) return false;
     return this.userPoints.availablePoints >= reward.pointsCost;
   }
@@ -284,6 +323,12 @@ export class RewardsComponent implements OnInit {
   
   // Open confirmation modal for redeeming a reward
   confirmRedeem(reward: Reward): void {
+    // Special case for welcome bonus
+    if (reward.id === 'welcome-bonus') {
+      this.claimWelcomeBonus();
+      return;
+    }
+    
     this.rewardToRedeem = reward;
     this.showConfirmationModal = true;
   }
@@ -318,7 +363,7 @@ export class RewardsComponent implements OnInit {
         // Close confirmation modal
         this.showConfirmationModal = false;
         
-        // Refresh rewards list
+        // Refresh rewards list to update quantities
         this.loadAvailableRewards();
         
         this.isRedeeming = false;
@@ -365,6 +410,6 @@ export class RewardsComponent implements OnInit {
   
   // Get reward image URL with fallback
   getRewardImageUrl(imageUrl: string): string {
-    return imageUrl || 'placeholder-image.jpg';
+    return imageUrl || '/assets/images/reward-placeholder.jpg';
   }
 }
