@@ -11,7 +11,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("https://paperworth.vercel.app",
-                        "https://compassionate-recreation-production-7031.up.railway.app/api",
+                        "https://compassionate-recreation-production-7031.up.railway.app","https://paperworth.sgp1.digitaloceanspaces.com",
                         "http://localhost:4200", "http://localhost:8080")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

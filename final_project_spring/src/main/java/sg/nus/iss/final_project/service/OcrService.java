@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,10 +24,14 @@ import com.google.cloud.vision.v1.Feature;
 import com.google.cloud.vision.v1.Feature.Type;
 import com.google.cloud.vision.v1.Image;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
+import com.google.cloud.vision.v1.ImageAnnotatorSettings;
 import com.google.protobuf.ByteString;
 
 @Service
 public class OcrService {
+
+    @Autowired
+    private ImageAnnotatorSettings imageAnnotatorSettings;
 
     public Map<String, Object> processReceiptImage(MultipartFile file) throws IOException {
         // Convert multipart file to buffered image for preprocessing
@@ -62,10 +67,8 @@ public class OcrService {
     }
 
     private String detectText(byte[] imageBytes) throws IOException {
-        // Initialize client that will be used to send requests
-        // This client only needs to be created once, and can be reused for multiple
-        // requests
-        try (ImageAnnotatorClient vision = ImageAnnotatorClient.create()) {
+        // Initialize client using the autowired settings
+        try (ImageAnnotatorClient vision = ImageAnnotatorClient.create(imageAnnotatorSettings)) {
             ByteString imgBytes = ByteString.copyFrom(imageBytes);
 
             // Create image object
@@ -96,9 +99,14 @@ public class OcrService {
                     return "Error: " + res.getError().getMessage();
                 }
 
-                // Get the full text annotation (this gives us all the text in the image)
-                String text = res.getTextAnnotations(0).getDescription();
-                fullText.append(text);
+                // Check if there are any text annotations before accessing them
+                if (res.getTextAnnotationsCount() > 0) {
+                    // Get the full text annotation (this gives us all the text in the image)
+                    String text = res.getTextAnnotations(0).getDescription();
+                    fullText.append(text);
+                } else {
+                    System.out.println("No text annotations found in the image");
+                }
             }
 
             return fullText.toString();
@@ -137,6 +145,10 @@ public class OcrService {
     }
 
     private String extractMerchantName(String text) {
+        if (text == null || text.isEmpty()) {
+            return "Unknown Merchant";
+        }
+
         String[] lines = text.split("\\n");
 
         // Check first few lines for known merchant patterns
@@ -160,6 +172,9 @@ public class OcrService {
     }
 
     private Double extractTotalAmount(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0.0;
+        }
 
         String[] lines = text.split("\\n");
         for (int i = lines.length - 1; i >= Math.max(0, lines.length - 10); i--) {
@@ -207,6 +222,9 @@ public class OcrService {
     }
 
     private String extractDate(String text) {
+        if (text == null || text.isEmpty()) {
+            return "Unknown Date";
+        }
 
         Pattern dateLinePattern = Pattern
                 .compile("(?i)\\b(date|date of purchase|txn date)\\s*:?\\s*(\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4})");
@@ -296,6 +314,11 @@ public class OcrService {
 
     private List<Map<String, Object>> extractItems(String text) {
         List<Map<String, Object>> items = new ArrayList<>();
+
+        if (text == null || text.isEmpty()) {
+            return items;
+        }
+
         String[] lines = text.split("\\n");
 
         // Different item patterns
@@ -306,20 +329,24 @@ public class OcrService {
             // Try to match item with quantity first
             Matcher qtyMatcher = itemWithQtyPattern.matcher(line);
             if (qtyMatcher.find()) {
-                int quantity = Integer.parseInt(qtyMatcher.group(1));
-                String itemName = qtyMatcher.group(2).trim();
-                double price = Double.parseDouble(qtyMatcher.group(3));
+                try {
+                    int quantity = Integer.parseInt(qtyMatcher.group(1));
+                    String itemName = qtyMatcher.group(2).trim();
+                    double price = Double.parseDouble(qtyMatcher.group(3));
 
-                // Skip totals, etc.
-                if (shouldSkipItem(itemName))
+                    // Skip totals, etc.
+                    if (shouldSkipItem(itemName))
+                        continue;
+
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("name", itemName);
+                    item.put("price", price);
+                    item.put("quantity", quantity);
+                    items.add(item);
                     continue;
-
-                Map<String, Object> item = new HashMap<>();
-                item.put("name", itemName);
-                item.put("price", price);
-                item.put("quantity", quantity);
-                items.add(item);
-                continue;
+                } catch (NumberFormatException e) {
+                    // Continue to next pattern if parsing fails
+                }
             }
 
             // Try regular item pattern
@@ -330,13 +357,17 @@ public class OcrService {
                 if (shouldSkipItem(itemName))
                     continue;
 
-                double price = Double.parseDouble(matcher.group(2));
+                try {
+                    double price = Double.parseDouble(matcher.group(2));
 
-                Map<String, Object> item = new HashMap<>();
-                item.put("name", itemName);
-                item.put("price", price);
-                item.put("quantity", 1);
-                items.add(item);
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("name", itemName);
+                    item.put("price", price);
+                    item.put("quantity", 1);
+                    items.add(item);
+                } catch (NumberFormatException e) {
+                    // Skip this item if price parsing fails
+                }
             }
         }
 
@@ -344,6 +375,10 @@ public class OcrService {
     }
 
     private boolean shouldSkipItem(String itemName) {
+        if (itemName == null) {
+            return true;
+        }
+
         String lowerName = itemName.toLowerCase();
         return lowerName.contains("total") ||
                 lowerName.contains("subtotal") ||

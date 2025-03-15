@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
@@ -42,6 +43,8 @@ export class HomePageComponent implements OnInit {
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService
   ) {}
+
+  private apiUrl = `${environment.apiUrl}`
 
   ngOnInit(): void {
     // Load user data
@@ -100,7 +103,7 @@ export class HomePageComponent implements OnInit {
     }
 
     this.isLoadingRecommendations = true;
-    this.http.get<any[]>(`http://localhost:8080/api/receipts/user/${currentUser.id}`).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/receipts/user/${currentUser.id}`).subscribe({
       next: (receipts) => {
         this.userReceiptHistory = receipts;
         const categories = this.analyzeReceiptHistory(receipts);
@@ -176,7 +179,7 @@ export class HomePageComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.http.post<any>('http://localhost:8080/api/ocr/scan', formData).subscribe({
+    this.http.post<any>(`${this.apiUrl}/ocr/scan`, formData).subscribe({
       next: (response) => {
         this.isProcessing = false;
         if (response?.merchantName && response?.totalAmount && response?.dateOfPurchase) {
@@ -226,7 +229,7 @@ saveReceipt() {
     }
   };
 
-  this.http.post('http://localhost:8080/api/receipts', receiptData)
+  this.http.post(`${this.apiUrl}/receipts`, receiptData)
     .subscribe({
       next: (response: any) => {
         console.log('Receipt saved:', response);
@@ -269,7 +272,7 @@ saveReceipt() {
     this.isLoadingPromotions = true;
     
     // Use the match endpoint to find promotions by merchant or category
-    this.http.get<any[]>(`http://localhost:8080/api/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
+    this.http.get<any[]>(`${this.apiUrl}/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
       .subscribe({
         next: (promotions) => {
           console.log('Matching promotions:', promotions);
@@ -322,7 +325,7 @@ saveReceipt() {
   
   // Fallback method if direct matching fails
   fetchPromotionsByReceiptId(receiptId: string) {
-    this.http.get<any[]>(`http://localhost:8080/api/promotions/receipt/${receiptId}`)
+    this.http.get<any[]>(`${this.apiUrl}/promotions/receipt/${receiptId}`)
       .subscribe({
         next: (promotions) => {
           console.log('Promotions by receipt ID:', promotions);

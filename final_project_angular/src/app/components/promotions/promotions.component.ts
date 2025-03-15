@@ -3,8 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
-import { Promotion } from '../../model';
 import { environment } from '../../../environments/environment.prod';
+import { Promotion } from '../../model';
 
 
 interface CategoryGroup {
@@ -24,6 +24,9 @@ export class PromotionsComponent implements OnInit {
   selectedCategory = 'all';
   allPromotions: Promotion[] = [];
   promotionsByCategory: CategoryGroup[] = [];
+  
+  // Base URL for Digital Ocean Spaces
+  private readonly spacesBaseUrl = 'https://paperworth.sgp1.digitaloceanspaces.com';
   
   // Categories for filter
   readonly categories = [
@@ -65,6 +68,25 @@ export class PromotionsComponent implements OnInit {
         this.fetchAllPromotions();
       }
     });
+  }
+  
+  // Method to fix image URLs
+  fixImageUrl(imageUrl: string | undefined): string {
+    if (!imageUrl) {
+      return 'promotions/placeholder-image.jpg'; // Fallback to a placeholder
+    }
+    
+    // If it's a full URL beginning with http or https, return as is
+    if (imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // If it's a relative path, prepend with the correct base URL
+    // Remove any leading slash for consistency
+    const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+    
+    // Return the full URL with the correct base
+    return `${this.spacesBaseUrl}/${cleanPath}`;
   }
   
   fetchPromotionsByMerchantAndCategory(merchant: string, category: string): void {
@@ -110,6 +132,7 @@ export class PromotionsComponent implements OnInit {
   }
   
   private processPromotions(promotions: Promotion[]): void {
+    console.log("Promotions fetched from backend:", promotions); // Log the fetched promotions
     this.allPromotions = this.normalizePromotions(promotions);
     this.organizePromotionsByCategory();
     
@@ -121,6 +144,11 @@ export class PromotionsComponent implements OnInit {
   // Normalize promotions data to ensure consistent field names
   private normalizePromotions(promotions: Promotion[]): Promotion[] {
     return promotions.map(promo => {
+      // Fix the image URL
+      if (promo.imageUrl) {
+        promo.imageUrl = this.fixImageUrl(promo.imageUrl);
+      }
+      
       // Auto-categorize health & beauty items
       if (!promo.category) {
         const merchantText = (promo.merchant || '').toLowerCase();

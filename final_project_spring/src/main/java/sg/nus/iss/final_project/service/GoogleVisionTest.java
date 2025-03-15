@@ -1,4 +1,4 @@
-package sg.nus.iss.final_project.config;
+package sg.nus.iss.final_project.service;
 
 import org.springframework.stereotype.Service;
 
