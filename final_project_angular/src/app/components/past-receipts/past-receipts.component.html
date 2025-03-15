@@ -1,130 +1,173 @@
-<!-- Hero Section -->
+<!-- src/app/components/past-receipts/past-receipts.component.html -->
+
+<!-- Simplified Hero Section for Mobile -->
 <section class="hero">
   <div class="hero-content">
     <h1>Past Receipts</h1>
-    <p>View and manage all your scanned receipts</p>
+    <p>View and manage your receipt history</p>
   </div>
 </section>
+
+<!-- Mobile-optimized Search and Filters -->
+<div class="search-filters-container">
+  <div class="search-bar">
+    <input 
+      type="text" 
+      placeholder="Search merchants..." 
+      [(ngModel)]="searchTerm"
+      class="search-input"
+    >
+    <span class="search-icon">🔍</span>
+  </div>
   
-<!-- Receipts Container -->
-<div class="receipts-container">
-  <!-- Filters and Search -->
-  <div class="receipts-controls">
-    <div class="search-bar">
-      <input type="text" placeholder="Search merchants..." [(ngModel)]="searchTerm">
-      <span class="search-icon">🔍</span>
-    </div>
-    
-    <div class="filters">
-      <div class="filter-group">
-        <label>Date Range:</label>
-        <select [(ngModel)]="filters.dateRange">
-          <option *ngFor="let range of dateRanges" [value]="range.id">{{ range.name }}</option>
-        </select>
+  <div class="filter-chips">
+    <button 
+      [class.active]="filters.dateRange === 'all'" 
+      (click)="filters.dateRange = 'all'"
+      class="filter-chip"
+    >
+      All Time
+    </button>
+    <button 
+      [class.active]="filters.dateRange === 'this-month'" 
+      (click)="filters.dateRange = 'this-month'"
+      class="filter-chip"
+    >
+      This Month
+    </button>
+    <button 
+      [class.active]="filters.dateRange === 'last-month'" 
+      (click)="filters.dateRange = 'last-month'"
+      class="filter-chip"
+    >
+      Last Month
+    </button>
+  </div>
+  
+  <div class="category-filter">
+    <select [(ngModel)]="filters.category" class="category-select">
+      <option *ngFor="let category of categories" [value]="category.id">
+        {{ category.name }}
+      </option>
+    </select>
+  </div>
+</div>
+
+<!-- Loading Indicator -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading your receipts...</p>
+</div>
+
+<!-- Error Message -->
+<div class="error-message" *ngIf="error && !isLoading">
+  <p>{{ error }}</p>
+  <button class="action-btn" (click)="loadUserReceipts()">Retry</button>
+</div>
+
+<!-- Empty State -->
+<div class="empty-state" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
+  <div class="empty-icon">🧾</div>
+  <h3>No Receipts Found</h3>
+  <p>No receipts match your current filters</p>
+  <button class="action-btn primary" routerLink="/homepage">Scan New Receipt</button>
+</div>
+
+<!-- Receipts List for Mobile -->
+<div class="receipts-list" *ngIf="filteredReceipts.length > 0 && !isLoading">
+  <div 
+    *ngFor="let receipt of filteredReceipts" 
+    class="receipt-card"
+    (click)="viewReceiptDetails(receipt)"
+  >
+    <div class="receipt-details">
+      <div class="receipt-merchant">{{ receipt.merchantName }}</div>
+      <div class="receipt-info">
+        <span class="receipt-category">{{ receipt.category }}</span>
+        <span class="receipt-date">{{ formatDate(receipt.dateOfPurchase) }}</span>
       </div>
-      
-      <div class="filter-group">
-        <label>Category:</label>
-        <select [(ngModel)]="filters.category">
-          <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-        </select>
-      </div>
     </div>
-  </div>
-  
-  <!-- Loading Indicator -->
-  <div class="loading-indicator" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Loading your receipts...</p>
-  </div>
-  
-  <!-- Error Message -->
-  <div class="error-message" *ngIf="error && !isLoading">
-    <p>{{ error }}</p>
-    <button class="action-btn primary" (click)="loadUserReceipts()">Retry</button>
-  </div>
-  
-  <!-- Receipts List -->
-  <div class="receipts-table-container" *ngIf="filteredReceipts.length > 0 && !isLoading">
-    <table class="receipts-table">
-      <thead>
-        <tr>
-          <th>Merchant</th>
-          <th>Category</th>
-          <th>Date</th>
-          <th>Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let receipt of filteredReceipts" class="receipt-row" (click)="viewReceiptDetails(receipt)">
-          <td class="receipt-merchant">{{ receipt.merchantName }}</td>
-          <td class="receipt-category">{{ receipt.category }}</td>
-          <td class="receipt-date">{{ formatDate(receipt.dateOfPurchase) }}</td>
-          <td class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-    
-  <div class="no-receipts" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
-    <p>No receipts found matching your filters.</p>
-    <button routerLink="/homepage" class="scan-btn">Scan New Receipt</button>
+    <div class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</div>
+    <div *ngIf="receipt.hasPromotion" class="promo-badge">🏷️</div>
   </div>
 </div>
 
 <!-- Receipt Details Modal -->
-<div class="receipt-details-modal" *ngIf="selectedReceipt" [class.closing]="isClosing">
-  <div class="modal-overlay" (click)="closeReceiptDetails()"></div>
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>{{ selectedReceipt.merchantName }}</h3>
-      <button class="close-button" (click)="closeReceiptDetails()">×</button>
-    </div>
-    
+<div class="mobile-modal" *ngIf="selectedReceipt" [class.visible]="selectedReceipt">
+  <div class="modal-header">
+    <h3 class="modal-title">Receipt Details</h3>
+    <button class="modal-close" (click)="closeReceiptDetails()">×</button>
+  </div>
+  
+  <div class="modal-body">
     <!-- Receipt Image (if available) -->
     <div class="receipt-image-container" *ngIf="selectedReceipt.imageUrl">
-      <img [src]="selectedReceipt.imageUrl" class="receipt-image" alt="Receipt Image">
+      <img [src]="selectedReceipt.imageUrl" alt="Receipt Image" class="receipt-image">
     </div>
     
-    <div class="receipt-info">
-      <div class="receipt-info-row">
-        <span>Date:</span>
-        <span>{{ formatDate(selectedReceipt.dateOfPurchase) }}</span>
+    <!-- Receipt Information -->
+    <div class="receipt-info-card">
+      <div class="info-row">
+        <div class="info-label">Merchant</div>
+        <div class="info-value">{{ selectedReceipt.merchantName }}</div>
       </div>
-      <div class="receipt-info-row">
-        <span>Category:</span>
-        <span>{{ selectedReceipt.category }}</span>
+      
+      <div class="info-row">
+        <div class="info-label">Date</div>
+        <div class="info-value">
+          {{ formatDate(selectedReceipt.dateOfPurchase) }}
+          <span class="info-time">{{ formatTime(selectedReceipt.dateOfPurchase) }}</span>
+        </div>
       </div>
-      <div class="receipt-info-row" *ngIf="selectedReceipt.totalAmount">
-        <span>Total Amount:</span>
-        <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
+      
+      <div class="info-row">
+        <div class="info-label">Category</div>
+        <div class="info-value">{{ selectedReceipt.category }}</div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-label">Total</div>
+        <div class="info-value info-total">${{ selectedReceipt.totalAmount.toFixed(2) }}</div>
       </div>
     </div>
     
-    <div class="receipt-items" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
+    <!-- Receipt Items (if available) -->
+    <div class="receipt-items-list" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
       <h4>Items</h4>
-      <div class="receipt-item-header">
-        <span>Item</span>
-        <span>Qty</span>
-        <span>Price</span>
+      
+      <div class="item-row" *ngFor="let item of selectedReceipt.items">
+        <div class="item-name">{{ item.name }}</div>
+        <div class="item-details">
+          <span class="item-qty" *ngIf="item.quantity > 1">{{ item.quantity }} ×</span>
+          <span class="item-price">${{ item.price.toFixed(2) }}</span>
+        </div>
       </div>
-      <div class="receipt-item-row" *ngFor="let item of selectedReceipt.items">
-        <span class="item-name">{{ item.name }}</span>
-        <span class="item-qty">{{ item.quantity }}</span>
-        <span class="item-price">${{ item.price.toFixed(2) }}</span>
-      </div>
-      <div class="receipt-total">
+      
+      <div class="items-total">
         <span>Total</span>
         <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
       </div>
     </div>
     
-    <div class="receipt-actions">
-      <button class="action-button secondary">Download PDF</button>
-      <button class="action-button secondary" (click)="deleteReceipt(selectedReceipt)">Delete Receipt</button>
+    <!-- Related Promotions Badge (if available) -->
+    <div class="promotions-badge" *ngIf="selectedReceipt.hasPromotion">
+      <div class="badge-icon">🏷️</div>
+      <div class="badge-content">
+        <div class="badge-title">Promotions Available!</div>
+        <p>This merchant has promotions you might like</p>
+      </div>
+      <button 
+        class="badge-action" 
+        [routerLink]="['/promotions']" 
+        [queryParams]="{merchant: selectedReceipt.merchantName}"
+      >
+        View
+      </button>
     </div>
   </div>
-</div>
   
-<!-- Floating Scan Button -->
-<button class="scan-button" routerLink="/scan">📸</button>
+  <div class="modal-footer">
+    <button class="action-btn secondary" (click)="closeReceiptDetails()">Close</button>
+    <button class="action-btn danger" (click)="deleteReceipt(selectedReceipt)">Delete</button>
+  </div>
+</div>

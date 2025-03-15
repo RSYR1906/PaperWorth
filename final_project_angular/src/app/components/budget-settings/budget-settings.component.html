@@ -1,83 +1,42 @@
 <!-- src/app/components/budget-settings/budget-settings.component.html -->
-<!-- Navbar -->
-<nav class="navbar">
-    <div class="logo-container">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="40" height="30">
-        <!-- Background -->
-        <rect width="400" height="300" fill="#ffffff" rx="20" ry="20"/>
-        
-        <!-- Gradient background for receipt -->
-        <defs>
-          <linearGradient id="receiptGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#f8f9fa"/>
-            <stop offset="100%" stop-color="#e9ecef"/>
-          </linearGradient>
-        </defs>
-        
-        <!-- Receipt paper -->
-        <path d="M240,50 L240,250 L160,250 L160,50 L240,50 Z" fill="url(#receiptGradient)" stroke="#dee2e6" stroke-width="2"/>
-        
-        <!-- Receipt serrated edge -->
-        <path d="M240,50 
-                 L245,55 L240,60 L245,65 L240,70 L245,75 L240,80 L245,85 L240,90 
-                 L245,95 L240,100 L245,105 L240,110 L245,115 L240,120 
-                 L245,125 L240,130 L245,135 L240,140 L245,145 L240,150
-                 L245,155 L240,160 L245,165 L240,170 L245,175 L240,180
-                 L245,185 L240,190 L245,195 L240,200 L245,205 L240,210
-                 L245,215 L240,220 L245,225 L240,230 L245,235 L240,240
-                 L245,245 L240,250" 
-                 fill="none" stroke="#dee2e6" stroke-width="2"/>
-        
-        <!-- Blue circle with dollar sign -->
-        <circle cx="200" cy="200" r="30" fill="#2E3192"/>
-        <text x="200" y="210" font-family="Arial, sans-serif" font-size="34" font-weight="bold" text-anchor="middle" fill="#ffffff">$</text>
-      </svg>
-      <h2 class="logo-text">PaperWorth</h2>
+
+<!-- Mobile-optimized Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Budget Settings</h1>
+    <p>Customize your monthly budget</p>
+  </div>
+</section>
+
+<!-- Loading Container -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading your budget data...</p>
+</div>
+
+<!-- Error & Success Messages -->
+<div class="message success-message" *ngIf="successMessage">
+  <div class="message-icon">✓</div>
+  <div class="message-content">{{ successMessage }}</div>
+</div>
+
+<div class="message error-message" *ngIf="errorMessage">
+  <div class="message-icon">⚠️</div>
+  <div class="message-content">{{ errorMessage }}</div>
+</div>
+
+<!-- Budget Form -->
+<form [formGroup]="budgetForm" (ngSubmit)="saveBudget()" *ngIf="!isLoading" class="settings-form">
+  <!-- Total Budget Section -->
+  <div class="settings-section">
+    <div class="section-header">
+      <h3>Monthly Budget</h3>
+      <p>Set your total monthly budget</p>
     </div>
     
-    <div class="nav-links">
-      <a routerLink="/homepage" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/expense-tracker" routerLinkActive="active">Expense Tracker</a>
-      <a routerLink="/past-receipts" routerLinkActive="active">Past Receipts</a>
-      <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
-    </div>
-  </nav>
-  
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Budget Settings</h1>
-      <p>Customize your monthly budget and category allocations</p>
-    </div>
-  </section>
-  
-  <!-- Budget Settings Form -->
-  <div class="settings-container">
-    <!-- Loading State -->
-    <div class="loading-container" *ngIf="isLoading">
-      <div class="spinner"></div>
-      <p>Loading budget data...</p>
-    </div>
-  
-    <!-- Messages -->
-    <div class="success-message" *ngIf="successMessage">
-      {{ successMessage }}
-    </div>
-  
-    <div class="error-message" *ngIf="errorMessage">
-      {{ errorMessage }}
-    </div>
-  
-    <!-- Budget Form -->
-    <form [formGroup]="budgetForm" (ngSubmit)="saveBudget()" *ngIf="!isLoading">
-      <!-- Total Budget Section -->
-      <div class="section-title">
-        <h3>Monthly Budget</h3>
-        <p>Set your total monthly budget</p>
-      </div>
-  
-      <div class="form-group total-budget-input">
-        <label for="totalBudget">Total Budget ($)</label>
+    <div class="form-group">
+      <label for="totalBudget">Total Budget ($)</label>
+      <div class="input-container">
         <input 
           type="number" 
           id="totalBudget" 
@@ -85,52 +44,58 @@
           min="1" 
           step="10" 
           (change)="onTotalBudgetChange()"
+          inputmode="numeric"
+          class="form-input"
         >
-        <div class="validation-error" *ngIf="budgetForm.get('totalBudget')?.invalid && budgetForm.get('totalBudget')?.touched">
-          Total budget must be at least $1
-        </div>
       </div>
-  
-      <!-- Category Budget Section -->
-      <div class="section-title">
-        <h3>Category Allocations</h3>
-        <p>Adjust how your budget is allocated across categories</p>
+      <div class="validation-error" *ngIf="budgetForm.get('totalBudget')?.invalid && budgetForm.get('totalBudget')?.touched">
+        Total budget must be at least $1
       </div>
-  
-      <!-- Category Budget Sliders -->
-      <div class="categories-container">
-        <div class="category-item" *ngFor="let category of categories">
-          <div class="category-header">
-            <span class="category-name">{{ category.category }}</span>
-            <span class="category-percentage">
-              {{ calculatePercentage(budgetForm.get('category_' + category.category)?.value) }}%
-            </span>
-          </div>
-  
-          <div class="budget-input-group">
-            <span class="currency-symbol">$</span>
-            <input
-              type="number"
-              [formControlName]="'category_' + category.category"
-              class="category-budget-input"
-              min="0"
-              step="10"
-            >
-          </div>
-  
-          <div class="budget-bar">
-            <div class="budget-fill" 
-                 [style.width.%]="calculatePercentage(budgetForm.get('category_' + category.category)?.value)"
-                 [style.backgroundColor]="getCategoryColor(category.category)">
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button type="button" class="cancel-button" (click)="goBack()">Cancel</button>
-        <button type="submit" class="save-button" [disabled]="budgetForm.invalid">Save Budget</button>
-      </div>
-    </form>
+    </div>
   </div>
+  
+  <!-- Category Allocations Section -->
+  <div class="settings-section">
+    <div class="section-header">
+      <h3>Category Allocations</h3>
+      <p>Adjust budget allocation across categories</p>
+    </div>
+    
+    <div class="categories-list">
+      <div class="category-item" *ngFor="let category of categories">
+        <div class="category-header">
+          <span class="category-name">{{ category.category }}</span>
+          <span class="category-percentage">
+            {{ calculatePercentage(budgetForm.get('category_' + category.category)?.value) }}%
+          </span>
+        </div>
+        
+        <div class="input-container">
+          <span class="currency-symbol">$</span>
+          <input
+            type="number"
+            [formControlName]="'category_' + category.category"
+            class="form-input"
+            min="0"
+            step="10"
+            inputmode="numeric"
+          >
+        </div>
+        
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="calculatePercentage(budgetForm.get('category_' + category.category)?.value)"
+            [style.backgroundColor]="getCategoryColor(category.category)"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button type="button" class="action-btn secondary" (click)="goBack()">Cancel</button>
+    <button type="submit" class="action-btn primary" [disabled]="budgetForm.invalid">Save Budget</button>
+  </div>
+</form>
