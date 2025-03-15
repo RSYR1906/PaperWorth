@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 @Configuration
 public class FirebaseConfig {
 
-    @Value("${FIREBASE_CREDENTIALS:}")
+    @Value("${firebase.credentials}")
     private String firebaseCredentialsBase64;
 
     @Bean
@@ -43,7 +43,8 @@ public class FirebaseConfig {
                 try {
                     Resource resource = (Resource) new ClassPathResource("firebase-service-account.json");
                     FirebaseOptions options = FirebaseOptions.builder()
-                            .setCredentials(GoogleCredentials.fromStream(((ClassPathResource) resource).getInputStream()))
+                            .setCredentials(
+                                    GoogleCredentials.fromStream(((ClassPathResource) resource).getInputStream()))
                             .build();
 
                     return FirebaseApp.initializeApp(options);

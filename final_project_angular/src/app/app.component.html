@@ -1,11 +1,13 @@
 <!-- src/app/app.component.html -->
 <!-- Auth pages won't show the navbar -->
 <ng-container *ngIf="isAuthRoute()">
-    <router-outlet></router-outlet>
-  </ng-container>
-  
-  <!-- All other pages will show the navbar -->
-  <ng-container *ngIf="!isAuthRoute()">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<!-- All other pages will show the navbar -->
+<ng-container *ngIf="!isAuthRoute()">
+  <!-- Desktop Side Navigation (hidden on mobile) -->
+  <div class="desktop-view">
     <mat-sidenav-container class="sidenav-container">
       <mat-sidenav #sidenav mode="over" class="sidenav">
         <div class="sidenav-header">
@@ -64,4 +66,58 @@
         </main>
       </mat-sidenav-content>
     </mat-sidenav-container>
-  </ng-container>
+  </div>
+
+  <!-- Mobile View -->
+  <div class="mobile-view">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <div class="logo-container">
+        <img src="logo.png" alt="PaperWorth Logo" width="30" height="24">
+        <h2 class="logo-text">PaperWorth</h2>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="mobile-content">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-nav">
+      <a routerLink="/homepage" routerLinkActive="active">
+        <div class="nav-icon">
+          <mat-icon>home</mat-icon>
+        </div>
+        <span>Home</span>
+      </a>
+      <a routerLink="/expense-tracker" routerLinkActive="active">
+        <div class="nav-icon">
+          <mat-icon>bar_chart</mat-icon>
+        </div>
+        <span>Expenses</span>
+      </a>
+      <!-- Camera Button in Middle -->
+      <div class="scan-tab">
+        <button class="scan-button-nav" (click)="triggerFileInput()">
+          <mat-icon>camera_alt</mat-icon>
+        </button>
+      </div>
+      <a routerLink="/past-receipts" routerLinkActive="active">
+        <div class="nav-icon">
+          <mat-icon>receipt</mat-icon>
+        </div>
+        <span>Receipts</span>
+      </a>
+      <a routerLink="/rewards" routerLinkActive="active">
+        <div class="nav-icon">
+          <mat-icon>card_giftcard</mat-icon>
+        </div>
+        <span>Rewards</span>
+      </a>
+    </div>
+
+    <!-- Hidden file input for camera access -->
+    <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
+  </div>
+</ng-container>

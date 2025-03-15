@@ -40,4 +40,22 @@ export class AppComponent {
     const currentUrl = this.router.url;
     return currentUrl.includes('/login') || currentUrl.includes('/signup');
   }
+
+  // Add this to app.component.ts
+triggerFileInput() {
+  const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
+  if (fileInput) {
+    fileInput.click();
+  }
+}
+
+onFileSelected(event: any) {
+  // Handle the selected file - you may need to adjust this
+  // to match your existing implementation
+  const file = event.target.files[0];
+  if (file) {
+    // Process the selected file (scan receipt)
+    // This should match the logic you already have in your HomePageComponent
+  }
+}
 }
