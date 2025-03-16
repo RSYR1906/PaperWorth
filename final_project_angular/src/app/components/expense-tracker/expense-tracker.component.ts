@@ -1,11 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription, forkJoin, of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
-import { CameraService } from '../../services/camera.service'; // Import the camera service
 
 @Component({
   selector: 'app-expense-tracker',
@@ -13,9 +12,8 @@ import { CameraService } from '../../services/camera.service'; // Import the cam
   templateUrl: './expense-tracker.component.html',
   styleUrls: ['./expense-tracker.component.css']
 })
-export class ExpenseTrackerComponent implements OnInit, OnDestroy {
+export class ExpenseTrackerComponent implements OnInit {
   private apiUrl = environment.apiUrl;
-  private fileSelectionSubscription: Subscription | undefined;
   
   userName: string = '';
   currentMonth: string = '';
@@ -42,8 +40,7 @@ export class ExpenseTrackerComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private budgetService: BudgetService,
-    private http: HttpClient,
-    private cameraService: CameraService // Inject camera service
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -57,13 +54,6 @@ export class ExpenseTrackerComponent implements OnInit, OnDestroy {
     const now = new Date();
     this.currentMonth = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     
-    // Subscribe to file selection events from the camera service
-    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
-      // Handle the file if needed in this component
-      // Or redirect to home component for processing
-      this.redirectToHomeWithCamera();
-    });
-    
     // Load budget data if user is logged in
     if (currentUser.id) {
       this.loadUserData(currentUser.id);
@@ -74,86 +64,57 @@ export class ExpenseTrackerComponent implements OnInit, OnDestroy {
     }
   }
   
-  ngOnDestroy(): void {
-    // Unsubscribe from camera service
-    if (this.fileSelectionSubscription) {
-      this.fileSelectionSubscription.unsubscribe();
-    }
-  }
-
-  // Method to handle camera button click
-  openCamera(): void {
-    this.cameraService.triggerFileInput();
-  }
-
-  // Method to handle file selection
-  onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file) {
-      // Notify the camera service about the file selection
-      this.cameraService.notifyFileSelected(file);
-      
-      // Redirect to the home component for processing
-      this.redirectToHomeWithCamera();
-    }
-  }
-
-  // Method to redirect to home component for camera processing
-  redirectToHomeWithCamera(): void {
-    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
-  }
-
-  // Update this method in your ExpenseTrackerComponent
-  loadUserData(userId: string): void {
-    this.isLoading = true;
-    
-    // Get the current month in YYYY-MM format
-    const now = new Date();
-    const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Generate the past 3 months in YYYY-MM format instead of 6
-    const months = this.getPreviousMonths(3);
-    
-    // Create an array of budget loading observables for each month
-    const budgetObservables = months.map(month => 
-      this.budgetService.loadUserBudget(userId, month).pipe(
-        catchError(error => {
-          console.error(`Error loading budget for ${month}:`, error);
-          // Return a placeholder empty budget on error
-          return of({
-            userId,
-            monthYear: month,
-            totalBudget: 0,
-            totalSpent: 0,
-            categories: []
-          });
-        })
-      )
-    );
-    
-    // Load all budgets in parallel
-    forkJoin(budgetObservables).subscribe({
-      next: (budgets) => {
-        // Process the current month's budget
-        const currentBudget = budgets.find(b => b.monthYear === currentMonthYear);
-        if (currentBudget) {
-          this.processCurrentBudget(currentBudget);
-        }
-        
-        // Process all budgets for history
-        this.processBudgetHistory(budgets);
-        
-        // Get recent transactions from the API
-        this.loadRecentTransactions(userId);
-        
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading user data:', error);
-        this.isLoading = false;
+// Update this method in your ExpenseTrackerComponent
+loadUserData(userId: string): void {
+  this.isLoading = true;
+  
+  // Get the current month in YYYY-MM format
+  const now = new Date();
+  const currentMonthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
+  // Generate the past 3 months in YYYY-MM format instead of 6
+  const months = this.getPreviousMonths(3);
+  
+  // Create an array of budget loading observables for each month
+  const budgetObservables = months.map(month => 
+    this.budgetService.loadUserBudget(userId, month).pipe(
+      catchError(error => {
+        console.error(`Error loading budget for ${month}:`, error);
+        // Return a placeholder empty budget on error
+        return of({
+          userId,
+          monthYear: month,
+          totalBudget: 0,
+          totalSpent: 0,
+          categories: []
+        });
+      })
+    )
+  );
+  
+  // Load all budgets in parallel
+  forkJoin(budgetObservables).subscribe({
+    next: (budgets) => {
+      // Process the current month's budget
+      const currentBudget = budgets.find(b => b.monthYear === currentMonthYear);
+      if (currentBudget) {
+        this.processCurrentBudget(currentBudget);
       }
-    });
-  }
+      
+      // Process all budgets for history
+      this.processBudgetHistory(budgets);
+      
+      // Get recent transactions from the API
+      this.loadRecentTransactions(userId);
+      
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error loading user data:', error);
+      this.isLoading = false;
+    }
+  });
+}
   
   // Process the current month's budget
   processCurrentBudget(budget: any): void {

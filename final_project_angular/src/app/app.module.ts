@@ -13,6 +13,7 @@ import { LoginComponent } from './components/login/login.component';
 import { PastReceiptsComponent } from './components/past-receipts/past-receipts.component';
 import { PromotionsComponent } from './components/promotions/promotions.component';
 import { RewardsComponent } from './components/rewards/rewards.component';
+import { SavedPromotionsComponent } from './components/saved-promotions/saved-promotions.component';
 import { SignupComponent } from './components/signup/signup.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { MaterialModule } from './material.module';
@@ -20,7 +21,6 @@ import { FirebaseAuthService } from './services/firebase-auth.service';
 import { PromotionService } from './services/promotions.service';
 import { ReceiptService } from './services/receipt.service';
 import { UserService } from './services/user.service';
-import { SavedPromotionsComponent } from './components/saved-promotions/saved-promotions.component';
 
 
 @NgModule({

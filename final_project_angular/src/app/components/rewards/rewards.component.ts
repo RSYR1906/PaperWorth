@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+// src/app/components/rewards/rewards.component.ts
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs'; // Import Subscription
 import { PointTransaction, Reward, UserPoints, UserReward } from '../../model';
-import { CameraService } from '../../services/camera.service'; // Import the camera service
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { RewardsService } from '../../services/rewards.service';
 
@@ -12,10 +11,7 @@ import { RewardsService } from '../../services/rewards.service';
   templateUrl: './rewards.component.html',
   styleUrls: ['./rewards.component.css']
 })
-export class RewardsComponent implements OnInit, OnDestroy {
-  // Camera service subscription
-  private fileSelectionSubscription: Subscription | undefined;
-  
+export class RewardsComponent implements OnInit {
   // User data
   currentUser: any = null;
   userPoints: UserPoints | null = null;
@@ -52,9 +48,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
   isClaimingBonus: boolean = false;
   showBonusAnimation: boolean = false;
   
-  // Tab selection for mobile
-  activeTab: string = 'transactions';
-  
   // Filter categories
   categories = [
     { id: 'WELCOME', name: 'Welcome Bonus'},
@@ -70,8 +63,7 @@ export class RewardsComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private rewardsService: RewardsService,
-    private firebaseAuthService: FirebaseAuthService,
-    private cameraService: CameraService // Inject camera service
+    private firebaseAuthService: FirebaseAuthService
   ) { }
 
   ngOnInit(): void {
@@ -84,46 +76,11 @@ export class RewardsComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Subscribe to file selection events from the camera service
-    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
-      // Redirect to home component for processing
-      this.redirectToHomeWithCamera();
-    });
-    
     // Load user points and rewards data
     this.loadUserData();
     
     // Check if user has claimed welcome bonus
     this.checkWelcomeBonus();
-  }
-  
-  ngOnDestroy(): void {
-    // Unsubscribe from camera service to prevent memory leaks
-    if (this.fileSelectionSubscription) {
-      this.fileSelectionSubscription.unsubscribe();
-    }
-  }
-  
-  // Method to handle camera button click
-  openCamera(): void {
-    this.cameraService.triggerFileInput();
-  }
-
-  // Method to handle file selection
-  onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file) {
-      // Notify the camera service about the file selection
-      this.cameraService.notifyFileSelected(file);
-      
-      // Redirect to the home component for processing
-      this.redirectToHomeWithCamera();
-    }
-  }
-
-  // Method to redirect to home component for camera processing
-  redirectToHomeWithCamera(): void {
-    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
   }
   
   // Check if user has claimed welcome bonus
@@ -136,8 +93,7 @@ export class RewardsComponent implements OnInit, OnDestroy {
         this.hasClaimedWelcomeBonus = transactions.some(t => 
           t.source === 'WELCOME_BONUS' && t.transactionType === 'EARNED'
         );
-      },
-      error: (error) => console.error('Error checking welcome bonus status:', error)
+      }
     });
   }
   
@@ -176,9 +132,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           this.showBonusAnimation = false;
         }, 3000);
-        
-        // Close the reward details modal if it's open
-        this.closeRewardDetails();
       },
       error: (error) => {
         console.error('Error claiming welcome bonus:', error);
@@ -200,7 +153,8 @@ export class RewardsComponent implements OnInit, OnDestroy {
         this.userPoints = points;
         this.determineUserTier(points.totalPoints);
       },
-      error: (error) => console.error('Error fetching user points:', error)
+      error: (error) => console.error('Error fetching user points:', error),
+      complete: () => this.loadAvailableRewards()
     });
     
     // Get redemption history
@@ -222,9 +176,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
       },
       error: (error) => console.error('Error fetching transactions:', error)
     });
-    
-    // Load available rewards
-    this.loadAvailableRewards();
   }
   
   // Load available rewards
@@ -232,21 +183,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
     this.rewardsService.getAvailableRewards().subscribe({
       next: (rewards) => {
         this.availableRewards = rewards;
-        
-        // Add welcome bonus if not claimed
-        if (!this.hasClaimedWelcomeBonus && !this.availableRewards.some(r => r.id === 'welcome-bonus')) {
-          this.availableRewards.unshift({
-            id: 'welcome-bonus',
-            name: 'Welcome Bonus',
-            description: 'Claim your 100 points welcome bonus for joining PaperWorth!',
-            pointsCost: 0,
-            imageUrl: '/assets/images/welcome-bonus.jpg',
-            category: 'WELCOME',
-            isAvailable: true,
-            quantity: 1
-          });
-        }
-        
         this.isLoading = false;
       },
       error: (error) => {
@@ -321,32 +257,17 @@ export class RewardsComponent implements OnInit, OnDestroy {
   
   // Filter rewards by selected category
   get filteredRewards(): Reward[] {
-    // Special case for welcome bonus tab
-    if (this.selectedCategory === 'WELCOME') {
-      return this.availableRewards.filter(reward => 
-        reward.id === 'welcome-bonus' && !this.hasClaimedWelcomeBonus
-      );
-    }
-    
-    // All rewards
     if (this.selectedCategory === 'all') {
-      // Don't show welcome bonus in all rewards tab
-      return this.availableRewards.filter(reward => reward.id !== 'welcome-bonus');
+      return this.availableRewards;
     }
     
-    // Filter by category
     return this.availableRewards.filter(reward => 
-      reward.category === this.selectedCategory && reward.id !== 'welcome-bonus'
+      reward.category === this.selectedCategory
     );
   }
   
   // Check if user can afford a reward
   canAfford(reward: Reward): boolean {
-    // Special case for welcome bonus
-    if (reward.id === 'welcome-bonus') {
-      return !this.hasClaimedWelcomeBonus;
-    }
-    
     if (!this.userPoints) return false;
     return this.userPoints.availablePoints >= reward.pointsCost;
   }
@@ -363,12 +284,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
   
   // Open confirmation modal for redeeming a reward
   confirmRedeem(reward: Reward): void {
-    // Special case for welcome bonus
-    if (reward.id === 'welcome-bonus') {
-      this.claimWelcomeBonus();
-      return;
-    }
-    
     this.rewardToRedeem = reward;
     this.showConfirmationModal = true;
   }
@@ -403,7 +318,7 @@ export class RewardsComponent implements OnInit, OnDestroy {
         // Close confirmation modal
         this.showConfirmationModal = false;
         
-        // Refresh rewards list to update quantities
+        // Refresh rewards list
         this.loadAvailableRewards();
         
         this.isRedeeming = false;
@@ -450,6 +365,6 @@ export class RewardsComponent implements OnInit, OnDestroy {
   
   // Get reward image URL with fallback
   getRewardImageUrl(imageUrl: string): string {
-    return imageUrl || 'promotions/placeholder-image.jpg';
+    return imageUrl || 'placeholder-image.jpg';
   }
 }

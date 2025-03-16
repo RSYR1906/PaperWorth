@@ -1,9 +1,8 @@
+// src/app/components/saved-promotions/saved-promotions.component.ts
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment.prod';
-import { CameraService } from '../../services/camera.service'; // Import the camera service
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 
 @Component({
@@ -12,59 +11,22 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
   templateUrl: './saved-promotions.component.html',
   styleUrls: ['./saved-promotions.component.css']
 })
-export class SavedPromotionsComponent implements OnInit, OnDestroy {
+export class SavedPromotionsComponent implements OnInit {
   savedPromotions: any[] = [];
   isLoading = false;
   selectedPromotion: any = null;
   errorMessage: string = '';
-  private fileSelectionSubscription: Subscription | undefined;
   
   private apiUrl = `${environment.apiUrl}/promotions`;
   
   constructor(
     private http: HttpClient,
     private router: Router,
-    private firebaseAuthService: FirebaseAuthService,
-    private cameraService: CameraService // Inject camera service
+    private firebaseAuthService: FirebaseAuthService
   ) { }
 
   ngOnInit(): void {
     this.loadSavedPromotions();
-    
-    // Subscribe to file selection events from the camera service
-    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
-      // Redirect to home component for processing
-      this.redirectToHomeWithCamera();
-    });
-  }
-  
-  ngOnDestroy(): void {
-    // Unsubscribe from camera service to prevent memory leaks
-    if (this.fileSelectionSubscription) {
-      this.fileSelectionSubscription.unsubscribe();
-    }
-  }
-  
-  // Method to handle camera button click
-  openCamera(): void {
-    this.cameraService.triggerFileInput();
-  }
-
-  // Method to handle file selection
-  onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file) {
-      // Notify the camera service about the file selection
-      this.cameraService.notifyFileSelected(file);
-      
-      // Redirect to the home component for processing
-      this.redirectToHomeWithCamera();
-    }
-  }
-
-  // Method to redirect to home component for camera processing
-  redirectToHomeWithCamera(): void {
-    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
   }
   
   // Load saved promotions for the current user

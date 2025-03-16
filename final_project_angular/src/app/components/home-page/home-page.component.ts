@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
-import { CameraService } from '../../services/camera.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
@@ -45,13 +44,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
   
   constructor(
     private http: HttpClient, 
-    private router: Router,
-    private route: ActivatedRoute,
+    private router: Router, 
     private promotionService: PromotionService,
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
     private savedPromotionService : SavedPromotionsService,
-    private cameraService: CameraService
   ) {}
 
   private apiUrl = `${environment.apiUrl}`
@@ -61,16 +58,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.loadUserData();
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
-
-    // Check if we were redirected here with camera flag
-    this.route.queryParams.subscribe(params => {
-      if (params['camera'] === 'open') {
-        // Trigger the camera after a short delay to ensure component is fully loaded
-        setTimeout(() => {
-          this.triggerFileInput();
-        }, 300);
-      }
-    });
   }
 
   ngOnDestroy() {
@@ -318,9 +305,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       reader.readAsDataURL(file);
       this.ocrText = '';
       this.extractedData = null;
-      
-      // Notify the camera service about the selected file
-      this.cameraService.notifyFileSelected(file);
     }
   }
 
@@ -621,9 +605,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return 'Others';
   }
 
-  // Modified to use the shared service
   triggerFileInput() {
-    this.cameraService.triggerFileInput();
+    const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
+    fileInput?.click();
   }
 
   toggleFullText() {
