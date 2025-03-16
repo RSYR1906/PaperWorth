@@ -290,4 +290,20 @@ get filteredReceipts() {
       minute: '2-digit'
     });
   }
+
+  // Add to your component class
+errorType: 'general' | 'network' | 'server' = 'general';
+
+// Update your error handling method
+handleError(error: any) {
+  this.error = error.message || 'An unexpected error occurred';
+  
+  if (!navigator.onLine || error.status === 0) {
+    this.errorType = 'network';
+  } else if (error.status >= 500) {
+    this.errorType = 'server';
+  } else {
+    this.errorType = 'general';
+  }
+}
 }

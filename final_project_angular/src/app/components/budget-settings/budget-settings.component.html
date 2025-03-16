@@ -115,7 +115,7 @@
       <span>Cancel</span>
     </button>
     <button type="submit" class="action-btn primary" [disabled]="budgetForm.invalid || isSubmitting">
-      <span class="btn-icon" *ngIf="!isSubmitting">💾</span>
+      <span class="btn-icon" *ngIf="!isSubmitting">💾  </span>
       <span class="spinner-small" *ngIf="isSubmitting"></span>
       <span>{{ isSubmitting ? 'Saving...' : 'Save Budget' }}</span>
     </button>

@@ -352,12 +352,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
       dateOfPurchase: this.extractedData.dateOfPurchase,
       category: category,
       imageUrl: this.imagePreview, // Store the image preview URL
-      items: this.extractedData.items || [], // Include items if available
       additionalFields: {
         fullText: this.extractedData.fullText || this.ocrText,
         // Include any other fields from extracted data
         ...Object.entries(this.extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'items', 'fullText'].includes(key))
+          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
           .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
       }
     };

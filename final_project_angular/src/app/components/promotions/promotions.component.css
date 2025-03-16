@@ -1,27 +1,22 @@
-/* Main container */
-.promotions-container {
-  padding: 1rem;
-  font-family: 'Roboto', Arial, sans-serif;
-}
-
-/* Hero Section */
+/* Hero Section - Mobile Optimized */
 .hero {
   background: linear-gradient(135deg, #2E3192 0%, #1b93ff 100%);
   color: white;
-  padding: 60px 30px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-top, 0));
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+  border-radius: 0 0 16px 16px;
 }
 
 .hero::before {
   content: '';
   position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 300px;
-  height: 300px;
+  top: -30px;
+  right: -30px;
+  width: 200px;
+  height: 200px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   z-index: 0;
@@ -30,10 +25,10 @@
 .hero::after {
   content: '';
   position: absolute;
-  bottom: -100px;
-  left: -100px;
-  width: 400px;
-  height: 400px;
+  bottom: -70px;
+  left: -70px;
+  width: 250px;
+  height: 250px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
   z-index: 0;
@@ -42,20 +37,20 @@
 .hero-content {
   position: relative;
   z-index: 1;
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
 .hero h1 {
-  font-size: 36px;
-  margin-bottom: 15px;
+  font-size: 24px;
+  margin-bottom: 12px;
   font-weight: 700;
   animation: fadeInUp 0.8s ease-out;
 }
 
 .hero p {
-  font-size: 18px;
-  margin-bottom: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
   opacity: 0.9;
   animation: fadeInUp 1s ease-out;
 }
@@ -63,7 +58,7 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -77,19 +72,19 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 50vh;
-  padding: 50px 0;
+  min-height: 40vh;
+  padding: 40px 0;
   animation: fadeIn 0.5s ease-out;
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(46, 49, 146, 0.1);
-  border-top: 4px solid #2E3192;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(46, 49, 146, 0.1);
+  border-top: 3px solid #2E3192;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 @keyframes spin {
@@ -98,7 +93,7 @@
 
 .loading-container p {
   color: #6c757d;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -111,65 +106,75 @@
   }
 }
 
-/* Category tabs */
+/* Category tabs - Mobile Optimized */
 .category-tabs {
   background-color: white;
-  padding: 15px 30px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 12px 16px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   position: sticky;
-  top: 60px;
+  top: 0;
   z-index: 90;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   animation: fadeIn 0.8s ease-out;
   display: flex;
   overflow-x: auto;
-  gap: 10px;
+  gap: 8px;
   padding-bottom: 5px;
-  -ms-overflow-style: none;  /* Hide scrollbar in IE and Edge */
-  scrollbar-width: none;  /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
 }
 
 .category-tabs::-webkit-scrollbar {
-  display: none;  /* Hide scrollbar in Chrome, Safari and Opera */
+  display: none;
 }
 
 .category-tabs button {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: 1px solid #e0e0e0;
   background: white;
-  border-radius: 30px;
+  border-radius: 24px;
   cursor: pointer;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  transition: all 0.3s;
+  transition: all 0.2s;
   color: #343a40;
+  scroll-snap-align: start;
+  min-height: 36px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .category-tabs button.active {
   background-color: #2E3192;
   color: white;
   border-color: #2E3192;
-  box-shadow: 0 4px 8px rgba(46, 49, 146, 0.2);
+  box-shadow: 0 3px 6px rgba(46, 49, 146, 0.2);
 }
 
-/* Promotions grid */
+.category-tabs button:active {
+  transform: scale(0.95);
+}
+
+/* Promotions grid - Mobile First */
 .promotions-grid {
-  padding: 30px;
+  padding: 16px;
   animation: fadeIn 1s ease-out;
 }
 
 .category-group {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
 .category-title {
-  margin-bottom: 25px;
+  margin-bottom: 16px;
   color: #343a40;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   position: relative;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .category-title:after {
@@ -177,40 +182,41 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 50px;
+  width: 40px;
   height: 3px;
   background-color: #2E3192;
 }
 
 .deals-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
-/* Promotion card */
+/* Promotion card - Mobile Optimized */
 .promotion-card {
   background-color: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: transform 0.2s;
   border: 1px solid rgba(0, 0, 0, 0.05);
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.promotion-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+.promotion-card:active {
+  transform: scale(0.98);
 }
 
 .promotion-image {
-  height: 180px;
+  height: 160px;
   overflow: hidden;
   position: relative;
 }
@@ -225,21 +231,22 @@
 
 .saved-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   background-color: #ffcc00;
   color: #333;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
+  font-size: 13px;
 }
 
 .promotion-info {
-  padding: 20px;
+  padding: 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -247,35 +254,44 @@
 
 .promotion-title {
   font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 15px;
+  margin-bottom: 6px;
   color: #343a40;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
 }
 
 .promotion-merchant {
-  font-size: 15px;
+  font-size: 14px;
   color: #6c757d;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .promotion-description {
-  font-size: 15px;
-  margin-bottom: 15px;
+  font-size: 14px;
+  margin-bottom: 12px;
   color: #343a40;
   flex: 1;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .promotion-discount {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #e74c3c;
   margin-top: auto;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .promotion-validity {
-  font-size: 13px;
+  font-size: 12px;
   color: #dc3545;
   font-weight: 500;
   display: flex;
@@ -284,53 +300,56 @@
 
 .promotion-validity::before {
   content: "⏱️";
-  margin-right: 5px;
-  font-size: 14px;
+  margin-right: 4px;
+  font-size: 13px;
 }
 
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 50px 0;
+  padding: 40px 16px;
   color: #6c757d;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  margin: 20px 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  margin: 16px 0;
 }
 
 .empty-state p {
-  font-size: 16px;
-  margin-bottom: 20px;
+  font-size: 15px;
+  margin-bottom: 16px;
 }
 
-/* Modal styles */
+/* Modal styles - Mobile Optimized */
 .promotion-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease-out;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .promotion-modal {
   position: relative;
   background-color: white;
-  border-radius: 12px;
-  width: 90%;
+  border-radius: 16px;
+  width: 92%;
   max-width: 800px;
-  max-height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
   z-index: 1001;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   animation: zoomIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes zoomIn {
@@ -346,36 +365,36 @@
 
 .close-button {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 12px;
+  right: 12px;
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
   cursor: pointer;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.close-button:hover {
+.close-button:active {
   background-color: rgba(0, 0, 0, 0.7);
 }
 
 .modal-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .modal-image {
-  height: 100%;
-  max-height: 400px;
+  height: 200px;
   overflow: hidden;
 }
 
@@ -387,75 +406,77 @@
 }
 
 .modal-details {
-  padding: 30px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .modal-details h2 {
-  margin: 0 0 10px 0;
-  font-size: 24px;
+  margin: 0 0 8px 0;
+  font-size: 20px;
   font-weight: 600;
   color: #343a40;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .merchant-name {
-  font-size: 16px;
+  font-size: 15px;
   color: #6c757d;
 }
 
 .discount-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   color: #e74c3c;
-  margin-top: -5px;
+  margin-top: -3px;
 }
 
 .description-text {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.5;
   color: #343a40;
 }
 
 .validity-dates {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   color: #6c757d;
   background-color: #f8f9fa;
-  padding: 15px;
+  padding: 12px;
   border-radius: 8px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .terms-conditions {
-  font-size: 14px;
+  font-size: 13px;
   color: #777;
   background-color: #f9f9f9;
-  padding: 15px;
+  padding: 12px;
   border-radius: 8px;
   border-left: 3px solid #ddd;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .terms-conditions h3 {
   margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 16px;
+  margin-bottom: 8px;
+  font-size: 15px;
   color: #555;
 }
 
 .action-buttons {
-  display: flex;
-  gap: 15px;
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 0 16px 16px;
 }
 
 .save-button, .remove-button, .link-button {
-  padding: 12px 20px;
+  padding: 12px 16px;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
@@ -465,31 +486,30 @@
   gap: 8px;
   text-decoration: none;
   border: none;
-  transition: all 0.3s;
+  transition: transform 0.2s;
+  font-size: 15px;
+  min-height: 48px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .save-button {
   background-color: #2E3192;
   color: white;
-  flex: 1;
 }
 
-.save-button:hover {
+.save-button:active {
   background-color: #232578;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(46, 49, 146, 0.2);
+  transform: scale(0.98);
 }
 
 .remove-button {
   background-color: #e74c3c;
   color: white;
-  flex: 1;
 }
 
-.remove-button:hover {
+.remove-button:active {
   background-color: #c0392b;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+  transform: scale(0.98);
 }
 
 .link-button {
@@ -498,29 +518,30 @@
   border: 1px solid #e0e0e0;
 }
 
-.link-button:hover {
+.link-button:active {
   background-color: #e9ecef;
   border-color: #d0d0d0;
-  transform: translateY(-2px);
+  transform: scale(0.98);
 }
 
-/* Notification styles */
+/* Notification styles - Mobile Optimized */
 .notification-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  right: 16px;
   z-index: 2000;
 }
 
 .success-notification {
   position: fixed;
-  bottom: 30px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0));
   left: 50%;
   transform: translateX(-50%);
   background-color: white;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  width: 350px;
+  width: 90%;
+  max-width: 340px;
   z-index: 2000;
   overflow: hidden;
   animation: slideUp 0.5s ease-out;
@@ -540,20 +561,20 @@
 .success-content {
   display: flex;
   align-items: center;
-  padding: 15px 20px;
+  padding: 12px 16px;
 }
 
 .success-icon {
   background-color: #4CAF50;
   color: white;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  margin-right: 15px;
+  font-size: 20px;
+  margin-right: 12px;
   flex-shrink: 0;
 }
 
@@ -562,14 +583,14 @@
 }
 
 .success-message h4 {
-  margin: 0 0 5px 0;
-  font-size: 16px;
+  margin: 0 0 4px 0;
+  font-size: 15px;
   color: #333;
 }
 
 .success-message p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
 }
 
@@ -577,108 +598,150 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 4px;
+  height: 3px;
   background-color: rgba(255, 255, 255, 0.6);
   transition: width 3s linear;
 }
 
-/* Floating Scan Button (if needed) */
+/* Floating Scan Button - Mobile Optimized */
 .scan-button {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 65px;
-  height: 65px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0));
+  right: 20px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background-color: #2E3192;
   color: white;
   border: none;
-  font-size: 30px;
+  font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: transform 0.2s, background-color 0.2s;
   z-index: 99;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.scan-button:hover {
-  transform: scale(1.1) rotate(5deg);
+.scan-button:active {
+  transform: scale(0.95);
   background-color: #232578;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-  .category-tabs {
-    padding: 15px;
-  }
-  
+@media (min-width: 480px) {
   .deals-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
   
-  .promotions-grid {
-    padding: 20px;
+  .hero h1 {
+    font-size: 26px;
   }
   
-  .modal-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-image {
-    max-height: 220px;
-  }
-  
-  .modal-details {
-    padding: 20px;
+  .hero p {
+    font-size: 14px;
   }
   
   .action-buttons {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) {
+  .hero {
+    padding: 24px;
+  }
+  
   .hero h1 {
     font-size: 28px;
   }
   
-  .hero p {
-    font-size: 16px;
+  .category-tabs {
+    padding: 16px;
+    top: 0;
+  }
+  
+  .promotions-grid {
+    padding: 24px;
   }
   
   .deals-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
   
-  .category-tabs button {
-    padding: 8px 16px;
-    font-size: 13px;
-  }
-  
-  .promotion-image {
-    height: 160px;
+  .category-title {
+    font-size: 20px;
   }
   
   .promotion-title {
-    font-size: 15px;
+    font-size: 16px;
   }
   
-  .promotion-description {
-    font-size: 14px;
+  .modal-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
   }
   
   .modal-image {
-    height: 180px;
+    height: 100%;
+    max-height: 400px;
   }
   
-  .scan-button {
-    width: 55px;
-    height: 55px;
-    font-size: 24px;
-    right: 20px;
-    bottom: 20px;
+  .modal-details {
+    padding: 24px;
   }
+  
+  .action-buttons {
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 0 24px 24px;
+  }
+}
+
+@media (min-width: 992px) {
+  .deals-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .promotion-image {
+    height: 180px;
+  }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .scan-button {
+    bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
+    right: max(20px, calc(20px + env(safe-area-inset-right, 0px)));
+  }
+  
+  .hero {
+    padding-top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+    padding-left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+    padding-right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+  }
+  
+  .success-notification {
+    bottom: max(24px, calc(24px + env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+/* Fix for iPhone input zooming */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px;
+  }
+}
+
+/* Improve scrolling experience */
+.promotion-modal {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

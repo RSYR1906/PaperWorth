@@ -38,10 +38,28 @@
     <p>Loading your receipts...</p>
   </div>
   
-  <!-- Error Message -->
-  <div class="error-message" *ngIf="error && !isLoading">
+  <!-- Error Message - Standard Error -->
+  <div *ngIf="error && !isLoading && errorType === 'general'" class="error-message">
+    <div class="error-icon">⚠️</div>
+    <h4>Unable to load receipts</h4>
     <p>{{ error }}</p>
-    <button class="action-btn primary" (click)="loadUserReceipts()">Retry</button>
+    <button class="action-btn" (click)="loadUserReceipts()">Try Again</button>
+  </div>
+
+  <!-- Error Message - Network Error -->
+  <div *ngIf="error && !isLoading && errorType === 'network'" class="error-message network">
+    <div class="error-icon">📶</div>
+    <h4>Connection Issue</h4>
+    <p>It looks like you're offline or having connectivity problems. Please check your internet connection and try again.</p>
+    <button class="action-btn" (click)="loadUserReceipts()">Retry Connection</button>
+  </div>
+
+  <!-- Error Message - Server Error -->
+  <div *ngIf="error && !isLoading && errorType === 'server'" class="error-message">
+    <div class="error-icon">🔧</div>
+    <h4>Server Error</h4>
+    <p>Our servers are experiencing some issues. We're working on fixing it as soon as possible. Please try again in a few moments.</p>
+    <button class="action-btn" (click)="loadUserReceipts()">Try Again</button>
   </div>
   
   <!-- Receipts List -->
@@ -97,24 +115,6 @@
       </div>
       <div class="receipt-info-row" *ngIf="selectedReceipt.totalAmount">
         <span>Total Amount:</span>
-        <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
-      </div>
-    </div>
-    
-    <div class="receipt-items" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
-      <h4>Items</h4>
-      <div class="receipt-item-header">
-        <span>Item</span>
-        <span>Qty</span>
-        <span>Price</span>
-      </div>
-      <div class="receipt-item-row" *ngFor="let item of selectedReceipt.items">
-        <span class="item-name">{{ item.name }}</span>
-        <span class="item-qty">{{ item.quantity }}</span>
-        <span class="item-price">${{ item.price.toFixed(2) }}</span>
-      </div>
-      <div class="receipt-total">
-        <span>Total</span>
         <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
       </div>
     </div>

@@ -1,32 +1,151 @@
-
-<!-- Hero Section -->
-<section class="hero">
-  <div class="hero-content">
-    <h1>Save More with Every Receipt!</h1>
-    <p>Scan your receipts to unlock exclusive deals and track your expenses.</p>
-    <button class="hero-button" (click)="triggerFileInput()">Scan a Receipt</button>
-  </div>
-</section>
-
-<!-- Dashboard -->
-<div class="dashboard">
-  <div class="user-info">
-    <h2>Welcome, {{ userName }}</h2>
-    <p>Total Monthly Expenses: <strong>${{ monthlyExpenses }}</strong></p>
-  </div>
-
-  <div class="rewards-promo">
-    <div class="rewards-icon">🎁</div>
-    <div class="rewards-text">
-      <h3>PaperWorth Rewards</h3>
-      <p>Earn points from scanning receipts and redeem for exciting rewards!</p>
-    </div>
-    <a routerLink="/rewards" class="view-rewards-btn">View Rewards</a>
-  </div>
-</div>
-
 <!-- Hidden File Input -->
 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
+
+<!-- Main Content Container -->
+<div class="app-container">
+  <!-- Compact Hero Section - Uncommented and enhanced -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Save More with Every Receipt!</h1>
+      <p>Scan your receipts to unlock exclusive deals and track your expenses.</p>
+      <button class="hero-button" (click)="triggerFileInput()">Start Scanning</button>
+    </div>
+  </section>
+
+  <!-- Dashboard Card -->
+  <div class="dashboard-card">
+    <div class="user-info">
+      <h2>Welcome, {{ userName }}</h2>
+      <p>Total Monthly Expenses: <strong>${{ monthlyExpenses }}</strong></p>
+    </div>
+
+    <div class="rewards-promo">
+      <div class="rewards-icon">🎁</div>
+      <div class="rewards-text">
+        <h3>PaperWorth Rewards</h3>
+        <p>Earn points from scanning receipts and redeem for exciting rewards!</p>
+      </div>
+      <a routerLink="/rewards" class="view-rewards-btn">View Rewards</a>
+    </div>
+  </div>
+
+  <!-- SAVED PROMOTIONS SECTION (Moved up for better accessibility) -->
+  <div class="promotions-section" *ngIf="!selectedFile && !extractedData">
+    <div class="section-header">
+      <h3>Your Saved Promotions</h3>
+      <a routerLink="/saved-promotions" class="view-all">View All <span class="arrow-icon">→</span></a>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoadingSavedPromotions" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Loading your saved promotions...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoadingSavedPromotions && savedPromotions.length === 0">
+      <div class="empty-icon">🏷️</div>
+      <h4>No Saved Promotions</h4>
+      <p>You haven't saved any promotions yet. Browse the available promotions and save the ones you like!</p>
+      <button class="action-btn primary" routerLink="/promotions">Browse Promotions</button>
+    </div>
+    
+    <!-- Saved Promotions List - Horizontal Scrollable -->
+    <div class="saved-promotions-scroll" *ngIf="!isLoadingSavedPromotions && savedPromotions.length > 0">
+      <div class="promo-card" *ngFor="let promo of displayedSavedPromotions">
+        <!-- Expiry Badge -->
+        <div class="expiry-badge" 
+            *ngIf="isExpiringSoon(promo.expiry) && !hasExpired(promo.expiry)">
+          Expires Soon
+        </div>
+        <div class="expiry-badge expired" *ngIf="hasExpired(promo.expiry)">
+          Expired
+        </div>
+        
+        <!-- Card Content -->
+        <div class="promo-image" (click)="viewPromotionDetails(promo)">
+          <img [src]="promo.imageUrl" 
+              [alt]="promo.merchant + ' promotion'" 
+              onerror="this.src='assets/images/promo-placeholder.jpg'">
+        </div>
+        <div class="promo-content">
+          <div class="promo-merchant">{{ promo.merchant }}</div>
+          <div class="promo-description" (click)="viewPromotionDetails(promo)">
+            {{ promo.description }}
+          </div>
+          <div class="promo-meta">
+            <div class="promo-expiry" [class.expired-text]="hasExpired(promo.expiry)">
+              Valid until: {{ formatDate(promo.expiry) }}
+            </div>
+            <div class="promo-code" *ngIf="promo.code">Code: {{ promo.code }}</div>
+          </div>
+        </div>
+        <div class="promo-actions">
+          <button class="view-btn" (click)="viewPromotionDetails(promo)">View</button>
+          <button class="remove-btn" (click)="removeSavedPromotion(promo.id)">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROMOTIONS SECTION -->
+  <div class="promotions" *ngIf="!selectedFile && !extractedData">
+    <!-- Loading promotions indicator -->
+    <div *ngIf="isLoadingPromotions" class="loading-promotions">
+      <div class="spinner"></div>
+      <p>Finding matching promotions...</p>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div class="recommendations-section">
+      <h3 class="personalized-title">Recommended For You</h3>
+      
+      <!-- Loading indicator for recommendations -->
+      <div *ngIf="isLoadingRecommendations" class="loading-promotions">
+        <div class="spinner"></div>
+        <p>Preparing your personalized recommendations...</p>
+      </div>
+      
+      <!-- Personalized recommendations based on receipt history -->
+      <div *ngIf="!isLoadingRecommendations">
+        <div *ngFor="let category of recommendedPromotions" class="category-section">
+          <div class="category-header">
+            <h4>{{ category.name }}</h4>
+          </div>
+          
+          <!-- Horizontal scrollable promotions list -->
+          <div class="promo-scroll-container">
+            <div class="promo-list">
+              <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
+                <img 
+                  [src]="promo.imageUrl" 
+                  alt="Promo Image" 
+                  onerror="this.src='promotions/placeholder-image.jpg'"
+                >
+                <div class="promo-content">
+                  <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
+                  <p class="promo-title">{{ promo.description }}</p>
+                  <p class="expiry">Valid until: {{ promo.expiry }}</p>
+                  <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty state for a category with no promotions -->
+          <div *ngIf="!category.deals || category.deals.length === 0" class="no-deals-message">
+            <p>No current deals available for {{ category.name }}</p>
+          </div>
+        </div>
+        
+        <!-- Empty state if no recommendations at all -->
+        <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
+          <p>Scan more receipts to get personalized recommendations!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- RECEIPT SCANNING SECTION -->
 <!-- Modal Overlay for Receipt Preview -->
@@ -92,21 +211,6 @@
         </div>
       </div>
       
-      <!-- Items Section (if available and not processing) -->
-      <div class="items-container" *ngIf="extractedData.items && extractedData.items.length > 0 && !isProcessing">
-        <h4 class="items-header">Items</h4>
-        <div class="items-table-header">
-          <span class="item-name-header">Item</span>
-          <span class="item-qty-header">Qty</span>
-          <span class="item-price-header">Price</span>
-        </div>
-        <div class="item-row" *ngFor="let item of extractedData.items">
-          <span class="item-name">{{ item.name }}</span>
-          <span class="item-qty">{{ item.quantity || 1 }}</span>
-          <span class="item-price">${{ item.price.toFixed(2) }}</span>
-        </div>
-      </div>
-      
       <!-- OCR Result (collapsible and not shown when processing) -->
       <div class="ocr-result-container" *ngIf="!isProcessing">
         <button class="toggle-ocr-btn" (click)="showFullText = !showFullText">
@@ -124,58 +228,6 @@
       <button class="action-btn primary save-btn" [disabled]="isProcessing" (click)="saveReceipt()">
         {{ isProcessing ? 'Saving...' : 'Save Receipt' }}
       </button>
-    </div>
-  </div>
-</div>
-  
-<!-- PROMOTIONS SECTION -->
-<div class="promotions" *ngIf="!selectedFile && !extractedData">
-  <!-- Loading promotions indicator -->
-  <div *ngIf="isLoadingPromotions" class="loading-promotions">
-    <div class="spinner"></div>
-    <p>Finding matching promotions...</p>
-  </div>
-
-  <!-- Recommendations Section -->
-  <div>
-    <h3 class="personalized-title">Recommended For You</h3>
-    
-    <!-- Loading indicator for recommendations -->
-    <div *ngIf="isLoadingRecommendations" class="loading-promotions">
-      <div class="spinner"></div>
-      <p>Preparing your personalized recommendations...</p>
-    </div>
-    
-    <!-- Personalized recommendations based on receipt history -->
-    <div *ngIf="!isLoadingRecommendations">
-      <div *ngFor="let category of recommendedPromotions">
-        <h4>{{ category.name }}</h4>
-        <div class="promo-list">
-          <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
-            <img 
-              [src]="promo.imageUrl" 
-              alt="Promo Image" 
-              onerror="this.src='promotions/placeholder-image.jpg'"
-            >
-            <div class="promo-content">
-              <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
-              <p class="promo-title">{{ promo.description }}</p>
-              <p class="expiry">Valid until: {{ promo.expiry }}</p>
-              <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Empty state for a category with no promotions -->
-        <div *ngIf="!category.deals || category.deals.length === 0" class="no-deals-message">
-          <p>No current deals available for {{ category.name }}</p>
-        </div>
-      </div>
-      
-      <!-- Empty state if no recommendations at all -->
-      <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
-        <p>Scan more receipts to get personalized recommendations!</p>
-      </div>
     </div>
   </div>
 </div>
@@ -220,76 +272,6 @@
     </div>
   </div>
 </div>
-
-<!-- Add this section to src/app/components/home-page/home-page.component.html -->
-<!-- SAVED PROMOTIONS SECTION -->
-<div class="promotions-section" *ngIf="!selectedFile && !extractedData">
-  <div class="section-header">
-    <h3>Your Saved Promotions</h3>
-    <a routerLink="/saved-promotions" class="view-all">View All <span class="arrow-icon">→</span></a>
-  </div>
-  
-  <!-- Loading Indicator -->
-  <div *ngIf="isLoadingSavedPromotions" class="loading-indicator">
-    <div class="spinner"></div>
-    <p>Loading your saved promotions...</p>
-  </div>
-  
-  <!-- Empty State -->
-  <div class="empty-state" *ngIf="!isLoadingSavedPromotions && savedPromotions.length === 0">
-    <div class="empty-icon">🏷️</div>
-    <h4>No Saved Promotions</h4>
-    <p>You haven't saved any promotions yet. Browse the available promotions and save the ones you like!</p>
-    <button class="action-btn primary" routerLink="/promotions">Browse Promotions</button>
-  </div>
-  
-  <!-- Saved Promotions List -->
-  <div class="saved-promotions-list" *ngIf="!isLoadingSavedPromotions && savedPromotions.length > 0">
-    <div class="promo-card" *ngFor="let promo of displayedSavedPromotions">
-      <!-- Expiry Badge -->
-      <div class="expiry-badge" 
-           *ngIf="isExpiringSoon(promo.expiry) && !hasExpired(promo.expiry)">
-        Expires Soon
-      </div>
-      <div class="expiry-badge expired" *ngIf="hasExpired(promo.expiry)">
-        Expired
-      </div>
-      
-      <!-- Card Content -->
-      <div class="promo-image" (click)="viewPromotionDetails(promo)">
-        <img [src]="promo.imageUrl" 
-             [alt]="promo.merchant + ' promotion'" 
-             onerror="this.src='assets/images/promo-placeholder.jpg'">
-      </div>
-      <div class="promo-content">
-        <div class="promo-merchant">{{ promo.merchant }}</div>
-        <div class="promo-description" (click)="viewPromotionDetails(promo)">
-          {{ promo.description }}
-        </div>
-        <div class="promo-meta">
-          <div class="promo-expiry" [class.expired-text]="hasExpired(promo.expiry)">
-            Valid until: {{ formatDate(promo.expiry) }}
-          </div>
-          <div class="promo-code" *ngIf="promo.code">Code: {{ promo.code }}</div>
-        </div>
-      </div>
-      <div class="promo-actions">
-        <button class="view-btn" (click)="viewPromotionDetails(promo)">View</button>
-        <button class="remove-btn" (click)="removeSavedPromotion(promo.id)">Remove</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Show More/Less Button -->
-  <div class="show-more-container" *ngIf="!isLoadingSavedPromotions && savedPromotions.length > savedPromotionsLimit">
-    <button class="show-more-btn" (click)="toggleShowMoreSavedPromotions()">
-      {{ showMoreSavedPromotions ? 'Show Less' : 'Show More' }}
-    </button>
-  </div>
-</div>
-
-<!-- Floating Camera Button -->
-<button class="scan-button" (click)="triggerFileInput()">📸</button>
 
 <!-- Success Notification -->
 <div class="success-notification" *ngIf="showSuccessNotification">

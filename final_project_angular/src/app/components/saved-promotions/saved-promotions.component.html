@@ -1,3 +1,4 @@
+<!-- Error Message Component -->
 <div class="promotions-container">
   <!-- Hero Section -->
   <div class="hero">
@@ -9,17 +10,35 @@
 
   <!-- Loading indicator -->
   <div *ngIf="isLoading" class="loading-container">
-    <div class="loading-spinner"></div>
+    <div class="spinner"></div>
     <p>Loading your saved promotions...</p>
   </div>
 
-  <!-- Error message -->
-  <div *ngIf="errorMessage && !isLoading" class="error-message">
+  <!-- Error message - Standard Error -->
+  <div *ngIf="errorMessage && !isLoading && errorType === 'general'" class="error-message">
+    <div class="error-icon">⚠️</div>
+    <h4>Unable to load promotions</h4>
     <p>{{errorMessage}}</p>
-    <button (click)="loadSavedPromotions()">Try Again</button>
+    <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
   </div>
 
-  <!-- Main content when not loading -->
+  <!-- Error message - Network Error -->
+  <div *ngIf="errorMessage && !isLoading && errorType === 'network'" class="error-message network">
+    <div class="error-icon">📶</div>
+    <h4>Connection Issue</h4>
+    <p>It looks like you're offline or having connectivity problems. Please check your internet connection and try again.</p>
+    <button class="action-btn" (click)="loadSavedPromotions()">Retry Connection</button>
+  </div>
+
+  <!-- Error message - Server Error -->
+  <div *ngIf="errorMessage && !isLoading && errorType === 'server'" class="error-message">
+    <div class="error-icon">🔧</div>
+    <h4>Server Error</h4>
+    <p>Our servers are experiencing some issues. We're working on fixing it as soon as possible. Please try again in a few moments.</p>
+    <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
+  </div>
+
+  <!-- Main content when not loading and no error -->
   <div *ngIf="!isLoading && !errorMessage" class="promotions-content">
     <!-- Category filter tabs -->
     <div class="category-tabs">

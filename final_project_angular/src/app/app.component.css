@@ -1,153 +1,225 @@
-/* src/app/app.component.css */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap');
+
+/* Global Styles */
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-light);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+/* Sidenav Container */
 .sidenav-container {
-    height: 100vh;
+  height: 100vh;
+}
+
+/* Sidenav */
+.sidenav {
+  width: 280px;
+  box-shadow: -3px 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  background-color: var(--white);
+}
+
+/* Content Area */
+.content {
+  padding-bottom: 70px;
+}
+
+/* Floating Menu Button */
+.floating-menu-button {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s ease-in-out, transform 0.3s;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.floating-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.08);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.floating-menu-button mat-icon {
+  color: black;
+  font-size: 22px;
+}
+
+/* Sidenav Header */
+.sidenav-header {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidenav-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.sidenav-header .close-button {
+  color: var(--white);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sidenav-header .close-button:hover {
+  opacity: 0.8;
+}
+
+/* Sidenav Navigation List */
+mat-nav-list {
+  padding: 0;
+}
+
+mat-nav-list a {
+  display: flex;
+  align-items: center;
+  margin: 6px 10px;
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s ease-in-out;
+  padding: 10px;
+}
+
+mat-nav-list a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+mat-nav-list a.active {
+  background-color: rgba(63, 81, 181, 0.15);
+  border-right: 4px solid var(--primary-color);
+}
+
+.nav-label {
+  margin-left: 10px;
+}
+
+mat-nav-list mat-icon {
+  margin-right: 10px;
+  font-size: 22px;
+}
+
+/* Bottom Navigation */
+.bottom-nav-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: var(--white);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 56px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-decoration: none;
+  width: 33.33%;
+  height: 100%;
+  transition: color 0.3s ease-in-out;
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
+
+.nav-item span {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.nav-item mat-icon {
+  font-size: 24px;
+  height: 24px;
+  width: 24px;
+}
+
+/* Floating Camera Button */
+.camera-button {
+  margin-top: -20px;
+}
+
+.camera-circle {
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease-in-out;
+}
+
+.camera-circle mat-icon {
+  color: var(--white);
+  font-size: 28px;
+}
+
+.camera-circle:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 599px) {
+  .floating-menu-button {
+    width: 36px;
+    height: 36px;
+    top: 12px;
+    right: 12px;
   }
-  
-  .sidenav {
-    width: 280px;
-    box-shadow: 3px 0 10px rgba(0, 0, 0, 0.2);
+
+  .floating-menu-button mat-icon {
+    font-size: 20px;
   }
-  
-  .spacer {
-    flex: 1 1 auto;
-  }
-  
-  .main-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    /* Higher contrast background */
-    background-color: #1c1e7a !important; /* Darker blue for navbar */
+}
+
+@media (min-width: 960px) {
+  .bottom-nav-container {
+    display: none;
   }
   
   .content {
-    padding-bottom: 60px; /* Space for the floating scan button */
+    padding-bottom: 20px;
   }
-  
-  .logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Center items horizontally */
-    gap: 8px; /* Space between logo and text */
-    text-align: center;
-    width: 100%;
-    padding: 10px 0; /* Add padding for spacing */
-  }
+}
 
-  .logo-container img {
-    max-width: 40px; /* Adjust size for responsiveness */
-    height: auto;
-  }
-  
-  .main-toolbar {
-    max-height: 30px;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-  }
-  
-  .logo-text {
-    font-size: 22px;
-    font-weight: 600;
-    color: white;
-    margin: 0;
-    text-align: center;
-  }
-  
-  .menu-button mat-icon,
-  .logout-icon mat-icon {
-    color: white;
-  }
-  
-  .menu-button:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-  }
-  
-  .logout-icon:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-  }
-  
-  mat-nav-list a.active {
-    background-color: rgba(63, 81, 181, 0.15);
-    border-left: 4px solid #3f51b5;
-  }
-  
-  .nav-label {
-    margin-left: 8px;
-  }
-  
-  mat-nav-list mat-icon {
-    margin-right: 8px;
-  }
-  
-  /* High contrast sidenav header */
-  .sidenav-header {
-    background-color: #1c1e7a;
-    color: white;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .sidenav-header h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 500;
-  }
-  
-  .sidenav-header .close-button {
-    color: white;
-  }
-  
-  /* Enhanced sidenav items */
-  mat-nav-list a {
-    margin: 4px 8px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-  }
-  
-  mat-nav-list a:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-  }
-  
-  /* Sidenav Logo */
-  .sidenav-header .logo-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-    transform: none;
-    left: auto;
-  }
-  
-  .sidenav-header .logo-container img {
-    max-height: 30px;
-    width: auto;
-    object-fit: contain;
-  }
-  
-  /* Media queries for responsive design */
-  @media (max-width: 599px) {
-    .logo-text {
-      font-size: 18px;
-    }
-
-    .logo-container img {
-      max-width: 35px
-    }
-    
-    .main-toolbar  {
-      max-height: 25px;
-    }
-  }
-  
-  @media (max-width: 420px) {
-    .logo-container {
-      left: 60%;
-    }
-    
-    .main-toolbar .logo-container img {
-      max-height: 22px;
-    }
+.sidenav-header h2 {
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
