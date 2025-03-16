@@ -1,4 +1,4 @@
-<!-- src/app/components/saved-promotions/saved-promotions.component.html -->
+<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
 <div class="saved-promotions-container">
     <div class="saved-promotions-header">
       <h3>Saved Promotions</h3>
@@ -121,3 +121,5 @@
       </div>
     </div>
   </div>
+
+  <button class="scan-button" (click)="openCamera()">📸</button>

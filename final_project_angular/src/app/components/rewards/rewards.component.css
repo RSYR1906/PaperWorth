@@ -948,3 +948,29 @@
   margin: 5px 0 0 0;
   font-size: 16px;
 }
+
+.scan-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background-color: #2E3192;
+  color: white;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  z-index: 99;
+}
+
+.scan-button:hover {
+  transform: scale(1.1) rotate(5deg);
+  background-color: #232578;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}

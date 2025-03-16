@@ -1,7 +1,8 @@
-// src/app/components/rewards/rewards.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs'; // Import Subscription
 import { PointTransaction, Reward, UserPoints, UserReward } from '../../model';
+import { CameraService } from '../../services/camera.service'; // Import the camera service
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { RewardsService } from '../../services/rewards.service';
 
@@ -11,7 +12,10 @@ import { RewardsService } from '../../services/rewards.service';
   templateUrl: './rewards.component.html',
   styleUrls: ['./rewards.component.css']
 })
-export class RewardsComponent implements OnInit {
+export class RewardsComponent implements OnInit, OnDestroy {
+  // Camera service subscription
+  private fileSelectionSubscription: Subscription | undefined;
+  
   // User data
   currentUser: any = null;
   userPoints: UserPoints | null = null;
@@ -66,7 +70,8 @@ export class RewardsComponent implements OnInit {
   constructor(
     private router: Router,
     private rewardsService: RewardsService,
-    private firebaseAuthService: FirebaseAuthService
+    private firebaseAuthService: FirebaseAuthService,
+    private cameraService: CameraService // Inject camera service
   ) { }
 
   ngOnInit(): void {
@@ -79,11 +84,46 @@ export class RewardsComponent implements OnInit {
       return;
     }
     
+    // Subscribe to file selection events from the camera service
+    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
+      // Redirect to home component for processing
+      this.redirectToHomeWithCamera();
+    });
+    
     // Load user points and rewards data
     this.loadUserData();
     
     // Check if user has claimed welcome bonus
     this.checkWelcomeBonus();
+  }
+  
+  ngOnDestroy(): void {
+    // Unsubscribe from camera service to prevent memory leaks
+    if (this.fileSelectionSubscription) {
+      this.fileSelectionSubscription.unsubscribe();
+    }
+  }
+  
+  // Method to handle camera button click
+  openCamera(): void {
+    this.cameraService.triggerFileInput();
+  }
+
+  // Method to handle file selection
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      // Notify the camera service about the file selection
+      this.cameraService.notifyFileSelected(file);
+      
+      // Redirect to the home component for processing
+      this.redirectToHomeWithCamera();
+    }
+  }
+
+  // Method to redirect to home component for camera processing
+  redirectToHomeWithCamera(): void {
+    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
   }
   
   // Check if user has claimed welcome bonus
@@ -410,6 +450,6 @@ export class RewardsComponent implements OnInit {
   
   // Get reward image URL with fallback
   getRewardImageUrl(imageUrl: string): string {
-    return imageUrl || '/assets/images/reward-placeholder.jpg';
+    return imageUrl || 'promotions/placeholder-image.jpg';
   }
 }

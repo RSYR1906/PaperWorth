@@ -1,8 +1,9 @@
-// src/app/components/saved-promotions/saved-promotions.component.ts
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment.prod';
+import { CameraService } from '../../services/camera.service'; // Import the camera service
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 
 @Component({
@@ -11,22 +12,59 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
   templateUrl: './saved-promotions.component.html',
   styleUrls: ['./saved-promotions.component.css']
 })
-export class SavedPromotionsComponent implements OnInit {
+export class SavedPromotionsComponent implements OnInit, OnDestroy {
   savedPromotions: any[] = [];
   isLoading = false;
   selectedPromotion: any = null;
   errorMessage: string = '';
+  private fileSelectionSubscription: Subscription | undefined;
   
   private apiUrl = `${environment.apiUrl}/promotions`;
   
   constructor(
     private http: HttpClient,
     private router: Router,
-    private firebaseAuthService: FirebaseAuthService
+    private firebaseAuthService: FirebaseAuthService,
+    private cameraService: CameraService // Inject camera service
   ) { }
 
   ngOnInit(): void {
     this.loadSavedPromotions();
+    
+    // Subscribe to file selection events from the camera service
+    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
+      // Redirect to home component for processing
+      this.redirectToHomeWithCamera();
+    });
+  }
+  
+  ngOnDestroy(): void {
+    // Unsubscribe from camera service to prevent memory leaks
+    if (this.fileSelectionSubscription) {
+      this.fileSelectionSubscription.unsubscribe();
+    }
+  }
+  
+  // Method to handle camera button click
+  openCamera(): void {
+    this.cameraService.triggerFileInput();
+  }
+
+  // Method to handle file selection
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      // Notify the camera service about the file selection
+      this.cameraService.notifyFileSelected(file);
+      
+      // Redirect to the home component for processing
+      this.redirectToHomeWithCamera();
+    }
+  }
+
+  // Method to redirect to home component for camera processing
+  redirectToHomeWithCamera(): void {
+    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
   }
   
   // Load saved promotions for the current user
@@ -50,8 +88,6 @@ export class SavedPromotionsComponent implements OnInit {
           console.error('Error loading saved promotions:', error);
           this.errorMessage = 'Failed to load saved promotions. Please try again.';
           this.isLoading = false;
-          // For demo purposes, load mock data if API fails
-          this.loadMockData();
         }
       });
   }
@@ -60,42 +96,6 @@ export class SavedPromotionsComponent implements OnInit {
   private getCurrentUser(): any {
     return this.firebaseAuthService.getCurrentUser() || 
            JSON.parse(localStorage.getItem('currentUser') || '{}');
-  }
-  
-  // Load mock data for demonstration
-  private loadMockData(): void {
-    this.savedPromotions = [
-      {
-        id: '1',
-        merchant: 'Cold Storage',
-        description: '15% off your next grocery purchase',
-        expiry: '2025-04-30',
-        code: 'CS15OFF',
-        category: 'Groceries',
-        imageUrl: 'promotions/coldstorage-promo.jpg',
-        savedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        merchant: 'Starbucks',
-        description: 'Buy 1 Get 1 Free on all frappuccinos',
-        expiry: '2025-04-15',
-        code: 'SBUX2FOR1',
-        category: 'Cafes',
-        imageUrl: 'promotions/starbucks-promo.jpg',
-        savedAt: new Date(Date.now() - 86400000).toISOString() // Yesterday
-      },
-      {
-        id: '3',
-        merchant: 'Amazon',
-        description: '$10 off when you spend $50 or more',
-        expiry: '2025-05-20',
-        code: 'AMZN10OFF',
-        category: 'Shopping',
-        imageUrl: 'promotions/amazon-promo.jpg',
-        savedAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
-      }
-    ];
   }
   
   // View promotion details

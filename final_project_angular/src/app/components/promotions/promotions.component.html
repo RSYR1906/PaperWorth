@@ -1,3 +1,20 @@
+<!-- Hidden File Input for Camera -->
+<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
+
+<!-- Success Notification -->
+<div class="success-notification" *ngIf="showSuccessNotification">
+  <div class="success-content">
+    <div class="success-icon">✓</div>
+    <div class="success-message">
+      <h4>{{ successNotificationMessage }}</h4>
+      <p>You can view it in your Saved Promotions</p>
+    </div>
+  </div>
+  <div class="timer-bar">
+    <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+  </div>
+</div>
+
 <!-- Hero Section -->
 <section class="hero">
   <div class="hero-content">
@@ -98,4 +115,4 @@
 </div>
   
 <!-- Floating Scan Button -->
-<button class="scan-button" routerLink="/homepage">📸</button>
+<button class="scan-button" (click)="openCamera()">📸</button>

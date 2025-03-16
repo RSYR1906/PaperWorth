@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
+import { CameraService } from '../../services/camera.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
@@ -44,11 +45,13 @@ export class HomePageComponent implements OnInit, OnDestroy {
   
   constructor(
     private http: HttpClient, 
-    private router: Router, 
+    private router: Router,
+    private route: ActivatedRoute,
     private promotionService: PromotionService,
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
-    private savedPromotionService : SavedPromotionsService
+    private savedPromotionService : SavedPromotionsService,
+    private cameraService: CameraService
   ) {}
 
   private apiUrl = `${environment.apiUrl}`
@@ -58,6 +61,16 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.loadUserData();
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
+
+    // Check if we were redirected here with camera flag
+    this.route.queryParams.subscribe(params => {
+      if (params['camera'] === 'open') {
+        // Trigger the camera after a short delay to ensure component is fully loaded
+        setTimeout(() => {
+          this.triggerFileInput();
+        }, 300);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -103,46 +116,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading saved promotions:', error);
         this.isLoadingSavedPromotions = false;
-        // For demo purposes, load mock data
-        this.loadMockSavedPromotions();
       }
     });
-  }
-
-  /** Load mock saved promotions for demonstration */
-  private loadMockSavedPromotions(): void {
-    this.savedPromotions = [
-      {
-        id: '1',
-        merchant: 'Cold Storage',
-        description: '15% off your next grocery purchase',
-        expiry: '2025-04-30',
-        code: 'CS15OFF',
-        category: 'Groceries',
-        imageUrl: 'promotions/coldstorage-promo.jpg',
-        savedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        merchant: 'Starbucks',
-        description: 'Buy 1 Get 1 Free on all frappuccinos',
-        expiry: '2025-04-15',
-        code: 'SBUX2FOR1',
-        category: 'Cafes',
-        imageUrl: 'promotions/starbucks-promo.jpg',
-        savedAt: new Date(Date.now() - 86400000).toISOString() // Yesterday
-      },
-      {
-        id: '3',
-        merchant: 'Amazon',
-        description: '$10 off when you spend $50 or more',
-        expiry: '2025-05-20',
-        code: 'AMZN10OFF',
-        category: 'Shopping',
-        imageUrl: 'promotions/amazon-promo.jpg',
-        savedAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
-      }
-    ];
   }
 
   /** Save a promotion */
@@ -343,6 +318,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
       reader.readAsDataURL(file);
       this.ocrText = '';
       this.extractedData = null;
+      
+      // Notify the camera service about the selected file
+      this.cameraService.notifyFileSelected(file);
     }
   }
 
@@ -643,9 +621,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return 'Others';
   }
 
+  // Modified to use the shared service
   triggerFileInput() {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
-    fileInput?.click();
+    this.cameraService.triggerFileInput();
   }
 
   toggleFullText() {

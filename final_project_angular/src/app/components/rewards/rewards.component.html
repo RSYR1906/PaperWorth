@@ -1,4 +1,4 @@
-<!-- src/app/components/rewards/rewards.component.html -->
+<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
 <!-- Hero Section -->
 <section class="hero">
   <div class="hero-content">
@@ -276,3 +276,5 @@
     <button class="success-btn" (click)="closeSuccessModal()">Done</button>
   </div>
 </div>
+
+<button class="scan-button" (click)="openCamera()">📸</button>

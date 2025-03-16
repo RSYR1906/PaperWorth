@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { CameraService } from '../../services/camera.service'; // Import the camera service
 import { ReceiptService } from '../../services/receipt.service';
 
 @Component({
@@ -8,13 +10,14 @@ import { ReceiptService } from '../../services/receipt.service';
   templateUrl: './past-receipts.component.html',
   styleUrls: ['./past-receipts.component.css']
 })
-export class PastReceiptsComponent implements OnInit {
+export class PastReceiptsComponent implements OnInit, OnDestroy {
   receipts: any[] = [];
   selectedReceipt: any = null;
   searchTerm: string = '';
   isLoading: boolean = true;
   error: string = '';
   isClosing: boolean = false;
+  private fileSelectionSubscription: Subscription | undefined;
 
   
   // Filters
@@ -47,11 +50,47 @@ export class PastReceiptsComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private receiptService: ReceiptService
+    private receiptService: ReceiptService,
+    private cameraService: CameraService // Inject camera service
   ) { }
 
   ngOnInit(): void {
     this.loadUserReceipts();
+    
+    // Subscribe to file selection events from the camera service
+    this.fileSelectionSubscription = this.cameraService.fileSelected$.subscribe(file => {
+      // Redirect to home component for processing
+      this.redirectToHomeWithCamera();
+    });
+  }
+  
+  ngOnDestroy(): void {
+    // Unsubscribe from camera service to prevent memory leaks
+    if (this.fileSelectionSubscription) {
+      this.fileSelectionSubscription.unsubscribe();
+    }
+  }
+  
+  // Method to handle camera button click
+  openCamera(): void {
+    this.cameraService.triggerFileInput();
+  }
+
+  // Method to handle file selection
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      // Notify the camera service about the file selection
+      this.cameraService.notifyFileSelected(file);
+      
+      // Redirect to the home component for processing
+      this.redirectToHomeWithCamera();
+    }
+  }
+
+  // Method to redirect to home component for camera processing
+  redirectToHomeWithCamera(): void {
+    this.router.navigate(['/home'], { queryParams: { camera: 'open' } });
   }
   
   loadUserReceipts() {
@@ -126,31 +165,7 @@ export class PastReceiptsComponent implements OnInit {
   loadDemoReceipts() {
     // Fallback to demo data if API fails
     this.receipts = [
-      // {
-      //   id: '1',
-      //   merchantName: 'Cold Storage',
-      //   category: 'Groceries',
-      //   scanDate: '2025-03-01T13:45:00',
-      //   totalAmount: 87.50,
-      //   hasPromotion: true,
-      //   items: [
-      //     { name: 'Milk', quantity: 2, price: 6.50 },
-      //     { name: 'Bread', quantity: 1, price: 3.20 },
-      //     { name: 'Eggs', quantity: 1, price: 4.80 }
-      //   ]
-      // },
-      // {
-      //   id: '2',
-      //   merchantName: 'Starbucks',
-      //   category: 'Cafes',
-      //   scanDate: '2025-02-28T09:15:00',
-      //   totalAmount: 15.80,
-      //   hasPromotion: true,
-      //   items: [
-      //     { name: 'Caffè Latte', quantity: 1, price: 6.50 },
-      //     { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
-      //   ]
-      // }
+      // Demo receipts data removed for brevity
     ];
   }
   
@@ -211,61 +226,61 @@ export class PastReceiptsComponent implements OnInit {
   }
   
   // Get filtered receipts
-get filteredReceipts() {
-  return this.receipts.filter(receipt => {
-    // Filter by search term
-    if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by promotion
-    if (this.filters.hasPromotion && !receipt.hasPromotion) {
-      return false;
-    }
-    
-    // Filter by category
-    if (this.filters.category !== 'all') {
-      const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
-      if (receiptCategory !== this.filters.category.toLowerCase()) {
+  get filteredReceipts() {
+    return this.receipts.filter(receipt => {
+      // Filter by search term
+      if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
         return false;
       }
-    }
-    
-    // Filter by date range - now using dateOfPurchase instead of scanDate
-    if (this.filters.dateRange !== 'all') {
-      const receiptDate = new Date(receipt.dateOfPurchase);
-      const today = new Date();
       
-      if (this.filters.dateRange === 'this-week') {
-        // This week logic
-        const firstDayOfWeek = new Date(today);
-        firstDayOfWeek.setDate(today.getDate() - today.getDay());
-        firstDayOfWeek.setHours(0, 0, 0, 0);
-        
-        if (receiptDate < firstDayOfWeek) {
-          return false;
-        }
-      } else if (this.filters.dateRange === 'this-month') {
-        // This month logic
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        if (receiptDate < firstDayOfMonth) {
-          return false;
-        }
-      } else if (this.filters.dateRange === 'last-month') {
-        // Last month logic
-        const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
+      // Filter by promotion
+      if (this.filters.hasPromotion && !receipt.hasPromotion) {
+        return false;
+      }
+      
+      // Filter by category
+      if (this.filters.category !== 'all') {
+        const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
+        if (receiptCategory !== this.filters.category.toLowerCase()) {
           return false;
         }
       }
-    }
-    
-    return true;
-  });
-}
+      
+      // Filter by date range - now using dateOfPurchase instead of scanDate
+      if (this.filters.dateRange !== 'all') {
+        const receiptDate = new Date(receipt.dateOfPurchase);
+        const today = new Date();
+        
+        if (this.filters.dateRange === 'this-week') {
+          // This week logic
+          const firstDayOfWeek = new Date(today);
+          firstDayOfWeek.setDate(today.getDate() - today.getDay());
+          firstDayOfWeek.setHours(0, 0, 0, 0);
+          
+          if (receiptDate < firstDayOfWeek) {
+            return false;
+          }
+        } else if (this.filters.dateRange === 'this-month') {
+          // This month logic
+          const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          
+          if (receiptDate < firstDayOfMonth) {
+            return false;
+          }
+        } else if (this.filters.dateRange === 'last-month') {
+          // Last month logic
+          const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          
+          if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
+    });
+  }
   
   logout() {
     localStorage.removeItem('currentUser');
