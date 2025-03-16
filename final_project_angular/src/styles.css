@@ -13,6 +13,7 @@ html, body {
   height: 100%;
   background-color: #f8f9fa;
   color: #212529;
+  touch-action: manipulation;
 }
 
 /* Headers */

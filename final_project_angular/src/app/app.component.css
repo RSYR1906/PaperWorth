@@ -28,12 +28,19 @@
   .logo-container {
     display: flex;
     align-items: center;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    justify-content: center; /* Center items horizontally */
+    gap: 8px; /* Space between logo and text */
+    text-align: center;
+    width: 100%;
+    padding: 10px 0; /* Add padding for spacing */
+  }
+
+  .logo-container img {
+    max-width: 40px; /* Adjust size for responsiveness */
+    height: auto;
   }
   
-  .main-toolbar .logo-container img {
+  .main-toolbar {
     max-height: 30px;
     width: auto;
     object-fit: contain;
@@ -44,8 +51,8 @@
     font-size: 22px;
     font-weight: 600;
     color: white;
-    margin: 0 0 0 8px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Added for better contrast */
+    margin: 0;
+    text-align: center;
   }
   
   .menu-button mat-icon,
@@ -125,8 +132,12 @@
     .logo-text {
       font-size: 18px;
     }
+
+    .logo-container img {
+      max-width: 35px
+    }
     
-    .main-toolbar .logo-container img {
+    .main-toolbar  {
       max-height: 25px;
     }
   }
