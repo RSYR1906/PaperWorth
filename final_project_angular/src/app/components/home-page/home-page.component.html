@@ -221,6 +221,73 @@
   </div>
 </div>
 
+<!-- Add this section to src/app/components/home-page/home-page.component.html -->
+<!-- SAVED PROMOTIONS SECTION -->
+<div class="promotions-section" *ngIf="!selectedFile && !extractedData">
+  <div class="section-header">
+    <h3>Your Saved Promotions</h3>
+    <a routerLink="/saved-promotions" class="view-all">View All <span class="arrow-icon">→</span></a>
+  </div>
+  
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoadingSavedPromotions" class="loading-indicator">
+    <div class="spinner"></div>
+    <p>Loading your saved promotions...</p>
+  </div>
+  
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoadingSavedPromotions && savedPromotions.length === 0">
+    <div class="empty-icon">🏷️</div>
+    <h4>No Saved Promotions</h4>
+    <p>You haven't saved any promotions yet. Browse the available promotions and save the ones you like!</p>
+    <button class="action-btn primary" routerLink="/promotions">Browse Promotions</button>
+  </div>
+  
+  <!-- Saved Promotions List -->
+  <div class="saved-promotions-list" *ngIf="!isLoadingSavedPromotions && savedPromotions.length > 0">
+    <div class="promo-card" *ngFor="let promo of displayedSavedPromotions">
+      <!-- Expiry Badge -->
+      <div class="expiry-badge" 
+           *ngIf="isExpiringSoon(promo.expiry) && !hasExpired(promo.expiry)">
+        Expires Soon
+      </div>
+      <div class="expiry-badge expired" *ngIf="hasExpired(promo.expiry)">
+        Expired
+      </div>
+      
+      <!-- Card Content -->
+      <div class="promo-image" (click)="viewPromotionDetails(promo)">
+        <img [src]="promo.imageUrl" 
+             [alt]="promo.merchant + ' promotion'" 
+             onerror="this.src='assets/images/promo-placeholder.jpg'">
+      </div>
+      <div class="promo-content">
+        <div class="promo-merchant">{{ promo.merchant }}</div>
+        <div class="promo-description" (click)="viewPromotionDetails(promo)">
+          {{ promo.description }}
+        </div>
+        <div class="promo-meta">
+          <div class="promo-expiry" [class.expired-text]="hasExpired(promo.expiry)">
+            Valid until: {{ formatDate(promo.expiry) }}
+          </div>
+          <div class="promo-code" *ngIf="promo.code">Code: {{ promo.code }}</div>
+        </div>
+      </div>
+      <div class="promo-actions">
+        <button class="view-btn" (click)="viewPromotionDetails(promo)">View</button>
+        <button class="remove-btn" (click)="removeSavedPromotion(promo.id)">Remove</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Show More/Less Button -->
+  <div class="show-more-container" *ngIf="!isLoadingSavedPromotions && savedPromotions.length > savedPromotionsLimit">
+    <button class="show-more-btn" (click)="toggleShowMoreSavedPromotions()">
+      {{ showMoreSavedPromotions ? 'Show Less' : 'Show More' }}
+    </button>
+  </div>
+</div>
+
 <!-- Floating Camera Button -->
 <button class="scan-button" (click)="triggerFileInput()">📸</button>
 

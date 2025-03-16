@@ -1,0 +1,123 @@
+<!-- src/app/components/saved-promotions/saved-promotions.component.html -->
+<div class="saved-promotions-container">
+    <div class="saved-promotions-header">
+      <h3>Saved Promotions</h3>
+      <p>Your collection of saved deals and offers</p>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div class="loading-indicator" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading your saved promotions...</p>
+    </div>
+    
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="errorMessage && !isLoading">
+      <p>{{ errorMessage }}</p>
+      <button class="retry-btn" (click)="loadSavedPromotions()">Try Again</button>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && !errorMessage && savedPromotions.length === 0">
+      <div class="empty-icon">🏷️</div>
+      <h4>No Saved Promotions</h4>
+      <p>You haven't saved any promotions yet. Browse the available promotions and save the ones you like!</p>
+      <button class="browse-btn" routerLink="/promotions">Browse Promotions</button>
+    </div>
+    
+    <!-- Promotions Grid -->
+    <div class="saved-promotions-grid" *ngIf="!isLoading && savedPromotions.length > 0">
+      <div class="promo-card" *ngFor="let promo of savedPromotions">
+        <!-- Expiry Badge -->
+        <div class="expiry-badge" 
+             *ngIf="isExpiringSoon(promo.expiry) && !hasExpired(promo.expiry)">
+          Expires Soon
+        </div>
+        <div class="expiry-badge expired" *ngIf="hasExpired(promo.expiry)">
+          Expired
+        </div>
+        
+        <!-- Card Content -->
+        <div class="promo-image" (click)="viewPromotionDetails(promo)">
+          <img [src]="promo.imageUrl" 
+               [alt]="promo.merchant + ' promotion'" 
+               onerror="this.src='assets/images/promo-placeholder.jpg'">
+        </div>
+        <div class="promo-content">
+          <div class="promo-merchant">{{ promo.merchant }}</div>
+          <div class="promo-description" (click)="viewPromotionDetails(promo)">
+            {{ promo.description }}
+          </div>
+          <div class="promo-meta">
+            <div class="promo-expiry">Valid until: {{ formatDate(promo.expiry) }}</div>
+            <div class="promo-saved-at">Saved: {{ getTimeElapsed(promo.savedAt) }}</div>
+          </div>
+        </div>
+        <div class="promo-actions">
+          <button class="view-btn" (click)="viewPromotionDetails(promo)">View Details</button>
+          <button class="remove-btn" (click)="removePromotion(promo.id)">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Promotion Details Modal -->
+  <div class="promotion-details-modal" *ngIf="selectedPromotion">
+    <div class="modal-overlay" (click)="closePromotionDetails()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>{{ selectedPromotion.merchant }}</h3>
+        <button class="close-button" (click)="closePromotionDetails()">×</button>
+      </div>
+      
+      <img [src]="selectedPromotion.imageUrl" 
+           alt="Promotion Image" 
+           class="promo-detail-image" 
+           onerror="this.src='assets/images/promo-placeholder.jpg'">
+      
+      <div class="promo-detail-info">
+        <h4>{{ selectedPromotion.description }}</h4>
+        
+        <div class="promo-detail-row" *ngIf="selectedPromotion.location">
+          <span class="label">Location:</span>
+          <span>{{ selectedPromotion.location }}</span>
+        </div>
+        
+        <div class="promo-detail-row">
+          <span class="label">Valid Until:</span>
+          <span [class.expired-text]="hasExpired(selectedPromotion.expiry)">
+            {{ formatDate(selectedPromotion.expiry) }}
+            <span class="expiry-status" *ngIf="hasExpired(selectedPromotion.expiry)">(Expired)</span>
+            <span class="expiry-status expiring" *ngIf="isExpiringSoon(selectedPromotion.expiry) && !hasExpired(selectedPromotion.expiry)">(Expiring Soon)</span>
+          </span>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="selectedPromotion.code">
+          <span class="label">Promotion Code:</span>
+          <div class="promo-code-container">
+            <span class="promo-code">{{ selectedPromotion.code }}</span>
+            <button class="copy-btn" (click)="copyPromoCode(selectedPromotion.code)">Copy</button>
+          </div>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="selectedPromotion.conditions">
+          <span class="label">Conditions:</span>
+          <span class="conditions">{{ selectedPromotion.conditions }}</span>
+        </div>
+        
+        <div class="promo-detail-row">
+          <span class="label">Category:</span>
+          <span class="category-badge">{{ selectedPromotion.category || 'General' }}</span>
+        </div>
+        
+        <div class="promo-detail-row">
+          <span class="label">Saved On:</span>
+          <span>{{ formatDate(selectedPromotion.savedAt) }}</span>
+        </div>
+      </div>
+      
+      <div class="promo-detail-actions">
+        <button class="action-button" (click)="removePromotion(selectedPromotion.id)">Remove Promotion</button>
+      </div>
+    </div>
+  </div>

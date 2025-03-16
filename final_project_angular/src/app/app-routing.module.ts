@@ -7,9 +7,10 @@ import { HomePageComponent } from './components/home-page/home-page.component';
 import { LoginComponent } from './components/login/login.component';
 import { PastReceiptsComponent } from './components/past-receipts/past-receipts.component';
 import { PromotionsComponent } from './components/promotions/promotions.component';
+import { RewardsComponent } from './components/rewards/rewards.component';
+import { SavedPromotionsComponent } from './components/saved-promotions/saved-promotions.component'; // Add this line
 import { SignupComponent } from './components/signup/signup.component';
 import { AuthGuard } from './guards/auth.guard';
-import { RewardsComponent } from './components/rewards/rewards.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -43,6 +44,11 @@ const routes: Routes = [
   { 
     path: 'rewards', 
     component: RewardsComponent,
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'saved-promotions', 
+    component: SavedPromotionsComponent,
     canActivate: [AuthGuard]
   },
   { path: '**', redirectTo: '/homepage' }

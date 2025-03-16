@@ -2,30 +2,29 @@ package sg.nus.iss.final_project.model;
 
 import java.time.LocalDateTime;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-@Document(collection = "promotions")
-public class Promotion {
-    @Id
-    private String id;
+/**
+ * Data Transfer Object for saved promotions.
+ * This combines information from both Promotion and SavedPromotion entities.
+ */
+public class SavedPromotionDTO {
+    private String id; // Promotion ID
     private String merchant;
     private String description;
-    private String expiry; // Changed from LocalDateTime to match the data structure
-    private String imageUrl; // Changed to match property name in the data
+    private String expiry;
+    private String imageUrl;
     private String location;
     private String code;
     private String conditions;
-    private String category; // Added category field
-    private int promotionId; // Added to store the numeric ID from the data
-
-    // Transient field to store when a user saved this promotion
-    // This field is not stored in the database, but can be populated
-    // for API responses
-    @Transient
+    private String category;
+    private int promotionId;
     private LocalDateTime savedAt;
+    private String savedPromotionId; // ID of the SavedPromotion record
 
+    // Default constructor
+    public SavedPromotionDTO() {
+    }
+
+    // Getters and setters
     public String getId() {
         return id;
     }
@@ -114,10 +113,11 @@ public class Promotion {
         this.savedAt = savedAt;
     }
 
-    @Override
-    public String toString() {
-        return "Promotion [id=" + id + ", merchant=" + merchant + ", description=" + description + ", expiry="
-                + expiry + ", imageUrl=" + imageUrl + ", location=" + location + ", code=" + code + ", conditions="
-                + conditions + ", category=" + category + ", promotionId=" + promotionId + "]";
+    public String getSavedPromotionId() {
+        return savedPromotionId;
+    }
+
+    public void setSavedPromotionId(String savedPromotionId) {
+        this.savedPromotionId = savedPromotionId;
     }
 }

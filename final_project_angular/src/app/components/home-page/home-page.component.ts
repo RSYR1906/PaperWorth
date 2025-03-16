@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
+import { SavedPromotionsService } from '../../services/saved-promotions.service';
 
 @Component({
   selector: 'app-home-page',
@@ -35,6 +36,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
   notificationTimer: any = null;
   processingMessage: string = '';
   successNotificationMessage: string = 'Receipt saved successfully!';
+  savedPromotions: any[] = [];
+  isLoadingSavedPromotions: boolean = false;
+  showMoreSavedPromotions: boolean = false;
+  savedPromotionsLimit: number = 3; // Default limit to show in homepage
 
   
   constructor(
@@ -42,7 +47,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private router: Router, 
     private promotionService: PromotionService,
     private budgetService: BudgetService,
-    private firebaseAuthService: FirebaseAuthService
+    private firebaseAuthService: FirebaseAuthService,
+    private savedPromotionService : SavedPromotionsService
   ) {}
 
   private apiUrl = `${environment.apiUrl}`
@@ -79,6 +85,174 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   private getCurrentUser() {
     return this.firebaseAuthService.getCurrentUser() || JSON.parse(localStorage.getItem('currentUser') || '{}');
+  }
+
+  private loadSavedPromotions(): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      this.savedPromotions = [];
+      return;
+    }
+
+    this.isLoadingSavedPromotions = true;
+    this.savedPromotionService.getSavedPromotions(currentUser.id).subscribe({
+      next: (promotions) => {
+        this.savedPromotions = promotions;
+        this.isLoadingSavedPromotions = false;
+      },
+      error: (error) => {
+        console.error('Error loading saved promotions:', error);
+        this.isLoadingSavedPromotions = false;
+        // For demo purposes, load mock data
+        this.loadMockSavedPromotions();
+      }
+    });
+  }
+
+  /** Load mock saved promotions for demonstration */
+  private loadMockSavedPromotions(): void {
+    this.savedPromotions = [
+      {
+        id: '1',
+        merchant: 'Cold Storage',
+        description: '15% off your next grocery purchase',
+        expiry: '2025-04-30',
+        code: 'CS15OFF',
+        category: 'Groceries',
+        imageUrl: 'promotions/coldstorage-promo.jpg',
+        savedAt: new Date().toISOString()
+      },
+      {
+        id: '2',
+        merchant: 'Starbucks',
+        description: 'Buy 1 Get 1 Free on all frappuccinos',
+        expiry: '2025-04-15',
+        code: 'SBUX2FOR1',
+        category: 'Cafes',
+        imageUrl: 'promotions/starbucks-promo.jpg',
+        savedAt: new Date(Date.now() - 86400000).toISOString() // Yesterday
+      },
+      {
+        id: '3',
+        merchant: 'Amazon',
+        description: '$10 off when you spend $50 or more',
+        expiry: '2025-05-20',
+        code: 'AMZN10OFF',
+        category: 'Shopping',
+        imageUrl: 'promotions/amazon-promo.jpg',
+        savedAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+      }
+    ];
+  }
+
+  /** Save a promotion */
+  savePromotion(promotion: any): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    // Check if already saved to avoid duplicates
+    const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
+    if (alreadySaved) {
+      alert('This promotion is already saved!');
+      return;
+    }
+    
+    this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
+      next: () => {
+        // Add to local array
+        const savedPromotion = {
+          ...promotion,
+          savedAt: new Date().toISOString()
+        };
+        this.savedPromotions.unshift(savedPromotion);
+        
+        // Show success notification
+        this.successNotificationMessage = 'Promotion saved successfully!';
+        this.showNotification();
+        
+        // Close promotion details if open
+        this.closePromotionDetails();
+      },
+      error: (error) => {
+        console.error('Error saving promotion:', error);
+        alert('Failed to save promotion. Please try again.');
+        
+        // For demo: add to local array anyway
+        const savedPromotion = {
+          ...promotion,
+          savedAt: new Date().toISOString()
+        };
+        this.savedPromotions.unshift(savedPromotion);
+      }
+    });
+  }
+
+  /** Remove a saved promotion */
+  removeSavedPromotion(promotionId: string): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) return;
+    
+    if (!confirm('Are you sure you want to remove this promotion?')) {
+      return;
+    }
+    
+    this.savedPromotionService.removePromotion(currentUser.id, promotionId).subscribe({
+      next: () => {
+        // Remove from local array
+        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotionId);
+        
+        // Show success notification
+        this.successNotificationMessage = 'Promotion removed!';
+        this.showNotification();
+      },
+      error: (error) => {
+        console.error('Error removing promotion:', error);
+        alert('Failed to remove promotion. Please try again.');
+        
+        // For demo: remove from local array anyway
+        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotionId);
+      }
+    });
+  }
+
+  /** Toggle show more/less saved promotions */
+  toggleShowMoreSavedPromotions(): void {
+    this.showMoreSavedPromotions = !this.showMoreSavedPromotions;
+  }
+
+  /** Get saved promotions to display based on limit */
+  get displayedSavedPromotions(): any[] {
+    return this.showMoreSavedPromotions 
+      ? this.savedPromotions 
+      : this.savedPromotions.slice(0, this.savedPromotionsLimit);
+  }
+
+  /** Check if a promotion is expiring soon (within 7 days) */
+  isExpiringSoon(expiryDate: string): boolean {
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
+    return differenceInDays >= 0 && differenceInDays <= 7;
+  }
+
+  /** Check if a promotion has expired */
+  hasExpired(expiryDate: string): boolean {
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    return expiry < now;
+  }
+
+  /** Format date for display */
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
   /** Determine category based on merchant name */
@@ -520,11 +694,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
   // Add this method to close the promotion details modal
   closePromotionDetails() {
     this.selectedPromotion = null;
-  }
-
-  // Add this method to save a promotion
-  savePromotion(promotion: any) {
-    alert(`Promotion "${promotion.description}" saved! You can access it in your Saved Promotions.`);
   }
 
   showNotification() {

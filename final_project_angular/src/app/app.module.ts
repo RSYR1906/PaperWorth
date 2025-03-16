@@ -20,6 +20,7 @@ import { FirebaseAuthService } from './services/firebase-auth.service';
 import { PromotionService } from './services/promotions.service';
 import { ReceiptService } from './services/receipt.service';
 import { UserService } from './services/user.service';
+import { SavedPromotionsComponent } from './components/saved-promotions/saved-promotions.component';
 
 
 @NgModule({
@@ -32,7 +33,8 @@ import { UserService } from './services/user.service';
     PromotionsComponent,
     SignupComponent,
     BudgetSettingsComponent,
-    RewardsComponent
+    RewardsComponent,
+    SavedPromotionsComponent
     ],
   imports: [
     BrowserModule,

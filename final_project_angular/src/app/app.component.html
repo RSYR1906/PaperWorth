@@ -15,29 +15,40 @@
           </button>
         </div>
         
-        <mat-nav-list>
-          <a mat-list-item routerLink="/homepage" routerLinkActive="active" (click)="sidenav.close()">
-            <mat-icon>dashboard</mat-icon>
-            <span class="nav-label">Dashboard</span>
-          </a>
-          <a mat-list-item routerLink="/expense-tracker" routerLinkActive="active" (click)="sidenav.close()">
-            <mat-icon>account_balance_wallet</mat-icon>
-            <span class="nav-label">Expense Tracker</span>
-          </a>
-          <a mat-list-item routerLink="/past-receipts" routerLinkActive="active" (click)="sidenav.close()">
-            <mat-icon>receipt</mat-icon>
-            <span class="nav-label">Past Receipts</span>
-          </a>
-          <a mat-list-item routerLink="/promotions" routerLinkActive="active" (click)="sidenav.close()">
-            <mat-icon>local_offer</mat-icon>
-            <span class="nav-label">Promotions</span>
-          </a>
-          <mat-divider></mat-divider>
-          <a mat-list-item (click)="logout(); sidenav.close()">
-            <mat-icon>exit_to_app</mat-icon>
-            <span class="nav-label">Logout</span>
-          </a>
-        </mat-nav-list>
+        <!-- Update this code in src/app/app.component.html - Add Saved Promotions to sidenav -->
+
+          <mat-nav-list>
+            <a mat-list-item routerLink="/homepage" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>dashboard</mat-icon>
+              <span class="nav-label">Dashboard</span>
+            </a>
+            <a mat-list-item routerLink="/expense-tracker" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>account_balance_wallet</mat-icon>
+              <span class="nav-label">Expense Tracker</span>
+            </a>
+            <a mat-list-item routerLink="/past-receipts" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>receipt</mat-icon>
+              <span class="nav-label">Past Receipts</span>
+            </a>
+            <a mat-list-item routerLink="/promotions" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>local_offer</mat-icon>
+              <span class="nav-label">Promotions</span>
+            </a>
+            <!-- Add this new menu item -->
+            <a mat-list-item routerLink="/saved-promotions" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>bookmark</mat-icon>
+              <span class="nav-label">Saved Promotions</span>
+            </a>
+            <a mat-list-item routerLink="/rewards" routerLinkActive="active" (click)="sidenav.close()">
+              <mat-icon>card_giftcard</mat-icon>
+              <span class="nav-label">Rewards</span>
+            </a>
+            <mat-divider></mat-divider>
+            <a mat-list-item (click)="logout(); sidenav.close()">
+              <mat-icon>exit_to_app</mat-icon>
+              <span class="nav-label">Logout</span>
+            </a>
+          </mat-nav-list>
       </mat-sidenav>
     
       <mat-sidenav-content>
