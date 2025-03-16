@@ -1,77 +1,94 @@
-// src/app/services/saved-promotions.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
-import { FirebaseAuthService } from './firebase-auth.service';
+import { Promotion, SavedPromotion } from '../model';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class SavedPromotionsService {
-  private apiUrl = `${environment.apiUrl}/promotions`;
+  private readonly apiBaseUrl = environment.apiUrl + '/promotions/saved';
   
-  constructor(
-    private http: HttpClient,
-    private firebaseAuthService: FirebaseAuthService
-  ) { }
+  // BehaviorSubject to store the current list of saved promotions
+  private savedPromotionsSubject = new BehaviorSubject<Promotion[]>([]);
   
+  // Observable that components can subscribe to
+  public savedPromotions$ = this.savedPromotionsSubject.asObservable();
+
+  constructor(private http: HttpClient) { }
+
   /**
-   * Get all saved promotions for the current user
+   * Get all saved promotions for a user
    */
-  getSavedPromotions(userId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/saved/${userId}`).pipe(
-      catchError(error => {
-        console.error('Error fetching saved promotions:', error);
-        return of([]);
+  getSavedPromotions(userId: string): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}`).pipe(
+      tap(promotions => {
+        // Update the BehaviorSubject with the new data
+        this.savedPromotionsSubject.next(promotions);
+      })
+    );
+  }
+
+  /**
+   * Get saved promotions for a user by category
+   */
+  getSavedPromotionsByCategory(userId: string, category: string): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}/category/${category}`);
+  }
+
+  /**
+   * Check if a promotion is saved by a user
+   */
+  isPromotionSaved(userId: string, promotionId: string): Observable<{saved: boolean}> {
+    return this.http.get<{saved: boolean}>(`${this.apiBaseUrl}/${userId}/${promotionId}`);
+  }
+
+  /**
+   * Save a promotion for a user
+   */
+  savePromotion(userId: string, promotionId: string): Observable<SavedPromotion> {
+    return this.http.post<SavedPromotion>(`${this.apiBaseUrl}/${userId}/${promotionId}`, {}).pipe(
+      tap(() => {
+        // After saving, refresh the list of saved promotions
+        this.refreshSavedPromotions(userId);
+      })
+    );
+  }
+
+  /**
+   * Remove a saved promotion
+   */
+  removePromotion(userId: string, promotionId: string): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiBaseUrl}/${userId}/${promotionId}`).pipe(
+      tap(() => {
+        // Update the list after removal
+        const currentPromotions = this.savedPromotionsSubject.getValue();
+        const updatedPromotions = currentPromotions.filter(promo => promo.id !== promotionId);
+        this.savedPromotionsSubject.next(updatedPromotions);
       })
     );
   }
   
   /**
-   * Save a promotion for the current user
+   * Helper method to refresh the saved promotions list
    */
-  savePromotion(userId: string, promotionId: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/saved/${userId}/${promotionId}`, {}).pipe(
-      catchError(error => {
-        console.error('Error saving promotion:', error);
-        throw error;
-      })
-    );
+  private refreshSavedPromotions(userId: string): void {
+    this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}`).subscribe({
+      next: (promotions) => {
+        this.savedPromotionsSubject.next(promotions);
+      },
+      error: (error) => {
+        console.error('Error refreshing saved promotions:', error);
+      }
+    });
   }
-  
+
   /**
-   * Remove a saved promotion for the current user
+   * Get the count of users who saved a promotion
    */
-  removePromotion(userId: string, promotionId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/saved/${userId}/${promotionId}`).pipe(
-      catchError(error => {
-        console.error('Error removing saved promotion:', error);
-        throw error;
-      })
-    );
-  }
-  
-  /**
-   * Check if a promotion is saved by the current user
-   */
-  isPromotionSaved(userId: string, promotionId: string): Observable<boolean> {
-    return this.http.get<any>(`${this.apiUrl}/saved/${userId}/${promotionId}`).pipe(
-      map(response => !!response),
-      catchError(error => {
-        // 404 means not saved
-        return of(false);
-      })
-    );
-  }
-  
-  /**
-   * Get the current user ID
-   */
-  getCurrentUserId(): string | null {
-    const currentUser = this.firebaseAuthService.getCurrentUser() || 
-                       JSON.parse(localStorage.getItem('currentUser') || '{}');
-    return currentUser?.id || null;
+  getSaveCount(promotionId: string): Observable<{count: number}> {
+    return this.http.get<{count: number}>(`${this.apiBaseUrl}/count/${promotionId}`);
   }
 }

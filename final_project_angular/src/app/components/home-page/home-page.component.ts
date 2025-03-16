@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
@@ -52,12 +53,25 @@ export class HomePageComponent implements OnInit, OnDestroy {
   ) {}
 
   private apiUrl = `${environment.apiUrl}`
+  private subscriptions = new Subscription();
 
   ngOnInit(): void {
     // Load user data
     this.loadUserData();
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
+
+    // Subscribe to savedPromotions observable
+  this.subscriptions.add(
+    this.savedPromotionService.savedPromotions$.subscribe(
+      promotions => {
+        this.savedPromotions = promotions;
+      }
+    )
+  );
+  
+  // Initial load of saved promotions
+  this.loadSavedPromotions();
   }
 
   ngOnDestroy() {
@@ -93,11 +107,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
       this.savedPromotions = [];
       return;
     }
-
+  
     this.isLoadingSavedPromotions = true;
     this.savedPromotionService.getSavedPromotions(currentUser.id).subscribe({
-      next: (promotions) => {
-        this.savedPromotions = promotions;
+      next: () => {
         this.isLoadingSavedPromotions = false;
       },
       error: (error) => {
@@ -106,8 +119,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  /** Save a promotion */
+  
+  
+  // Replace savePromotion with this:
   savePromotion(promotion: any): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
@@ -124,13 +138,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     
     this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
       next: () => {
-        // Add to local array
-        const savedPromotion = {
-          ...promotion,
-          savedAt: new Date().toISOString()
-        };
-        this.savedPromotions.unshift(savedPromotion);
-        
         // Show success notification
         this.successNotificationMessage = 'Promotion saved successfully!';
         this.showNotification();
@@ -141,18 +148,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error saving promotion:', error);
         alert('Failed to save promotion. Please try again.');
-        
-        // For demo: add to local array anyway
-        const savedPromotion = {
-          ...promotion,
-          savedAt: new Date().toISOString()
-        };
-        this.savedPromotions.unshift(savedPromotion);
       }
     });
   }
-
-  /** Remove a saved promotion */
+  
+  // Replace removeSavedPromotion with this:
   removeSavedPromotion(promotionId: string): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) return;
@@ -163,9 +163,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     
     this.savedPromotionService.removePromotion(currentUser.id, promotionId).subscribe({
       next: () => {
-        // Remove from local array
-        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotionId);
-        
         // Show success notification
         this.successNotificationMessage = 'Promotion removed!';
         this.showNotification();
@@ -173,9 +170,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error removing promotion:', error);
         alert('Failed to remove promotion. Please try again.');
-        
-        // For demo: remove from local array anyway
-        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotionId);
       }
     });
   }

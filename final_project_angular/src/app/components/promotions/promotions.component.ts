@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, finalize, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment.prod';
 import { Promotion } from '../../model';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
@@ -25,8 +25,11 @@ export class PromotionsComponent implements OnInit {
   selectedCategory = 'all';
   allPromotions: Promotion[] = [];
   promotionsByCategory: CategoryGroup[] = [];
-  filteredPromotions: CategoryGroup[] = []; // Added missing property
+  filteredPromotions: CategoryGroup[] = [];
   savedPromotions: Promotion[] = [];
+  
+  // Track saved state for each promotion
+  savedPromotionMap: Map<string, boolean> = new Map();
 
   // Success notification variables
   showSuccessNotification = false;
@@ -78,6 +81,9 @@ export class PromotionsComponent implements OnInit {
         this.fetchAllPromotions();
       }
     });
+
+    // Fetch the user's saved promotions if logged in
+    this.fetchSavedPromotions();
   }
 
   // Method to fix image URLs
@@ -149,6 +155,9 @@ export class PromotionsComponent implements OnInit {
 
     // Initialize filtered promotions based on selected category
     this.selectCategory(this.selectedCategory);
+    
+    // Check which promotions are saved by the current user
+    this.checkSavedPromotions();
   }
   
   private normalizePromotions(promotions: Promotion[]): Promotion[] {
@@ -211,7 +220,6 @@ export class PromotionsComponent implements OnInit {
     }
   }
 
-  // Method to filter promotions by category (was missing)
   selectCategory(categoryId: string): void {
     this.selectedCategory = categoryId;
     
@@ -235,31 +243,101 @@ export class PromotionsComponent implements OnInit {
     }
   }
 
-  // Method to show promotion details (was missing)
   viewPromotionDetails(promotion: Promotion): void {
     this.selectedPromotion = promotion;
+    
+    // Check if this promotion is saved by the current user
+    const currentUser = this.getCurrentUser();
+    if (currentUser?.id) {
+      this.savedPromotionService.isPromotionSaved(currentUser.id, promotion.id)
+        .subscribe({
+          next: (result) => {
+            this.savedPromotionMap.set(promotion.id, result.saved);
+          },
+          error: (error) => {
+            console.error('Error checking saved status:', error);
+          }
+        });
+    }
   }
 
   private getCurrentUser() {
     return this.firebaseAuthService.getCurrentUser() || JSON.parse(localStorage.getItem('currentUser') || '{}');
   }
 
+  // Fetch saved promotions for the current user
+  fetchSavedPromotions(): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return;
+    }
+    
+    this.savedPromotionService.getSavedPromotions(currentUser.id)
+      .subscribe({
+        next: (promotions) => {
+          this.savedPromotions = promotions;
+          
+          // Update the saved status map
+          promotions.forEach(promo => {
+            this.savedPromotionMap.set(promo.id, true);
+          });
+        },
+        error: (error) => {
+          console.error('Error fetching saved promotions:', error);
+        }
+      });
+  }
+
+  // Check which promotions are saved by the current user
+  private checkSavedPromotions(): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id || this.allPromotions.length === 0) {
+      return;
+    }
+    
+    // Create an array of observables for each promotion
+    const checkRequests = this.allPromotions.map(promo => 
+      this.savedPromotionService.isPromotionSaved(currentUser.id, promo.id).pipe(
+        tap(result => {
+          this.savedPromotionMap.set(promo.id, result.saved);
+        }),
+        catchError(error => {
+          console.error(`Error checking saved status for promotion ${promo.id}:`, error);
+          return of({ saved: false });
+        })
+      )
+    );
+    
+    // Execute all requests in parallel
+    forkJoin(checkRequests).subscribe();
+  }
+
+  // Check if a promotion is saved
+  isPromotionSaved(promotionId: string): boolean {
+    return this.savedPromotionMap.get(promotionId) || false;
+  }
+
   // Save Promotion
-  savePromotion(promotion: any): void {
+  savePromotion(promotion: Promotion): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
       this.router.navigate(['/login']);
       return;
     }
 
-    const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
-    if (alreadySaved) {
-      alert('This promotion is already saved!');
+    // Check if already saved to prevent duplicate API calls
+    if (this.isPromotionSaved(promotion.id)) {
+      this.successNotificationMessage = 'This promotion is already saved!';
+      this.showNotification();
       return;
     }
 
     this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
       next: () => {
+        // Mark the promotion as saved
+        this.savedPromotionMap.set(promotion.id, true);
+        
+        // Add to saved promotions list with saved timestamp
         const savedPromotion = { ...promotion, savedAt: new Date().toISOString() };
         this.savedPromotions.unshift(savedPromotion);
         
@@ -270,10 +348,35 @@ export class PromotionsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error saving promotion:', error);
-        alert('Failed to save promotion. Please try again.');
+        this.successNotificationMessage = 'Failed to save promotion. Please try again.';
+        this.showNotification();
+      }
+    });
+  }
+
+  // Remove saved promotion
+  removePromotion(promotion: Promotion): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.savedPromotionService.removePromotion(currentUser.id, promotion.id).subscribe({
+      next: () => {
+        // Remove from saved map
+        this.savedPromotionMap.set(promotion.id, false);
         
-        const savedPromotion = { ...promotion, savedAt: new Date().toISOString() };
-        this.savedPromotions.unshift(savedPromotion);
+        // Remove from saved promotions array
+        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotion.id);
+        
+        this.successNotificationMessage = 'Promotion removed from saved list!';
+        this.showNotification();
+      },
+      error: (error) => {
+        console.error('Error removing promotion:', error);
+        this.successNotificationMessage = 'Failed to remove promotion. Please try again.';
+        this.showNotification();
       }
     });
   }

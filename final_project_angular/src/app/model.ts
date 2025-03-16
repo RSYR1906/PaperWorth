@@ -46,6 +46,15 @@ export interface Promotion {
   code?: string;
   conditions?: string;
   imageUrl?: string;
+  link?: string;
+  savedAt?: string;
+  }
+
+  export interface SavedPromotion {
+    id: string;
+    userId: string;
+    promotionId: string;
+    savedAt: string;
   }
 
   // src/app/model.ts - Add the following interfaces

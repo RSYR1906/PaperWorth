@@ -1,9 +1,11 @@
 // src/app/components/saved-promotions/saved-promotions.component.ts
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment.prod';
+import { Subscription } from 'rxjs';
+import { Promotion } from '../../model';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
+import { SavedPromotionsService } from '../../services/saved-promotions.service';
 
 @Component({
   selector: 'app-saved-promotions',
@@ -11,22 +13,47 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
   templateUrl: './saved-promotions.component.html',
   styleUrls: ['./saved-promotions.component.css']
 })
-export class SavedPromotionsComponent implements OnInit {
-  savedPromotions: any[] = [];
+export class SavedPromotionsComponent implements OnInit, OnDestroy {
+  savedPromotions: Promotion[] = [];
   isLoading = false;
-  selectedPromotion: any = null;
+  selectedPromotion: Promotion | null = null;
   errorMessage: string = '';
   
-  private apiUrl = `${environment.apiUrl}/promotions`;
+  // Success notification variables
+  showSuccessNotification = false;
+  successNotificationMessage = '';
+  notificationTimeRemaining = 100;
+  
+  // Category filtering
+  selectedCategory = 'all';
+  categories = [
+    { id: 'all', name: 'All Categories' },
+    { id: 'fastfood', name: 'Fast Food' },
+    { id: 'groceries', name: 'Groceries' },
+    { id: 'retail', name: 'Retail' },
+    { id: 'cafes', name: 'Cafes' },
+    { id: 'dining', name: 'Dining' },
+    { id: 'health&beauty', name: 'Health & Beauty' }
+  ];
+  
+  filteredPromotions: Promotion[] = [];
+  
+  private subscriptions = new Subscription();
   
   constructor(
     private http: HttpClient,
     private router: Router,
-    private firebaseAuthService: FirebaseAuthService
+    private firebaseAuthService: FirebaseAuthService,
+    private savedPromotionsService: SavedPromotionsService
   ) { }
 
   ngOnInit(): void {
     this.loadSavedPromotions();
+  }
+  
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.unsubscribe();
   }
   
   // Load saved promotions for the current user
@@ -39,11 +66,12 @@ export class SavedPromotionsComponent implements OnInit {
     
     this.isLoading = true;
     
-    // Get saved promotions from the user's saved list
-    this.http.get<any[]>(`${this.apiUrl}/saved/${currentUser.id}`)
-      .subscribe({
+    // Get saved promotions from the service
+    this.subscriptions.add(
+      this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
           this.savedPromotions = promotions;
+          this.filterPromotions();
           this.isLoading = false;
         },
         error: (error) => {
@@ -51,7 +79,38 @@ export class SavedPromotionsComponent implements OnInit {
           this.errorMessage = 'Failed to load saved promotions. Please try again.';
           this.isLoading = false;
         }
+      })
+    );
+  }
+  
+  // Filter promotions by category
+  selectCategory(categoryId: string): void {
+    this.selectedCategory = categoryId;
+    this.filterPromotions();
+  }
+  
+  // Filter promotions based on selected category
+  private filterPromotions(): void {
+    if (this.selectedCategory === 'all') {
+      this.filteredPromotions = [...this.savedPromotions];
+    } else {
+      // Find the category name that matches the category ID
+      const categoryName = this.categories.find(c => c.id === this.selectedCategory)?.name;
+      
+      // Filter promotions by the selected category
+      this.filteredPromotions = this.savedPromotions.filter(promotion => {
+        if (!promotion.category) return false;
+        
+        // Convert category names to comparable format for matching
+        const promoCategory = promotion.category.toLowerCase().replace(/\s+/g, '');
+        const selectedCategoryId = this.selectedCategory.toLowerCase();
+        const selectedCategoryName = categoryName?.toLowerCase().replace(/\s+/g, '') || '';
+        
+        return promoCategory === selectedCategoryId || 
+               promoCategory === selectedCategoryName ||
+               (this.selectedCategory === 'health&beauty' && promoCategory === 'health&beauty');
       });
+    }
   }
   
   // Get current user
@@ -61,7 +120,7 @@ export class SavedPromotionsComponent implements OnInit {
   }
   
   // View promotion details
-  viewPromotionDetails(promotion: any): void {
+  viewPromotionDetails(promotion: Promotion): void {
     this.selectedPromotion = promotion;
   }
   
@@ -71,47 +130,41 @@ export class SavedPromotionsComponent implements OnInit {
   }
   
   // Remove promotion from saved list
-  removePromotion(promotionId: string): void {
+  removePromotion(promotion: Promotion): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) return;
     
-    // Confirm before removing
-    if (!confirm('Are you sure you want to remove this promotion from your saved list?')) {
-      return;
-    }
-    
-    // Remove from API
-    this.http.delete(`${this.apiUrl}/saved/${currentUser.id}/${promotionId}`)
-      .subscribe({
-        next: () => {
-          // Remove from local array
-          this.savedPromotions = this.savedPromotions.filter(promo => promo.id !== promotionId);
-          
-          // Close modal if it's the one being deleted
-          if (this.selectedPromotion && this.selectedPromotion.id === promotionId) {
-            this.selectedPromotion = null;
-          }
-        },
-        error: (error) => {
-          console.error('Error removing promotion:', error);
-          alert('Failed to remove promotion. Please try again.');
-          
-          // For demo, remove from local array anyway
-          this.savedPromotions = this.savedPromotions.filter(promo => promo.id !== promotionId);
+    this.savedPromotionsService.removePromotion(currentUser.id, promotion.id).subscribe({
+      next: () => {
+        // Remove from local array
+        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotion.id);
+        this.filterPromotions();
+        
+        // Close modal if it's the one being deleted
+        if (this.selectedPromotion && this.selectedPromotion.id === promotion.id) {
+          this.selectedPromotion = null;
         }
-      });
+        
+        // Show success notification
+        this.successNotificationMessage = 'Promotion removed successfully';
+        this.showNotification();
+      },
+      error: (error) => {
+        console.error('Error removing promotion:', error);
+        this.successNotificationMessage = 'Failed to remove promotion. Please try again.';
+        this.showNotification();
+      }
+    });
   }
   
-  // Copy promo code to clipboard
-  copyPromoCode(code: string): void {
-    navigator.clipboard.writeText(code)
-      .then(() => {
-        alert(`Promo code ${code} copied to clipboard!`);
-      })
-      .catch(err => {
-        console.error('Failed to copy promo code:', err);
-        alert(`Promo code: ${code} (please copy manually)`);
-      });
+  // Show notification
+  private showNotification(): void {
+    this.showSuccessNotification = true;
+    this.notificationTimeRemaining = 100;
+
+    setTimeout(() => {
+      this.showSuccessNotification = false;
+    }, 3000);
   }
   
   // Check if a promotion is expiring soon (within 7 days)
@@ -141,6 +194,8 @@ export class SavedPromotionsComponent implements OnInit {
   
   // Get time elapsed since promotion was saved
   getTimeElapsed(savedAt: string): string {
+    if (!savedAt) return '';
+    
     const savedDate = new Date(savedAt);
     const now = new Date();
     const differenceInSeconds = Math.floor((now.getTime() - savedDate.getTime()) / 1000);

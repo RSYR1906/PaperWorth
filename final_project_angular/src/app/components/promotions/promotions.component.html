@@ -1,112 +1,102 @@
-<!-- Success Notification -->
-<div class="success-notification" *ngIf="showSuccessNotification">
-  <div class="success-content">
-    <div class="success-icon">✓</div>
-    <div class="success-message">
-      <h4>{{ successNotificationMessage }}</h4>
-      <p>You can view it in your Saved Promotions</p>
+<div class="promotions-container">
+  <!-- Loading indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading promotions...</p>
+  </div>
+
+  <!-- Main content when not loading -->
+  <div *ngIf="!isLoading" class="promotions-content">
+    <!-- Category filter tabs -->
+    <div class="category-tabs">
+      <button *ngFor="let category of categories"
+              [class.active]="selectedCategory === category.id"
+              (click)="selectCategory(category.id)">
+        {{category.name}}
+      </button>
+    </div>
+
+    <!-- Promotions listing -->
+    <div class="promotions-grid">
+      <ng-container *ngIf="filteredPromotions.length > 0">
+        <div *ngFor="let group of filteredPromotions" class="category-group">
+          <h2 class="category-title">{{group.category}}</h2>
+          <div class="deals-grid">
+            <div *ngFor="let promotion of group.deals" class="promotion-card" (click)="viewPromotionDetails(promotion)">
+              <div class="promotion-image">
+                <img [src]="promotion.imageUrl || 'promotions/placeholder-image.jpg'" alt="{{promotion.merchant}}">
+                <div *ngIf="isPromotionSaved(promotion.id)" class="saved-badge">
+                  <i class="fa fa-bookmark"></i>
+                </div>
+              </div>
+              <div class="promotion-info">
+                <p class="promotion-merchant">{{promotion.merchant}}</p>
+                <p class="promotion-description">{{promotion.description | slice:0:50}}{{promotion.description.length > 50 ? '...' : ''}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Empty state -->
+      <div *ngIf="filteredPromotions.length === 0" class="empty-state">
+        <p>No promotions found in this category.</p>
+      </div>
     </div>
   </div>
-  <div class="timer-bar">
-    <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
-  </div>
-</div>
 
-<!-- Hero Section -->
-<section class="hero">
-  <div class="hero-content">
-    <h1>{{ receivedReceiptId ? 'Matching Promotions' : 'Available Promotions' }}</h1>
-    <p>{{ receivedReceiptId ? 'Exclusive deals based on your recent purchases' : 'Discover great deals from your favorite merchants' }}</p>
-  </div>
-</section>
-  
-<!-- Loading state -->
-<div class="loading-indicator" *ngIf="isLoading">
-  <div class="spinner"></div>
-  <p>Loading promotions...</p>
-</div>
-  
-<!-- Categories Navigation -->
-<div class="categories-nav" *ngIf="!isLoading">
-  <div class="categories-scroll">
-    <button 
-      *ngFor="let category of categories" 
-      [class.active]="selectedCategory === category.id"
-      (click)="selectCategory(category.id)"
-      class="category-button"
-    >
-      {{ category.name }}
-    </button>
-  </div>
-</div>
-  
-<!-- Promotions Container -->
-<div class="promotions" *ngIf="!isLoading">
-  <!-- Empty State -->
-  <div *ngIf="!filteredPromotions.length" class="no-promotions">
-    <p>No promotions found for this category.</p>
-  </div>
-
-  <!-- Category Groups -->
-  <div *ngFor="let categoryGroup of filteredPromotions">
-    <h3>{{ categoryGroup.category }}</h3>
-    
-    <div class="promo-list">
-      <div *ngFor="let promo of categoryGroup.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
-        <img [src]="promo.imageUrl" 
-             alt="{{ promo.merchant }} promotion" 
-             onerror="this.src='promotions/placeholder-image.jpg'">
-        <div class="promo-content">
-          <div class="promo-merchant">{{ promo.merchant }}</div>
-          <p class="promo-description">{{ promo.description }}</p>
-          <p class="promo-location" *ngIf="promo.location">{{ promo.location }}</p>
-          <p class="promo-expiry" *ngIf="promo.expiry">Valid until: {{ promo.expiry }}</p>
+  <!-- Promotion details modal -->
+  <div *ngIf="selectedPromotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
+    <div class="promotion-modal" (click)="$event.stopPropagation()">
+      <button class="close-button" (click)="closePromotionDetails()">×</button>
+      
+      <div class="modal-content">
+        <div class="modal-image">
+          <img [src]="selectedPromotion.imageUrl || 'promotions/placeholder-image.jpg'" alt="{{selectedPromotion.merchant}}">
+        </div>
+        
+        <div class="modal-details">
+          <p class="merchant-name">{{selectedPromotion.merchant}}</p>
+          <p class="description-text">{{selectedPromotion.description}}</p>
+          
+          <div *ngIf="selectedPromotion.conditions" class="terms-conditions">
+            <h3>Terms & Conditions</h3>
+            <p>{{selectedPromotion.conditions}}</p>
+          </div>
+          
+          <div class="action-buttons">
+            <!-- Save/Remove button -->
+            <ng-container *ngIf="!isPromotionSaved(selectedPromotion.id); else removeSavedTemplate">
+              <button class="save-button" (click)="savePromotion(selectedPromotion)">
+                <i class="fa fa-bookmark-o"></i> Save Promotion
+              </button>
+            </ng-container>
+            <ng-template #removeSavedTemplate>
+              <button class="remove-button" (click)="removePromotion(selectedPromotion)">
+                <i class="fa fa-bookmark"></i> Remove Saved
+              </button>
+            </ng-template>
+            
+            <!-- External link button -->
+            <a *ngIf="selectedPromotion.link" [href]="selectedPromotion.link" target="_blank" class="link-button">
+              <i class="fa fa-external-link"></i> Visit Website
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-  
-<!-- Promotion Details Modal -->
-<div class="promotion-details-modal" *ngIf="selectedPromotion">
-  <div class="modal-overlay" (click)="closePromotionDetails()"></div>
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>{{ selectedPromotion.merchant }}</h3>
-      <button class="close-button" (click)="closePromotionDetails()">×</button>
-    </div>
-    
-    <img [src]="selectedPromotion.imageUrl" 
-         alt="Promotion Image" 
-         class="promo-detail-image" 
-         onerror="this.src='promotions/placeholder-image.jpg'">
-    
-    <div class="promo-detail-info">
-      <h4>{{ selectedPromotion.description }}</h4>
-      
-      <div class="promo-detail-row" *ngIf="selectedPromotion.location">
-        <span class="label">Location:</span>
-        <span>{{ selectedPromotion.location }}</span>
+
+  <!-- Success notification -->
+    <div class="success-notification" *ngIf="showSuccessNotification">
+      <div class="success-content">
+        <div class="success-icon">✓</div>
+        <div class="success-message">
+          <h4>{{ successNotificationMessage }}</h4>
+          <p>You can view it in your Saved Promotions</p>
+        </div>
       </div>
-      
-      <div class="promo-detail-row" *ngIf="selectedPromotion.expiry">
-        <span class="label">Valid Until:</span>
-        <span>{{ selectedPromotion.expiry }}</span>
-      </div>
-      
-      <div class="promo-detail-row" *ngIf="selectedPromotion.code">
-        <span class="label">Promotion Code:</span>
-        <span class="promo-code">{{ selectedPromotion.code }}</span>
-      </div>
-      
-      <div class="promo-detail-row" *ngIf="selectedPromotion.conditions">
-        <span class="label">Conditions:</span>
-        <span class="conditions">{{ selectedPromotion.conditions }}</span>
+      <div class="timer-bar">
+        <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
       </div>
     </div>
-    
-    <div class="promo-detail-actions">
-      <button class="action-button" (click)="savePromotion(selectedPromotion)">Save Promotion</button>
-    </div>
-  </div>
-</div>
