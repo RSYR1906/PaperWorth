@@ -3,16 +3,16 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { initializeApp } from 'firebase/app';
 import {
-    User as FirebaseUser,
-    GoogleAuthProvider,
-    createUserWithEmailAndPassword,
-    getAuth,
-    getRedirectResult,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    signInWithRedirect,
-    signOut,
-    updateProfile
+  User as FirebaseUser,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  getAuth,
+  getRedirectResult,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  updateProfile
 } from 'firebase/auth';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
@@ -131,7 +131,7 @@ export class FirebaseAuthService {
     return this.currentUserSubject.value;
   }
 
-  isAuthenticated(): boolean {
+  public isAuthenticated(): boolean {
     return !!this.currentUserSubject.value;
   }
 

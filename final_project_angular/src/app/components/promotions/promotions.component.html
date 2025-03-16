@@ -39,6 +39,8 @@
               <div class="promotion-info">
                 <p class="promotion-merchant">{{promotion.merchant}}</p>
                 <p class="promotion-description">{{promotion.description | slice:0:50}}{{promotion.description.length > 50 ? '...' : ''}}</p>
+                <p class="promotion-expiry"> {{promotion.code}}</p>
+                <p class="promotion-expiry"> {{promotion.expiry}}</p>
               </div>
             </div>
           </div>
