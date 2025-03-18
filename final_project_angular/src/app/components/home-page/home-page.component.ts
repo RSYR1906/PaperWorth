@@ -78,6 +78,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (this.notificationTimer) {
       clearInterval(this.notificationTimer);
     }
+
+    if (this.subscriptions) {
+      this.subscriptions.unsubscribe();
+    }
   }
   
   private loadUserData(): void {
