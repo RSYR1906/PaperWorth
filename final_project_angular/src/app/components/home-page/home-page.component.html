@@ -1,232 +1,273 @@
-<!-- Updated home-page.component.html -->
-<div class="home-container">
-  <!-- Header Section -->
-  <header class="dashboard-header">
-    <div class="user-welcome">
-      <h1>Hello, {{ store.userFirstName$ | async }}!</h1>
-      <p>Welcome to your expense dashboard</p>
+<div class="app-container">
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Welcome {{ store.userFirstName$ | async }}!</h1>
+      <p>Scan receipts, track expenses, discover deals</p>
+      <button class="hero-button" (click)="openCamera()">Scan a Receipt</button>
     </div>
-    <div class="monthly-expenses-card">
-      <h3>Monthly Expenses</h3>
-      <div class="expense-amount" *ngIf="!(store.isLoadingBudget$ | async); else loadingBudget">
-        ${{ store.formatCurrency((store.monthlyExpenses$ | async) || 0) }}
-      </div>
-      <ng-template #loadingBudget>
-        <div class="loading-indicator">Loading...</div>
-      </ng-template>
-    </div>
-    <button class="logout-button" (click)="logout()">Logout</button>
-  </header>
+  </section>
 
-  <!-- Main Content Section -->
-  <div class="dashboard-content">
-    <!-- Receipt Scanner Card -->
-    <div class="card scanner-card">
-      <h2>Receipt Scanner</h2>
-      
-      <!-- Upload Area -->
-      <div class="upload-area" *ngIf="!(store.imagePreview$ | async)">
-        <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden>
-        
-        <div class="upload-options">
-          <div class="upload-option" (click)="triggerFileInput()">
-            <i class="upload-icon"></i>
-            <p>Upload from gallery</p>
-          </div>
-          
-          <div class="upload-option" (click)="openCamera()">
-            <i class="camera-icon"></i>
-            <p>Take a photo</p>
-          </div>
-        </div>
+  <!-- Main Content -->
+  <div class="dashboard">
+    <!-- User Info & Stats -->
+    <div class="user-info">
+      <h2>Monthly Expenses: ${{ (store.monthlyExpenses$ | async) | number:'1.2-2' }}</h2>
+      <p>Track your spending with our <strong>Expense Tracker</strong></p>
+    </div>
+
+    <!-- Rewards Promo -->
+    <div class="rewards-promo" routerLink="/rewards">
+      <div class="rewards-icon">🎁</div>
+      <div class="rewards-text">
+        <h3>Earn Rewards!</h3>
+        <p>Get points every time you scan a receipt</p>
       </div>
-      
-      <!-- Image Preview & OCR Results -->
-      <div class="scanner-results" *ngIf="store.imagePreview$ | async">
-        <div class="image-preview">
-          <img [src]="store.imagePreview$ | async" alt="Receipt preview">
-        </div>
-        
-        <ng-container *ngIf="!(store.isProcessing$ | async); else processingTemplate">
-          <div class="extracted-data" *ngIf="store.extractedData$ | async as extractedData">
-            <h3>Extracted Data</h3>
-            <div class="data-row">
-              <span class="label">Merchant:</span>
-              <span class="value">{{ extractedData.merchantName }}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Amount:</span>
-              <span class="value">${{ store.formatCurrency(extractedData.totalAmount) }}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Date:</span>
-              <span class="value">{{ store.formatDate(extractedData.dateOfPurchase) }}</span>
-            </div>
-            
-            <div class="ocr-text-container">
-              <div class="ocr-toggle" (click)="toggleFullText()">
-                {{ (store.showFullText$ | async) ? 'Hide OCR Text' : 'Show OCR Text' }}
-              </div>
-              <div class="ocr-text" *ngIf="store.showFullText$ | async">
-                {{ store.ocrText$ | async }}
-              </div>
-            </div>
-          </div>
-          
-          <div class="scanner-actions">
-            <button class="scan-btn" *ngIf="!(store.extractedData$ | async)" (click)="uploadImage()">
-              Scan Receipt
-            </button>
-            <button class="save-btn" *ngIf="store.extractedData$ | async" (click)="saveReceipt()">
-              Save Receipt
-            </button>
-            <button class="reset-btn" (click)="store.resetScanner()">
-              New Scan
-            </button>
-          </div>
-        </ng-container>
+      <a class="view-rewards-btn" routerLink="/rewards">View</a>
+    </div>
+  </div>
+
+  <!-- Scanner Section -->
+  <div class="dashboard-card" *ngIf="!(store.imagePreview$ | async)">
+    <h3>Receipt Scanner</h3>
+    <div class="scanner-options">
+      <div class="scanner-option" (click)="triggerFileInput()">
+        <div class="option-icon">🖼️</div>
+        <p>Upload Receipt</p>
       </div>
-      
-      <!-- Processing Template -->
-      <ng-template #processingTemplate>
-        <div class="processing-indicator">
-          <div class="spinner"></div>
-          <p>{{ (store.processingMessage$ | async) || 'Processing...' }}</p>
-        </div>
-      </ng-template>
+      <div class="scanner-option" (click)="openCamera()">
+        <div class="option-icon">📸</div>
+        <p>Take Photo</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Receipt Preview & Processing -->
+  <div class="dashboard-card" *ngIf="store.imagePreview$ | async">
+    <h3>Receipt Scanner</h3>
+    
+    <!-- Receipt Image Preview -->
+    <div class="image-preview">
+      <img [src]="store.imagePreview$ | async" alt="Receipt Preview">
     </div>
     
-    <!-- Saved Promotions -->
-    <div class="card promotions-card">
-      <div class="card-header">
-        <h2>Your Saved Promotions</h2>
-        <span class="view-all" *ngIf="(store.savedPromotions$ | async)?.length > 3" (click)="toggleShowMoreSavedPromotions()">
-          {{ (store.showMoreSavedPromotions$ | async) ? 'Show Less' : 'View All' }}
-        </span>
+    <!-- Processing State -->
+    <div class="processing-state" *ngIf="store.isProcessing$ | async">
+      <div class="spinner"></div>
+      <p>{{ store.processingMessage$ | async }}</p>
+    </div>
+    
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="store.error$ | async">
+      <p>{{ store.error$ | async }}</p>
+      <button class="action-btn" (click)="store.resetScanner()">Try Again</button>
+    </div>
+    
+    <!-- Extracted Data -->
+    <div class="extracted-data" *ngIf="(store.extractedData$ | async) && !(store.isProcessing$ | async) && !(store.error$ | async)">
+      <h4>Extracted Data</h4>
+      
+      <div class="data-grid">
+        <div class="data-row">
+          <span class="data-label">Merchant:</span>
+          <span class="data-value">{{ (store.extractedData$ | async)?.merchantName }}</span>
+        </div>
+        
+        <div class="data-row">
+          <span class="data-label">Amount:</span>
+          <span class="data-value">${{ store.formatCurrency((store.extractedData$ | async)?.totalAmount || 0) }}</span>
+        </div>
+        
+        <div class="data-row">
+          <span class="data-label">Date:</span>
+          <span class="data-value">{{ store.formatDate((store.extractedData$ | async)?.dateOfPurchase) }}</span>
+        </div>
+        
+        <div class="data-row">
+          <span class="data-label">Category:</span>
+          <span class="data-value">{{ (store.extractedData$ | async)?.category || 'Auto-detected' }}</span>
+        </div>
       </div>
       
-      <div class="card-content">
-        <div class="loading-indicator" *ngIf="store.isLoadingSavedPromotions$ | async">
-          Loading your promotions...
-        </div>
-        
-        <div class="no-promotions" *ngIf="(store.displayedSavedPromotions$ | async)?.length === 0 && !(store.isLoadingSavedPromotions$ | async)">
-          <p>You don't have any saved promotions yet.</p>
-        </div>
-        
-        <div class="promotion-items" *ngIf="(store.displayedSavedPromotions$ | async)?.length > 0">
-          <div class="promotion-item" *ngFor="let promo of (store.displayedSavedPromotions$ | async)">
-            <div class="promo-details" (click)="viewPromotionDetails(promo)">
-              <h3>{{ promo.title }}</h3>
-              <div class="merchant">{{ promo.merchant }}</div>
-              <div class="expiry" [ngClass]="{
-                'expiring-soon': store.isExpiringSoon(promo.expiryDate),
-                'expired': store.hasExpired(promo.expiryDate)
-              }">
-                <span *ngIf="store.hasExpired(promo.expiryDate)">Expired</span>
-                <span *ngIf="store.isExpiringSoon(promo.expiryDate) && !store.hasExpired(promo.expiryDate)">
-                  Expires soon: {{ store.formatDate(promo.expiryDate) }}
-                </span>
-                <span *ngIf="!store.isExpiringSoon(promo.expiryDate) && !store.hasExpired(promo.expiryDate)">
-                  Expires: {{ store.formatDate(promo.expiryDate) }}
-                </span>
-              </div>
-            </div>
-            <button class="delete-btn" (click)="removeSavedPromotion(promo.id)">
-              <i class="delete-icon"></i>
-            </button>
-          </div>
-        </div>
+      <!-- OCR Full Text Toggle -->
+      <div class="ocr-toggle" (click)="toggleFullText()">
+        {{ (store.showFullText$ | async) ? 'Hide OCR Text' : 'Show OCR Text' }}
+      </div>
+      
+      <!-- OCR Text (Collapsed by Default) -->
+      <div class="ocr-text" *ngIf="store.showFullText$ | async">
+        <pre>{{ store.ocrText$ | async }}</pre>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="scanner-actions">
+        <button class="action-btn primary" (click)="saveReceipt()">Save Receipt</button>
+        <button class="action-btn secondary" (click)="store.resetScanner()">Cancel</button>
       </div>
     </div>
     
-    <!-- Recommended Promotions -->
-    <div class="card recommended-card">
-      <h2>Recommended For You</h2>
-      
-      <div class="loading-indicator" *ngIf="store.isLoadingRecommendations$ | async">
-        Finding promotions for you...
-      </div>
-      
-      <div class="no-recommendations" *ngIf="(store.recommendedPromotions$ | async)?.length === 0 && !(store.isLoadingRecommendations$ | async)">
-        <p>We're still learning your preferences. Check back after scanning more receipts!</p>
-      </div>
-      
-      <div class="recommendation-categories" *ngIf="(store.recommendedPromotions$ | async)?.length > 0">
-        <div class="category-group" *ngFor="let category of (store.recommendedPromotions$ | async)">
-          <h3 class="category-name">{{ category.name }}</h3>
+    <!-- Scan Controls (when no data extracted yet) -->
+    <div class="scanner-actions" *ngIf="!(store.extractedData$ | async) && !(store.isProcessing$ | async) && !(store.error$ | async)">
+      <button class="action-btn primary" (click)="uploadImage()">Analyze Receipt</button>
+      <button class="action-btn secondary" (click)="store.resetScanner()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="(store.isLoading$ | async) && !(store.imagePreview$ | async)">
+    <div class="spinner"></div>
+    <p>Loading your data...</p>
+  </div>
+
+  <!-- Empty State - No Data -->
+  <div class="empty-state" *ngIf="!(store.hasData$ | async) && !(store.isLoading$ | async) && !(store.imagePreview$ | async)">
+    <div class="empty-icon">📊</div>
+    <h4>No Data Yet</h4>
+    <p>Start by scanning receipts to track expenses and discover deals!</p>
+    <button class="action-btn primary" (click)="openCamera()">Scan Your First Receipt</button>
+  </div>
+
+  <!-- Saved Promotions Section -->
+  <!-- Fixed the nullable operator check for length -->
+  <div class="promotions-section" *ngIf="(store.savedPromotions$ | async)?.length && (store.savedPromotions$ | async)!.length > 0">
+    <div class="section-header">
+      <h3>Your Saved Promotions</h3>
+      <a routerLink="/saved-promotions" class="view-all">
+        View All <span class="arrow-icon">→</span>
+      </a>
+    </div>
+    
+    <div class="saved-promotions-scroll">
+      <div class="promo-card" *ngFor="let promo of (store.displayedSavedPromotions$ | async)" (click)="viewPromotionDetails(promo)">
+        <div class="promo-image">
+          <img [src]="promo.imageUrl || 'placeholder-image.jpg'" [alt]="promo.merchant">
           
-          <div class="promotion-items">
-            <div class="promotion-item" *ngFor="let promo of category.deals">
-              <div class="promo-details" (click)="viewPromotionDetails(promo)">
-                <h4>{{ promo.title }}</h4>
-                <div class="merchant">{{ promo.merchant }}</div>
-                <div class="discount">{{ promo.discount }}</div>
-                <div class="expiry" [ngClass]="{
-                  'expiring-soon': store.isExpiringSoon(promo.expiryDate),
-                  'expired': store.hasExpired(promo.expiryDate)
-                }">
-                  Expires: {{ store.formatDate(promo.expiryDate) }}
-                </div>
-              </div>
-              <button class="save-promo-btn" (click)="savePromotion(promo)">
-                <i class="save-icon"></i>
-              </button>
-            </div>
+          <!-- Expiry Badge -->
+          <div class="expiry-badge" *ngIf="promo.expiry && store.isExpiringSoon(promo.expiry) && !store.hasExpired(promo.expiry)">
+            Expiring Soon
+          </div>
+          <div class="expiry-badge expired" *ngIf="promo.expiry && store.hasExpired(promo.expiry)">
+            Expired
+          </div>
+        </div>
+        
+        <div class="promo-content">
+          <div class="promo-merchant">{{ promo.merchant }}</div>
+          <div class="promo-description">{{ promo.description | slice:0:60 }}{{ promo.description && promo.description.length > 60 ? '...' : '' }}</div>
+          <div class="promo-expiry" *ngIf="promo.expiry">Expires: {{ store.formatDate(promo.expiry) }}</div>
+        </div>
+        
+        <div class="promo-actions">
+          <button class="view-btn">View Details</button>
+          <button class="remove-btn" (click)="removeSavedPromotion(promo.id); $event.stopPropagation()">Remove</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommended Promotions Section -->
+  <div class="promotions-section" *ngIf="(store.recommendedPromotions$ | async)?.length && (store.recommendedPromotions$ | async)!.length > 0">
+    <div class="section-header">
+      <h3>Recommended For You</h3>
+      <a routerLink="/promotions" class="view-all">
+        View All <span class="arrow-icon">→</span>
+      </a>
+    </div>
+    
+    <!-- Recommended Categories -->
+    <div *ngFor="let category of (store.recommendedPromotions$ | async)" class="category-section">
+      <div class="category-header">
+        <h4>{{ category.name }}</h4>
+      </div>
+      
+      <div class="promo-scroll-container">
+        <div class="promo-card" *ngFor="let promo of category.deals.slice(0, 5)" (click)="viewPromotionDetails(promo)">
+          <div class="promo-image">
+            <img [src]="promo.imageUrl || 'placeholder-image.jpg'" [alt]="promo.merchant">
+          </div>
+          
+          <div class="promo-content">
+            <div class="promo-merchant">{{ promo.merchant }}</div>
+            <div class="promo-description">{{ promo.description | slice:0:60 }}{{ promo.description && promo.description.length > 60 ? '...' : '' }}</div>
+            <div class="promo-expiry" *ngIf="promo.expiry">Expires: {{ store.formatDate(promo.expiry) }}</div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
-  <!-- Promotion Details Modal -->
-  <div class="promotion-modal" *ngIf="store.selectedPromotion$ | async as promotion">
-    <div class="modal-overlay" (click)="closePromotionDetails()"></div>
-    <div class="modal-content">
-      <button class="close-modal" (click)="closePromotionDetails()">×</button>
-      
-      <div class="promotion-header">
-        <h2>{{ promotion.title }}</h2>
-        <div class="merchant">{{ promotion.merchant }}</div>
-      </div>
-      
-      <div class="promotion-body">
-        <div class="discount-details">
-          <div class="discount">{{ promotion.discount }}</div>
-          <div class="expiry" [ngClass]="{
-            'expiring-soon': store.isExpiringSoon(promotion.expiryDate),
-            'expired': store.hasExpired(promotion.expiryDate)
-          }">
-            <span *ngIf="store.hasExpired(promotion.expiryDate)">Expired on {{ store.formatDate(promotion.expiryDate) }}</span>
-            <span *ngIf="!store.hasExpired(promotion.expiryDate)">Expires on {{ store.formatDate(promotion.expiryDate) }}</span>
-          </div>
-        </div>
-        
-        <div class="description">
-          {{ promotion.description }}
-        </div>
-        
-        <div class="terms">
-          <h4>Terms & Conditions</h4>
-          <p>{{ promotion.terms || 'No specific terms provided.' }}</p>
-        </div>
-      </div>
-      
-      <div class="modal-actions">
-        <button class="save-btn" (click)="savePromotion(promotion)">Save Promotion</button>
-      </div>
-    </div>
-  </div>
-  
+
   <!-- Success Notification -->
   <div class="success-notification" *ngIf="store.showSuccessNotification$ | async">
-    <div class="notification-content">
-      <div class="success-icon"></div>
-      <p>{{ store.successNotificationMessage$ | async }}</p>
+    <div class="success-content">
+      <div class="success-icon">✓</div>
+      <div class="success-message">
+        <h4>Success!</h4>
+        <p>{{ store.successNotificationMessage$ | async }}</p>
+      </div>
       <button class="close-notification" (click)="closeSuccessNotification()">×</button>
     </div>
-    <div class="notification-progress-bar">
-      <div class="progress" [style.width.%]="store.notificationTimeRemaining$ | async"></div>
+    <div class="timer-bar">
+      <div class="timer-progress" [style.width.%]="store.notificationTimeRemaining$ | async"></div>
     </div>
   </div>
+
+  <!-- Promotion Details Modal -->
+  <div class="promotion-details-modal" *ngIf="store.selectedPromotion$ | async">
+    <div class="modal-overlay" (click)="closePromotionDetails()"></div>
+    <div class="modal-content">
+      <button class="close-button" (click)="closePromotionDetails()">×</button>
+      
+      <div class="promo-detail-image">
+        <img [src]="(store.selectedPromotion$ | async)?.imageUrl || 'placeholder-image.jpg'" [alt]="(store.selectedPromotion$ | async)?.merchant">
+      </div>
+      
+      <div class="promo-detail-info">
+        <h4>{{ (store.selectedPromotion$ | async)?.description }}</h4>
+        
+        <div class="promo-detail-row">
+          <span class="label">Merchant:</span>
+          <span>{{ (store.selectedPromotion$ | async)?.merchant }}</span>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="(store.selectedPromotion$ | async)?.code">
+          <span class="label">Promo Code:</span>
+          <div class="promo-code">{{ (store.selectedPromotion$ | async)?.code }}</div>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="(store.selectedPromotion$ | async)?.expiry">
+          <span class="label">Valid Until:</span>
+          <span [class.expired-text]="store.hasExpired((store.selectedPromotion$ | async)?.expiry)">
+            {{ store.formatDate((store.selectedPromotion$ | async)?.expiry) }}
+            <span class="expiry-status" *ngIf="(store.selectedPromotion$ | async)?.expiry && store.hasExpired((store.selectedPromotion$ | async)?.expiry)">(Expired)</span>
+            <span class="expiry-status expiring" *ngIf="(store.selectedPromotion$ | async)?.expiry && store.isExpiringSoon((store.selectedPromotion$ | async)?.expiry) && !store.hasExpired((store.selectedPromotion$ | async)?.expiry)">(Expiring Soon)</span>
+          </span>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="(store.selectedPromotion$ | async)?.location">
+          <span class="label">Location:</span>
+          <span>{{ (store.selectedPromotion$ | async)?.location }}</span>
+        </div>
+        
+        <div class="promo-detail-row" *ngIf="(store.selectedPromotion$ | async)?.conditions">
+          <span class="label">Terms:</span>
+          <div class="conditions">{{ (store.selectedPromotion$ | async)?.conditions }}</div>
+        </div>
+      </div>
+      
+      <div class="promo-detail-actions">
+        <!-- Use saveSelectedPromotion() method -->
+        <button class="action-button" (click)="saveSelectedPromotion()">
+          Save Promotion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for camera functionality -->
+  <input 
+    type="file" 
+    accept="image/*" 
+    (change)="onFileSelected($event)" 
+    style="display: none;" 
+  >
 </div>

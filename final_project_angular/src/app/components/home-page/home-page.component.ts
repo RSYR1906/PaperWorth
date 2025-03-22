@@ -104,6 +104,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.store.savePromotion(promotion);
   }
 
+  // Added this method to fix the async pipe issue
+  saveSelectedPromotion(): void {
+    const selectedPromotion = this.store.extract(this.store.selectedPromotion$);
+    if (selectedPromotion) {
+      this.savePromotion(selectedPromotion);
+    }
+  }
+
   removeSavedPromotion(promotionId: string): void {
     this.store.removePromotion(promotionId);
   }
