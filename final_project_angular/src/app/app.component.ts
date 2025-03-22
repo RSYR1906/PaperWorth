@@ -15,23 +15,26 @@ import { FirebaseAuthService } from './services/firebase-auth.service';
 export class AppComponent implements OnInit, OnDestroy {
   title = 'PaperWorth';
   
-  @ViewChild('fileInput') fileInput!: ElementRef;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   
   private subscriptions = new Subscription();
 
   constructor(
     private router: Router,
     private firebaseAuthService: FirebaseAuthService,
-    public cameraService: CameraService // Make public so it can be accessed from template
+    public cameraService: CameraService
   ) {}
 
   ngOnInit() {
-    // Subscribe to router events to determine current route
+    // Subscribe to router events
     this.subscriptions.add(
       this.router.events
         .pipe(filter(event => event instanceof NavigationEnd))
         .subscribe(() => {
-          // Additional initialization if needed
+          // Reset camera service when navigating to a new route
+          if (!this.isReceiptProcessingRoute()) {
+            this.cameraService.resetScanner();
+          }
         })
     );
     
@@ -50,8 +53,14 @@ export class AppComponent implements OnInit, OnDestroy {
   isAuthRoute(): boolean {
     const currentRoute = this.router.url;
     return currentRoute.includes('/login') || 
-           currentRoute.includes('/register') || 
+           currentRoute.includes('/signup') || 
            currentRoute.includes('/forgot-password');
+  }
+
+  isReceiptProcessingRoute(): boolean {
+    const currentNavigation = this.router.getCurrentNavigation();
+    return this.router.url.includes('/homepage') && 
+           Object.keys(currentNavigation?.extras?.state || {}).length > 0;
   }
 
   isAuthenticated(): boolean {
@@ -62,6 +71,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.firebaseAuthService.signOut()
       .then(() => {
         console.log("User logged out");
+        this.router.navigate(['/login']);
       })
       .catch(error => {
         console.error("Logout error:", error);
@@ -70,14 +80,25 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Camera functionality methods
   triggerFileInput() {
-    if (this.fileInput) {
+    if (this.fileInput && this.fileInput.nativeElement) {
       this.fileInput.nativeElement.click();
     } else {
-      console.error("File input element not found");
+      console.error("File input element not found or not yet initialized");
+      // Fallback for when the ViewChild is not available
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = (event) => this.onFileSelected(event);
+      input.click();
     }
   }
 
   onFileSelected(event: any): void {
-    this.cameraService.onFileSelected(event);
+    if (event && event.target && event.target.files && event.target.files.length > 0) {
+      this.cameraService.onFileSelected(event);
+    } else {
+      console.warn("No file selected or event is invalid");
+    }
   }
 }

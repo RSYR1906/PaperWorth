@@ -109,6 +109,70 @@ export class CameraService {
     });
   }
 
+  uploadBase64Image(base64Image: string): void {
+    if (!base64Image) {
+      this.snackBar.open('No image data provided!', 'Close', { duration: 3000 });
+      return;
+    }
+    
+    this.isProcessing = true;
+    this.processingMessage = "Processing your receipt...";
+    
+    // Store the base64 image as preview
+    this.imagePreview = base64Image.startsWith('data:') 
+      ? base64Image 
+      : `data:image/jpeg;base64,${base64Image}`;
+    
+    // Send the base64 data to the new endpoint
+    this.http.post<any>(`${this.apiUrl}/ocr/scan/base64`, { 
+      base64Image: base64Image 
+    }).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+        if (response?.merchantName && response?.totalAmount && response?.dateOfPurchase) {
+          this.extractedData = response;
+          this.ocrText = response.fullText || "No additional text extracted.";
+          
+          // Navigate to the homepage with the extracted data
+          this.router.navigate(['/homepage'], { 
+            state: { 
+              extractedData: this.extractedData,
+              imagePreview: this.imagePreview,
+              ocrText: this.ocrText
+            } 
+          });
+        } else {
+          this.ocrText = "Error processing image. Please try again.";
+          this.snackBar.open('Could not extract receipt details. Please try again.', 'Close', { duration: 3000 });
+        }
+      },
+      error: (error) => {
+        console.error('Error processing receipt:', error);
+        this.isProcessing = false;
+        this.processingMessage = "";
+        this.ocrText = "Error processing image. Please try again.";
+        this.snackBar.open('Error processing receipt. Please try again.', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  /**
+   * Capture image from device camera and process it
+   */
+  captureAndProcessImage(): void {
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use rear camera on mobile
+    
+    // Handle file selection
+    input.onchange = (event) => this.onFileSelected(event);
+    
+    // Trigger the file input
+    input.click();
+  }
+
   resetScanner(): void {
     this.selectedFile = null;
     this.imagePreview = null;
