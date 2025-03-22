@@ -586,6 +586,57 @@
   color: #6c757d;
 }
 
+.category-tabs {
+  background-color: white;
+  padding: 12px 16px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  margin-bottom: 16px;
+  animation: fadeIn 0.8s ease-out;
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 5px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tabs button {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #343a40;
+  scroll-snap-align: start;
+  min-height: 36px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.category-tabs button.active {
+  background-color: #2E3192;
+  color: white;
+  border-color: #2E3192;
+  box-shadow: 0 3px 6px rgba(46, 49, 146, 0.2);
+}
+
+.category-tabs button:active {
+  transform: scale(0.95);
+}
+
 .category-badge {
   background-color: #e9ecef;
   padding: 4px 8px;
