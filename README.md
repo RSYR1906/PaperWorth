@@ -10,7 +10,7 @@
 Frontend: [https://paperworth.vercel.app](https://paperworth.vercel.app)  
 Backend API: [https://compassionate-recreation-production-7031.up.railway.app](https://compassionate-recreation-production-7031.up.railway.app)
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
