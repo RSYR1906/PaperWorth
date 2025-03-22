@@ -87,6 +87,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   
   /**
    * Check if there's any receipt data passed from navigation state
+   * FIXED: No longer auto-saves receipt, only displays confirmation modal
    */
   private checkForReceiptData(): void {
     // Get navigation state
@@ -94,33 +95,22 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (state?.extractedData) {
       console.log('Received extracted data:', state.extractedData);
       
-      // Process the received data
-      this.processExtractedData(state.extractedData, state.imagePreview, state.ocrText);
+      // Instead of auto-saving, just make sure the camera service has the data
+      // for the confirmation modal to display
+      this.cameraService.extractedDataSubject.next(state.extractedData);
+      this.cameraService.imagePreviewSubject.next(state.imagePreview);
+      this.cameraService.ocrTextSubject.next(state.ocrText || "");
     }
     
     // Also subscribe to OCR processed events from the camera service
+    // FIXED: No longer auto-processes extracted data, just lets the modal display
     this.subscriptions.add(
       this.cameraService.ocrProcessed$.subscribe(result => {
-        if (result?.extractedData) {
-          this.processExtractedData(
-            result.extractedData, 
-            this.cameraService.imagePreview, 
-            result.ocrText
-          );
-        }
+        // No further action needed - the modal will show based on
+        // the data already in the camera service
+        console.log('OCR processing result received', result);
       })
     );
-  }
-  
-  /**
-   * Process extracted data and prepare to save receipt
-   */
-  private processExtractedData(extractedData: any, imagePreview: any, ocrText: string): void {
-    // If data has been processed already, save the receipt
-    const currentUser = this.getCurrentUser();
-    if (currentUser?.id && extractedData) {
-      this.saveReceipt(currentUser.id, extractedData, imagePreview, ocrText);
-    }
   }
   
   private loadUserData(): void {
@@ -569,32 +559,32 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.showFullText = false;
   }
 
-/**
- * Confirm and save the receipt
- */
-confirmAndSaveReceipt(): void {
-  const currentUser = this.getCurrentUser();
-  
-  if (!currentUser?.id) {
-    // Redirect to login if user is not logged in
-    this.router.navigate(['/login']);
-    return;
+  /**
+   * Confirm and save the receipt - This is called when the user clicks "Save Receipt"
+   */
+  confirmAndSaveReceipt(): void {
+    const currentUser = this.getCurrentUser();
+    
+    if (!currentUser?.id) {
+      // Redirect to login if user is not logged in
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    // Get the extracted data from camera service
+    const extractedData = {...this.cameraService.extractedData};
+    const imagePreview = this.cameraService.imagePreview;
+    const ocrText = this.cameraService.ocrText;
+    
+    // Important: Clear the extracted data BEFORE saving to prevent loop
+    this.cameraService.resetScanner();
+    
+    // Save the receipt using the local copy of the data
+    this.saveReceipt(
+      currentUser.id, 
+      extractedData, 
+      imagePreview, 
+      ocrText
+    );
   }
-  
-  // Get the extracted data from camera service
-  const extractedData = {...this.cameraService.extractedData};
-  const imagePreview = this.cameraService.imagePreview;
-  const ocrText = this.cameraService.ocrText;
-  
-  // Important: Clear the extracted data BEFORE saving to prevent loop
-  this.cameraService.resetScanner();
-  
-  // Save the receipt using the local copy of the data
-  this.saveReceipt(
-    currentUser.id, 
-    extractedData, 
-    imagePreview, 
-    ocrText
-  );
-}
 }

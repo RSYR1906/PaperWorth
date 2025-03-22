@@ -1,3 +1,4 @@
+// src/app/components/past-receipts/past-receipts.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReceiptService } from '../../services/receipt.service';
@@ -95,7 +96,7 @@ export class PastReceiptsComponent implements OnInit {
           this.error = 'Failed to load receipts. Please try again later.';
           this.isLoading = false;
           
-          // Provide demo data if backend fails
+          // Add demo receipts since the backend might not be working
           this.loadDemoReceipts();
         }
       });
@@ -124,34 +125,49 @@ export class PastReceiptsComponent implements OnInit {
   }
   
   loadDemoReceipts() {
-    // Fallback to demo data if API fails
+    // FIX: Add actual demo data if backend fails
     this.receipts = [
-      // {
-      //   id: '1',
-      //   merchantName: 'Cold Storage',
-      //   category: 'Groceries',
-      //   scanDate: '2025-03-01T13:45:00',
-      //   totalAmount: 87.50,
-      //   hasPromotion: true,
-      //   items: [
-      //     { name: 'Milk', quantity: 2, price: 6.50 },
-      //     { name: 'Bread', quantity: 1, price: 3.20 },
-      //     { name: 'Eggs', quantity: 1, price: 4.80 }
-      //   ]
-      // },
-      // {
-      //   id: '2',
-      //   merchantName: 'Starbucks',
-      //   category: 'Cafes',
-      //   scanDate: '2025-02-28T09:15:00',
-      //   totalAmount: 15.80,
-      //   hasPromotion: true,
-      //   items: [
-      //     { name: 'Caffè Latte', quantity: 1, price: 6.50 },
-      //     { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
-      //   ]
-      // }
+      {
+        id: '1',
+        merchantName: 'Cold Storage',
+        category: 'Groceries',
+        dateOfPurchase: '2025-03-10T13:45:00',
+        totalAmount: 87.50,
+        hasPromotion: true,
+        items: [
+          { name: 'Milk', quantity: 2, price: 6.50 },
+          { name: 'Bread', quantity: 1, price: 3.20 },
+          { name: 'Eggs', quantity: 1, price: 4.80 }
+        ]
+      },
+      {
+        id: '2',
+        merchantName: 'Starbucks',
+        category: 'Cafes',
+        dateOfPurchase: '2025-03-05T09:15:00',
+        totalAmount: 15.80,
+        hasPromotion: true,
+        items: [
+          { name: 'Caffè Latte', quantity: 1, price: 6.50 },
+          { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
+        ]
+      },
+      {
+        id: '3',
+        merchantName: 'McDonald\'s',
+        category: 'Fast Food',
+        dateOfPurchase: '2025-03-15T12:30:00',
+        totalAmount: 22.50,
+        hasPromotion: false,
+        items: [
+          { name: 'Big Mac', quantity: 2, price: 12.00 },
+          { name: 'Fries', quantity: 2, price: 7.00 },
+          { name: 'Coca Cola', quantity: 2, price: 3.50 }
+        ]
+      }
     ];
+    
+    console.log('Loaded demo receipts:', this.receipts);
   }
   
   viewReceiptDetails(receipt: any) {
@@ -211,61 +227,66 @@ export class PastReceiptsComponent implements OnInit {
   }
   
   // Get filtered receipts
-get filteredReceipts() {
-  return this.receipts.filter(receipt => {
-    // Filter by search term
-    if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
-      return false;
-    }
+  get filteredReceipts() {
+    // FIX: Added debugging to troubleshoot filtering issues
+    console.log('Filtering receipts. Total receipts:', this.receipts.length);
+    console.log('Current filters:', this.filters);
+    console.log('Search term:', this.searchTerm);
     
-    // Filter by promotion
-    if (this.filters.hasPromotion && !receipt.hasPromotion) {
-      return false;
-    }
-    
-    // Filter by category
-    if (this.filters.category !== 'all') {
-      const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
-      if (receiptCategory !== this.filters.category.toLowerCase()) {
+    return this.receipts.filter(receipt => {
+      // Filter by search term
+      if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
         return false;
       }
-    }
-    
-    // Filter by date range - now using dateOfPurchase instead of scanDate
-    if (this.filters.dateRange !== 'all') {
-      const receiptDate = new Date(receipt.dateOfPurchase);
-      const today = new Date();
       
-      if (this.filters.dateRange === 'this-week') {
-        // This week logic
-        const firstDayOfWeek = new Date(today);
-        firstDayOfWeek.setDate(today.getDate() - today.getDay());
-        firstDayOfWeek.setHours(0, 0, 0, 0);
-        
-        if (receiptDate < firstDayOfWeek) {
-          return false;
-        }
-      } else if (this.filters.dateRange === 'this-month') {
-        // This month logic
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        if (receiptDate < firstDayOfMonth) {
-          return false;
-        }
-      } else if (this.filters.dateRange === 'last-month') {
-        // Last month logic
-        const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
+      // Filter by promotion
+      if (this.filters.hasPromotion && !receipt.hasPromotion) {
+        return false;
+      }
+      
+      // Filter by category
+      if (this.filters.category !== 'all') {
+        const receiptCategory = receipt.category.toLowerCase().replace(/\s+/g, '');
+        if (receiptCategory !== this.filters.category.toLowerCase()) {
           return false;
         }
       }
-    }
-    
-    return true;
-  });
-}
+      
+      // Filter by date range - now using dateOfPurchase instead of scanDate
+      if (this.filters.dateRange !== 'all') {
+        const receiptDate = new Date(receipt.dateOfPurchase);
+        const today = new Date();
+        
+        if (this.filters.dateRange === 'this-week') {
+          // This week logic
+          const firstDayOfWeek = new Date(today);
+          firstDayOfWeek.setDate(today.getDate() - today.getDay());
+          firstDayOfWeek.setHours(0, 0, 0, 0);
+          
+          if (receiptDate < firstDayOfWeek) {
+            return false;
+          }
+        } else if (this.filters.dateRange === 'this-month') {
+          // This month logic
+          const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          
+          if (receiptDate < firstDayOfMonth) {
+            return false;
+          }
+        } else if (this.filters.dateRange === 'last-month') {
+          // Last month logic
+          const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          
+          if (receiptDate < firstDayOfLastMonth || receiptDate >= firstDayOfThisMonth) {
+            return false;
+          }
+        }
+      }
+      
+      return true;
+    });
+  }
   
   logout() {
     localStorage.removeItem('currentUser');
@@ -291,19 +312,19 @@ get filteredReceipts() {
     });
   }
 
-  // Add to your component class
-errorType: 'general' | 'network' | 'server' = 'general';
+  // Error handling with type
+  errorType: 'general' | 'network' | 'server' = 'general';
 
-// Update your error handling method
-handleError(error: any) {
-  this.error = error.message || 'An unexpected error occurred';
-  
-  if (!navigator.onLine || error.status === 0) {
-    this.errorType = 'network';
-  } else if (error.status >= 500) {
-    this.errorType = 'server';
-  } else {
-    this.errorType = 'general';
+  // Update your error handling method
+  handleError(error: any) {
+    this.error = error.message || 'An unexpected error occurred';
+    
+    if (!navigator.onLine || error.status === 0) {
+      this.errorType = 'network';
+    } else if (error.status >= 500) {
+      this.errorType = 'server';
+    } else {
+      this.errorType = 'general';
+    }
   }
-}
 }

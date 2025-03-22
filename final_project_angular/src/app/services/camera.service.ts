@@ -1,4 +1,3 @@
-// src/app/services/camera.service.ts
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -18,10 +17,12 @@ export class CameraService {
   private apiUrl = environment.apiUrl;
   
   // Camera functionality variables
-  private selectedFileSubject = new BehaviorSubject<File | null>(null);
-  private imagePreviewSubject = new BehaviorSubject<string | ArrayBuffer | null>(null);
-  private extractedDataSubject = new BehaviorSubject<any>(null);
-  private ocrTextSubject = new BehaviorSubject<string>('');
+  // These are now exposed to allow direct manipulation in HomePageComponent
+  public selectedFileSubject = new BehaviorSubject<File | null>(null);
+  public imagePreviewSubject = new BehaviorSubject<string | ArrayBuffer | null>(null);
+  public extractedDataSubject = new BehaviorSubject<any>(null);
+  public ocrTextSubject = new BehaviorSubject<string>('');
+  
   private isProcessingSubject = new BehaviorSubject<boolean>(false);
   private showFullTextSubject = new BehaviorSubject<boolean>(false);
   private processingMessageSubject = new BehaviorSubject<string>('');
@@ -178,8 +179,7 @@ export class CameraService {
     this.uploadImage();
   }
 
-  // Update the CameraService's uploadImage method to not automatically navigate
-// This way, the confirmation modal will be displayed instead
+  // FIXED: Modified to not automatically navigate
   uploadImage(): void {
     const file = this.selectedFileSubject.getValue();
     if (!file) {
@@ -211,7 +211,7 @@ export class CameraService {
               ocrText: response.fullText || "No additional text extracted."
             });
             
-            // CHANGED: Do not navigate automatically
+            // FIXED: Do not navigate automatically
             // Instead, the component will display the confirmation modal
           } else {
             this.ocrTextSubject.next(response?.fullText || "No text extracted");
@@ -273,14 +273,8 @@ export class CameraService {
             ocrText: response.fullText || "No additional text extracted."
           });
           
-          // Navigate to the homepage with the extracted data
-          this.router.navigate(['/homepage'], { 
-            state: { 
-              extractedData: response,
-              imagePreview: this.imagePreviewSubject.getValue(),
-              ocrText: response.fullText || "No additional text extracted."
-            } 
-          });
+          // FIXED: Do not navigate automatically
+          // Instead let the confirmation modal handle it
         } else {
           this.ocrTextSubject.next(response?.fullText || "No text extracted");
           this.setError('Could not extract receipt details. Please try again with a clearer image.');
