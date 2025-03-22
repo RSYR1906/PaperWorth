@@ -1,9 +1,6 @@
-<!-- Hidden File Input -->
-<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
-
 <!-- Main Content Container -->
 <div class="app-container">
-  <!-- Compact Hero Section - Uncommented and enhanced -->
+  <!-- Compact Hero Section -->
   <section class="hero">
     <div class="hero-content">
       <h1>Save More with Every Receipt!</h1>
@@ -29,7 +26,7 @@
   </div>
 
   <!-- SAVED PROMOTIONS SECTION (Moved up for better accessibility) -->
-  <div class="promotions-section" *ngIf="!selectedFile && !extractedData">
+  <div class="promotions-section" *ngIf="!cameraService.selectedFile && !cameraService.extractedData">
     <div class="section-header">
       <h3>Your Saved Promotions</h3>
       <a routerLink="/saved-promotions" class="view-all">View All <span class="arrow-icon">→</span></a>
@@ -88,7 +85,7 @@
   </div>
 
   <!-- PROMOTIONS SECTION -->
-  <div class="promotions" *ngIf="!selectedFile && !extractedData">
+  <div class="promotions" *ngIf="!cameraService.selectedFile && !cameraService.extractedData">
     <!-- Loading promotions indicator -->
     <div *ngIf="isLoadingPromotions" class="loading-promotions">
       <div class="spinner"></div>
@@ -146,37 +143,14 @@
   </div>
 </div>
 
-<!-- RECEIPT SCANNING SECTION -->
-<!-- Modal Overlay for Receipt Preview -->
-<div class="modal-overlay" *ngIf="selectedFile && !extractedData" (click)="resetScanner()"></div>
-
-<!-- Receipt Preview Modal -->
-<div class="receipt-modal" *ngIf="selectedFile && !extractedData">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Receipt Preview</h3>
-      <button class="close-btn" (click)="resetScanner()">×</button>
-    </div>
-    <div class="modal-body">
-      <img [src]="imagePreview" class="preview-image">
-    </div>
-    <div class="modal-footer">
-      <button class="action-btn secondary" (click)="resetScanner()">Cancel</button>
-      <button class="action-btn primary" [disabled]="isProcessing" (click)="uploadImage()">
-        {{ isProcessing ? 'Processing...' : 'Extract Information' }}
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- Extracted Data Modal -->
-<div class="modal-overlay" *ngIf="extractedData" (click)="resetScanner()"></div>
+<div class="modal-overlay" *ngIf="cameraService.extractedData" (click)="cameraService.resetScanner()"></div>
 
-<div class="receipt-modal" *ngIf="extractedData">
+<div class="receipt-modal" *ngIf="cameraService.extractedData">
   <div class="modal-content">
     <div class="modal-header">
       <h3>Extracted Information</h3>
-      <button class="close-btn" (click)="resetScanner()">×</button>
+      <button class="close-btn" (click)="cameraService.resetScanner()">×</button>
     </div>
     <div class="modal-body">
       <!-- Loading Indicator for Save Process -->
@@ -194,34 +168,34 @@
       <div class="data-container" *ngIf="!isProcessing">
         <div class="data-row">
           <span class="data-label">Merchant:</span>
-          <span class="data-value">{{ extractedData.merchantName }}</span>
+          <span class="data-value">{{ cameraService.extractedData.merchantName }}</span>
         </div>
         <div class="data-row">
           <span class="data-label">Total Amount:</span>
-          <span class="data-value">${{ extractedData.totalAmount.toFixed(2) }}</span>
+          <span class="data-value">${{ cameraService.extractedData.totalAmount.toFixed(2) }}</span>
         </div>
         <div class="data-row">
           <span class="data-label">Date:</span>
-          <span class="data-value">{{ extractedData.dateOfPurchase }}</span>
+          <span class="data-value">{{ cameraService.extractedData.dateOfPurchase }}</span>
         </div>
         <div class="data-row">
           <span class="data-label">Category:</span>
-          <span class="data-value">{{ extractedData.category || determineCategoryFromMerchant(extractedData.merchantName) }}</span>
+          <span class="data-value">{{ cameraService.extractedData.category || determineCategoryFromMerchant(cameraService.extractedData.merchantName) }}</span>
         </div>
       </div>
       
       <!-- OCR Result (collapsible and not shown when processing) -->
       <div class="ocr-result-container" *ngIf="!isProcessing">
-        <button class="toggle-ocr-btn" (click)="showFullText = !showFullText">
-          {{ showFullText ? 'Hide' : 'Show' }} Full Extracted Text
+        <button class="toggle-ocr-btn" (click)="cameraService.toggleFullText()">
+          {{ cameraService.showFullText ? 'Hide' : 'Show' }} Full Extracted Text
         </button>
-        <div class="ocr-result" *ngIf="showFullText && ocrText">
-          <pre>{{ ocrText }}</pre>
+        <div class="ocr-result" *ngIf="cameraService.showFullText && cameraService.ocrText">
+          <pre>{{ cameraService.ocrText }}</pre>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="action-btn secondary" [disabled]="isProcessing" (click)="resetScanner()">
+      <button class="action-btn secondary" [disabled]="isProcessing" (click)="cameraService.resetScanner()">
         {{ isProcessing ? 'Please wait...' : 'Cancel' }}
       </button>
       <button class="action-btn primary save-btn" [disabled]="isProcessing" (click)="saveReceipt()">
@@ -240,7 +214,7 @@
       <button class="close-button" (click)="closePromotionDetails()">×</button>
     </div>
     
-    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='promotions/placeholder-image.jpg'">
+    <img [src]="selectedPromotion.imageUrl" alt="Promotion Image" class="promo-detail-image" onerror="this.src='placeholder-image.jpg'">
     
     <div class="promo-detail-info">
       <h4>{{ selectedPromotion.description }}</h4>

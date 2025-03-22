@@ -64,9 +64,9 @@
         <div class="deals-grid">
           <div *ngFor="let promotion of filteredPromotions" class="promotion-card" (click)="viewPromotionDetails(promotion)">
             <div class="promotion-image">
-              <img [src]="promotion.imageUrl || 'promotions/placeholder-image.jpg'" 
+              <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
                    [alt]="promotion.merchant + ' promotion'"
-                   onerror="this.src='promotions/placeholder-image.jpg'">
+                   onerror="this.src='placeholder-image.jpg'">
               
               <!-- Status badges -->
               <div *ngIf="promotion.savedAt" class="saved-timestamp">
@@ -96,9 +96,9 @@
       
       <div class="modal-content">
         <div class="modal-image">
-          <img [src]="selectedPromotion.imageUrl || 'assets/images/placeholder.jpg'" 
+          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" 
                alt="Promotion Image"
-               onerror="this.src='promotions/placeholder-image.jpg'">
+               onerror="this.src='placeholder-image.jpg'">
         </div>
         
         <div class="modal-details">
@@ -133,9 +133,9 @@
             </button>
             
             <!-- External link button -->
-            <a *ngIf="selectedPromotion.link" [href]="selectedPromotion.link" target="_blank" class="link-button">
+            <!-- <a *ngIf="selectedPromotion.link" [href]="selectedPromotion.link" target="_blank" class="link-button">
               <i class="fa fa-external-link"></i> Visit Website
-            </a>
+            </a> -->
           </div>
         </div>
       </div>

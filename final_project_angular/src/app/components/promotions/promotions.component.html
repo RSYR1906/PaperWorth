@@ -31,7 +31,7 @@
           <div class="deals-grid">
             <div *ngFor="let promotion of group.deals" class="promotion-card" (click)="viewPromotionDetails(promotion)">
               <div class="promotion-image">
-                <img [src]="promotion.imageUrl || 'promotions/placeholder-image.jpg'" alt="{{promotion.merchant}}">
+                <img [src]="promotion.imageUrl || 'placeholder-image.jpg '" alt="{{promotion.merchant}}">
                 <div *ngIf="isPromotionSaved(promotion.id)" class="saved-badge">
                   <i class="fa fa-bookmark"></i>
                 </div>
@@ -61,7 +61,7 @@
       
       <div class="modal-content">
         <div class="modal-image">
-          <img [src]="selectedPromotion.imageUrl || 'promotions/placeholder-image.jpg'" alt="{{selectedPromotion.merchant}}">
+          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" alt="{{selectedPromotion.merchant}}">
         </div>
         
         <div class="modal-details">
@@ -86,10 +86,10 @@
               </button>
             </ng-template>
             
-            <!-- External link button -->
+            <!-- External link button
             <a *ngIf="selectedPromotion.link" [href]="selectedPromotion.link" target="_blank" class="link-button">
               <i class="fa fa-external-link"></i> Visit Website
-            </a>
+            </a> -->
           </div>
         </div>
       </div>

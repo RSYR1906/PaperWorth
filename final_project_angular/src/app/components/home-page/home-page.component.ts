@@ -1,9 +1,12 @@
+// src/app/components/home-page/home-page.component.ts
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
+import { CameraService } from '../../services/camera.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
@@ -49,7 +52,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private promotionService: PromotionService,
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
-    private savedPromotionService : SavedPromotionsService,
+    private savedPromotionService: SavedPromotionsService,
+    public cameraService: CameraService // Make public to access in template
   ) {}
 
   private apiUrl = `${environment.apiUrl}`
@@ -62,16 +66,28 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.loadUserReceiptHistory();
 
     // Subscribe to savedPromotions observable
-  this.subscriptions.add(
-    this.savedPromotionService.savedPromotions$.subscribe(
-      promotions => {
-        this.savedPromotions = promotions;
-      }
-    )
-  );
-  
-  // Initial load of saved promotions
-  this.loadSavedPromotions();
+    this.subscriptions.add(
+      this.savedPromotionService.savedPromotions$.subscribe(
+        promotions => {
+          this.savedPromotions = promotions;
+        }
+      )
+    );
+    
+    // Initial load of saved promotions
+    this.loadSavedPromotions();
+    
+    // Check for data coming from router navigation (from camera service)
+    this.checkRouterState();
+    
+    // Listen for router navigation events to check state
+    this.subscriptions.add(
+      this.router.events.pipe(
+        filter(event => event instanceof NavigationStart)
+      ).subscribe(() => {
+        this.checkRouterState();
+      })
+    );
   }
 
   ngOnDestroy() {
@@ -81,6 +97,19 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
     if (this.subscriptions) {
       this.subscriptions.unsubscribe();
+    }
+  }
+  
+  // Check for router state containing receipt data
+  private checkRouterState() {
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation?.extras?.state) {
+      const state = navigation.extras.state as any;
+      if (state.extractedData) {
+        this.extractedData = state.extractedData;
+        this.imagePreview = state.imagePreview;
+        this.ocrText = state.ocrText;
+      }
     }
   }
   
@@ -124,8 +153,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
   
-  
-  // Replace savePromotion with this:
   savePromotion(promotion: any): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
@@ -156,7 +183,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
   
-  // Replace removeSavedPromotion with this:
   removeSavedPromotion(promotionId: string): void {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) return;
@@ -268,7 +294,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   /** Fetch promotions based on category */
   private getRecommendedPromotions(categories: string[]): void {
     if (!categories.length) {
-      this.recommendedPromotions = this.fallbackPromotionsByCategory;
+      this.recommendedPromotions = this.fallbackPromotionsByCategory as any;
       this.isLoadingRecommendations = false;
       return;
     }
@@ -285,7 +311,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           if (++completedRequests === categories.length) {
-            this.recommendedPromotions = categoryPromotions.length ? categoryPromotions : this.fallbackPromotionsByCategory;
+            this.recommendedPromotions = categoryPromotions.length ? categoryPromotions : this.fallbackPromotionsByCategory as any;
             this.isLoadingRecommendations = false;
           }
         }
@@ -293,45 +319,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
 
-   /** File selection & preview */
-   onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-      const reader = new FileReader();
-      reader.onload = () => this.imagePreview = reader.result;
-      reader.readAsDataURL(file);
-      this.ocrText = '';
-      this.extractedData = null;
-    }
-  }
-
-   /** Upload image for OCR */
-   uploadImage(): void {
-    if (!this.selectedFile) return console.error("No file selected!");
-    
-    this.isProcessing = true;
-    const formData = new FormData();
-    formData.append('file', this.selectedFile);
-
-    this.http.post<any>(`${this.apiUrl}/ocr/scan`, formData).subscribe({
-      next: (response) => {
-        this.isProcessing = false;
-        if (response?.merchantName && response?.totalAmount && response?.dateOfPurchase) {
-          this.extractedData = response;
-          this.ocrText = response.fullText || "No additional text extracted.";
-        } else {
-          this.ocrText = "Error processing image. Please try again.";
-        }
-      },
-      error: () => {
-        this.isProcessing = false;
-        this.ocrText = "Error processing image. Please try again.";
-      }
-    });
-  }
-  
-  saveReceipt() {
+   /** Save receipt from extracted data */
+   saveReceipt() {
     if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
       alert("Incomplete receipt data. Please try again.");
       return;
@@ -602,9 +591,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return 'Others';
   }
 
-  triggerFileInput() {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
-    fileInput?.click();
+  // Trigger camera service to open camera
+  openCamera(): void {
+    this.cameraService.triggerCamera();
   }
 
   toggleFullText() {
@@ -631,18 +620,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
   // Helper method to get first name only
   get userFirstName(): string {
     return this.userName.split(' ')[0];
-  }
-  
-  // Calculate if file size is acceptable
-  isFileSizeAcceptable(file: File): boolean {
-    const maxSizeInMB = 5;
-    const fileSizeInMB = file.size / (1024 * 1024);
-    return fileSizeInMB <= maxSizeInMB;
-  }
-  
-  // Get file extension
-  getFileExtension(filename: string): string {
-    return filename.split('.').pop()?.toLowerCase() || '';
   }
 
   // Add this method to handle promotion click

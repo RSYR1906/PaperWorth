@@ -53,14 +53,6 @@
         <mat-icon>menu</mat-icon>
       </button>
   
-      <!-- Processing Overlay -->
-      <div class="processing-overlay" *ngIf="isProcessing">
-        <div class="processing-content">
-          <mat-spinner diameter="50"></mat-spinner>
-          <p class="processing-message">{{processingMessage || 'Processing your receipt...'}}</p>
-        </div>
-      </div>
-
       <!-- Hidden file input for camera functionality -->
       <input 
         type="file" 
@@ -69,6 +61,14 @@
         style="display: none;" 
         #fileInput
       >
+      
+      <!-- Processing Overlay -->
+      <div class="processing-overlay" *ngIf="cameraService.isProcessing">
+        <div class="processing-content">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p class="processing-message">{{cameraService.processingMessage || 'Processing your receipt...'}}</p>
+        </div>
+      </div>
   
       <!-- Main Content Area -->
       <main class="content">
@@ -82,11 +82,11 @@
             <mat-icon>home</mat-icon>
             <span>Home</span>
           </a>
-          <a routerLink="/home-page" routerLinkActive="active" class="nav-item">
-          <div class="camera-circle" (click)="triggerFileInput()">
-            <mat-icon>camera_alt</mat-icon>
+          <div class="nav-item camera-button">
+            <div class="camera-circle" (click)="triggerFileInput()">
+              <mat-icon>camera_alt</mat-icon>
+            </div>
           </div>
-          </a>
           <a routerLink="/saved-promotions" routerLinkActive="active" class="nav-item">
             <mat-icon>bookmark</mat-icon>
             <span>Saved</span>
