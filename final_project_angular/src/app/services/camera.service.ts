@@ -73,7 +73,7 @@ export class CameraService {
     return this.errorMessageSubject.asObservable();
   }
   
-  // Observable that components can subscribe to
+  // Observable that app component subscribes to
   get triggerCamera$(): Observable<void> {
     return this.triggerCameraSubject.asObservable();
   }
@@ -86,7 +86,7 @@ export class CameraService {
     return this.ocrProcessedSource.asObservable();
   }
   
-  // For backward compatibility
+  // Direct getters (for backward compatibility)
   get isProcessing(): boolean {
     return this.isProcessingSubject.getValue();
   }
@@ -101,6 +101,18 @@ export class CameraService {
   
   set processingMessage(value: string) {
     this.processingMessageSubject.next(value);
+  }
+  
+  get extractedData(): any {
+    return this.extractedDataSubject.getValue();
+  }
+  
+  get ocrText(): string {
+    return this.ocrTextSubject.getValue();
+  }
+  
+  get imagePreview(): string | ArrayBuffer | null {
+    return this.imagePreviewSubject.getValue();
   }
   
   // Method to trigger camera from any component
@@ -297,20 +309,43 @@ export class CameraService {
   }
 
   /**
-   * Capture image from device camera and process it
+   * Save a processed receipt to the backend
    */
-  captureAndProcessImage(): void {
-    // Create a file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment'; // Use rear camera on mobile
+  saveReceipt(userId: string): Observable<any> {
+    const extractedData = this.extractedDataSubject.getValue();
+    const imagePreview = this.imagePreviewSubject.getValue();
     
-    // Handle file selection
-    input.onchange = (event) => this.onFileSelected(event);
+    if (!extractedData || !extractedData.merchantName || !extractedData.totalAmount || !extractedData.dateOfPurchase) {
+      this.setError("Incomplete receipt data. Please try again.");
+      return throwError(() => new Error('Incomplete receipt data'));
+    }
     
-    // Trigger the file input
-    input.click();
+    this.isProcessingSubject.next(true);
+    this.processingMessageSubject.next("Saving your receipt...");
+    
+    // Determine category based on merchant name if not present
+    const category = extractedData.category || this.determineCategoryFromMerchant(extractedData.merchantName);
+    
+    // Create receipt object
+    const receiptData = {
+      userId: userId,
+      merchantName: extractedData.merchantName,
+      totalAmount: extractedData.totalAmount,
+      dateOfPurchase: extractedData.dateOfPurchase,
+      category: category,
+      imageUrl: imagePreview, // Store the image preview URL
+      additionalFields: {
+        fullText: extractedData.fullText || this.ocrTextSubject.getValue(),
+        // Include any other fields from extracted data
+        ...Object.entries(extractedData)
+          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
+          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
+      }
+    };
+    
+    return this.http.post(`${this.apiUrl}/receipts`, receiptData).pipe(
+      catchError(this.handleError)
+    );
   }
 
   resetScanner(): void {
@@ -338,6 +373,61 @@ export class CameraService {
   
   getFileExtension(filename: string): string {
     return filename.split('.').pop()?.toLowerCase() || '';
+  }
+  
+  /**
+   * Determines category based on merchant name
+   */
+  determineCategoryFromMerchant(merchantName: string): string {
+    if (!merchantName) return 'Others';
+    
+    merchantName = merchantName.toLowerCase();
+    
+    // Grocery stores
+    if (merchantName.includes('cold storage') || 
+        merchantName.includes('fairprice') || 
+        merchantName.includes('ntuc') || 
+        merchantName.includes('giant') || 
+        merchantName.includes('sheng siong')) {
+      return 'Groceries';
+    }
+    
+    // Fast food
+    if (merchantName.includes('mcdonald') || 
+        merchantName.includes('burger king') || 
+        merchantName.includes('kfc') || 
+        merchantName.includes('subway') ||
+        merchantName.includes('jollibee')) {
+      return 'Fast Food';
+    }
+    
+    // Cafes
+    if (merchantName.includes('starbucks') || 
+        merchantName.includes('coffee bean') || 
+        merchantName.includes('toast box') ||
+        merchantName.includes('ya kun') ||
+        merchantName.includes('cafe')) {
+      return 'Cafes';
+    }
+    
+    // Retail
+    if (merchantName.includes('uniqlo') || 
+        merchantName.includes('zara') || 
+        merchantName.includes('h&m') ||
+        merchantName.includes('cotton on')) {
+      return 'Retail';
+    }
+    
+    // Healthcare
+    if (merchantName.includes('guardian') || 
+        merchantName.includes('watsons') || 
+        merchantName.includes('unity') ||
+        merchantName.includes('pharmacy')) {
+      return 'Health & Beauty';
+    }
+    
+    // Default to "Others" if no match
+    return 'Others';
   }
   
   private handleError(error: HttpErrorResponse) {

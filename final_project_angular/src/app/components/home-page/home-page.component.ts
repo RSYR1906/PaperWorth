@@ -1,9 +1,11 @@
+// src/app/components/home-page/home-page.component.ts
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment.prod';
 import { BudgetService } from '../../services/budget.service';
+import { CameraService } from '../../services/camera.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
@@ -17,11 +19,6 @@ import { SavedPromotionsService } from '../../services/saved-promotions.service'
 export class HomePageComponent implements OnInit, OnDestroy {
   userName = 'User';
   monthlyExpenses = 0;
-  selectedFile: File | null = null;
-  imagePreview: string | ArrayBuffer | null = null;
-  extractedData: any = null;
-  ocrText = '';
-  isProcessing = false;
   showFullText = false;
   recentlySavedReceipt: any = null;
   matchingPromotions: any[] = [];
@@ -35,43 +32,47 @@ export class HomePageComponent implements OnInit, OnDestroy {
   showSuccessNotification = false;
   notificationTimeRemaining = 100;
   notificationTimer: any = null;
-  processingMessage: string = '';
   successNotificationMessage: string = 'Receipt saved successfully!';
   savedPromotions: any[] = [];
   isLoadingSavedPromotions: boolean = false;
   showMoreSavedPromotions: boolean = false;
   savedPromotionsLimit: number = 3; // Default limit to show in homepage
-
   
+  private subscriptions = new Subscription();
+  private apiUrl = `${environment.apiUrl}`;
+
   constructor(
     private http: HttpClient, 
-    private router: Router, 
+    private router: Router,
+    private activatedRoute: ActivatedRoute,
     private promotionService: PromotionService,
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
-    private savedPromotionService : SavedPromotionsService,
+    private savedPromotionService: SavedPromotionsService,
+    public cameraService: CameraService
   ) {}
-
-  private apiUrl = `${environment.apiUrl}`
-  private subscriptions = new Subscription();
 
   ngOnInit(): void {
     // Load user data
     this.loadUserData();
+    
     // Load user's receipt history when component initializes
     this.loadUserReceiptHistory();
 
     // Subscribe to savedPromotions observable
-  this.subscriptions.add(
-    this.savedPromotionService.savedPromotions$.subscribe(
-      promotions => {
-        this.savedPromotions = promotions;
-      }
-    )
-  );
+    this.subscriptions.add(
+      this.savedPromotionService.savedPromotions$.subscribe(
+        promotions => {
+          this.savedPromotions = promotions;
+        }
+      )
+    );
   
-  // Initial load of saved promotions
-  this.loadSavedPromotions();
+    // Initial load of saved promotions
+    this.loadSavedPromotions();
+    
+    // Check for any receipt data passed from the camera service
+    this.checkForReceiptData();
   }
 
   ngOnDestroy() {
@@ -81,6 +82,44 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
     if (this.subscriptions) {
       this.subscriptions.unsubscribe();
+    }
+  }
+  
+  /**
+   * Check if there's any receipt data passed from navigation state
+   */
+  private checkForReceiptData(): void {
+    // Get navigation state
+    const state = history.state;
+    if (state?.extractedData) {
+      console.log('Received extracted data:', state.extractedData);
+      
+      // Process the received data
+      this.processExtractedData(state.extractedData, state.imagePreview, state.ocrText);
+    }
+    
+    // Also subscribe to OCR processed events from the camera service
+    this.subscriptions.add(
+      this.cameraService.ocrProcessed$.subscribe(result => {
+        if (result?.extractedData) {
+          this.processExtractedData(
+            result.extractedData, 
+            this.cameraService.imagePreview, 
+            result.ocrText
+          );
+        }
+      })
+    );
+  }
+  
+  /**
+   * Process extracted data and prepare to save receipt
+   */
+  private processExtractedData(extractedData: any, imagePreview: any, ocrText: string): void {
+    // If data has been processed already, save the receipt
+    const currentUser = this.getCurrentUser();
+    if (currentUser?.id && extractedData) {
+      this.saveReceipt(currentUser.id, extractedData, imagePreview, ocrText);
     }
   }
   
@@ -124,60 +163,78 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
   
-  
-  // Replace savePromotion with this:
-  savePromotion(promotion: any): void {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      this.router.navigate(['/login']);
+  // Save the receipt to the backend
+  saveReceipt(userId: string, extractedData: any, imagePreview: any, ocrText: string): void {
+    if (!extractedData || !extractedData.merchantName || !extractedData.totalAmount || !extractedData.dateOfPurchase) {
+      console.error("Incomplete receipt data:", extractedData);
       return;
     }
-    
-    // Check if already saved to avoid duplicates
-    const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
-    if (alreadySaved) {
-      alert('This promotion is already saved!');
-      return;
-    }
-    
-    this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
-      next: () => {
-        // Show success notification
-        this.successNotificationMessage = 'Promotion saved successfully!';
-        this.showNotification();
-        
-        // Close promotion details if open
-        this.closePromotionDetails();
-      },
-      error: (error) => {
-        console.error('Error saving promotion:', error);
-        alert('Failed to save promotion. Please try again.');
-      }
-    });
-  }
-  
-  // Replace removeSavedPromotion with this:
-  removeSavedPromotion(promotionId: string): void {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) return;
-    
-    if (!confirm('Are you sure you want to remove this promotion?')) {
-      return;
-    }
-    
-    this.savedPromotionService.removePromotion(currentUser.id, promotionId).subscribe({
-      next: () => {
-        // Show success notification
-        this.successNotificationMessage = 'Promotion removed!';
-        this.showNotification();
-      },
-      error: (error) => {
-        console.error('Error removing promotion:', error);
-        alert('Failed to remove promotion. Please try again.');
-      }
-    });
-  }
 
+    this.cameraService.isProcessing = true;
+    this.cameraService.processingMessage = "Saving your receipt...";
+    
+    // Determine category based on merchant name
+    const category = extractedData.category || this.cameraService.determineCategoryFromMerchant(extractedData.merchantName);
+    
+    // Create receipt object based on our updated model
+    const receiptData = {
+      userId: userId,
+      merchantName: extractedData.merchantName,
+      totalAmount: extractedData.totalAmount,
+      dateOfPurchase: extractedData.dateOfPurchase,
+      category: category,
+      imageUrl: imagePreview, // Store the image preview URL
+      additionalFields: {
+        fullText: extractedData.fullText || ocrText,
+        // Include any other fields from extracted data
+        ...Object.entries(extractedData)
+          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
+          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
+      }
+    };
+  
+    this.http.post(`${this.apiUrl}/receipts`, receiptData)
+      .subscribe({
+        next: (response: any) => {
+          console.log('Receipt saved:', response);
+          
+          // Update the processing message to show next step
+          this.cameraService.processingMessage = "Finding matching promotions...";
+          
+          // Extract receipt and points data from response
+          const savedReceipt = response.receipt;
+          const pointsAwarded = response.pointsAwarded || 0;
+          
+          // Store the recently saved receipt for reference
+          this.recentlySavedReceipt = {
+            ...receiptData,
+            id: savedReceipt.id
+          };
+          
+          // Update monthly expenses with the new receipt amount
+          this.monthlyExpenses += extractedData.totalAmount;
+          
+          // Customize notification message to include points
+          this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
+          
+          // Show the success notification
+          this.showNotification();
+  
+          // Fetch matching promotions for the receipt
+          this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
+          
+          // Also refresh the recommended promotions as we have a new receipt
+          this.loadUserReceiptHistory();
+        },
+        error: (error) => {
+          console.error('Error saving receipt:', error);
+          alert('Failed to save receipt. Please try again.');
+          this.cameraService.isProcessing = false;
+          this.cameraService.processingMessage = "";
+        }
+      });
+  }
+  
   /** Toggle show more/less saved promotions */
   toggleShowMoreSavedPromotions(): void {
     this.showMoreSavedPromotions = !this.showMoreSavedPromotions;
@@ -214,20 +271,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       day: 'numeric'
     });
   }
-
-  /** Determine category based on merchant name */
-  private getCategoryFromMerchant(merchantName: string): string {
-    if (!merchantName) return 'Others';
-    const name = merchantName.toLowerCase();
-
-    if (/cold storage|fairprice|ntuc|giant|sheng siong/.test(name)) return 'Groceries';
-    if (/mcdonald|burger king|kfc|subway|jollibee/.test(name)) return 'Fast Food';
-    if (/starbucks|coffee bean|toast box|ya kun|cafe/.test(name)) return 'Cafes';
-    if (/uniqlo|zara|h&m|cotton on/.test(name)) return 'Retail';
-    if (/guardian|watsons|unity|pharmacy/.test(name)) return 'Health & Beauty';
-
-    return 'Others';
-  }
   
   /** Load user's receipt history & fetch promotions */
   private loadUserReceiptHistory(): void {
@@ -255,7 +298,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private analyzeReceiptHistory(receipts: any[]): string[] {
     const categoryCounts: Record<string, number> = {};
     receipts.forEach(({ category, merchantName, additionalFields }) => {
-      const detectedCategory = category || additionalFields?.category || this.getCategoryFromMerchant(merchantName);
+      const detectedCategory = category || additionalFields?.category || this.cameraService.determineCategoryFromMerchant(merchantName);
       if (detectedCategory) categoryCounts[detectedCategory] = (categoryCounts[detectedCategory] || 0) + 1;
     });
 
@@ -293,120 +336,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
 
-   /** File selection & preview */
-   onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-      const reader = new FileReader();
-      reader.onload = () => this.imagePreview = reader.result;
-      reader.readAsDataURL(file);
-      this.ocrText = '';
-      this.extractedData = null;
-    }
-  }
-
-   /** Upload image for OCR */
-   uploadImage(): void {
-    if (!this.selectedFile) return console.error("No file selected!");
-    
-    this.isProcessing = true;
-    const formData = new FormData();
-    formData.append('file', this.selectedFile);
-
-    this.http.post<any>(`${this.apiUrl}/ocr/scan`, formData).subscribe({
-      next: (response) => {
-        this.isProcessing = false;
-        if (response?.merchantName && response?.totalAmount && response?.dateOfPurchase) {
-          this.extractedData = response;
-          this.ocrText = response.fullText || "No additional text extracted.";
-        } else {
-          this.ocrText = "Error processing image. Please try again.";
-        }
-      },
-      error: () => {
-        this.isProcessing = false;
-        this.ocrText = "Error processing image. Please try again.";
-      }
-    });
-  }
-  
-  saveReceipt() {
-    if (!this.extractedData || !this.extractedData.merchantName || !this.extractedData.totalAmount || !this.extractedData.dateOfPurchase) {
-      alert("Incomplete receipt data. Please try again.");
-      return;
-    }
-  
-    this.isProcessing = true;
-    // Show a more specific processing message
-    this.processingMessage = "Saving your receipt...";
-    
-    // First, try to get user from Firebase auth service directly
-    const firebaseUser = this.firebaseAuthService.getCurrentUser();
-    const currentUser = firebaseUser || JSON.parse(localStorage.getItem('currentUser') || '{}');
-    
-    // Determine category based on merchant name
-    const category = this.extractedData.category || this.determineCategoryFromMerchant(this.extractedData.merchantName);
-    
-    // Create receipt object based on our updated model
-    const receiptData = {
-      userId: currentUser.id || '1',
-      merchantName: this.extractedData.merchantName,
-      totalAmount: this.extractedData.totalAmount,
-      dateOfPurchase: this.extractedData.dateOfPurchase,
-      category: category,
-      imageUrl: this.imagePreview, // Store the image preview URL
-      additionalFields: {
-        fullText: this.extractedData.fullText || this.ocrText,
-        // Include any other fields from extracted data
-        ...Object.entries(this.extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
-          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
-      }
-    };
-  
-    this.http.post(`${this.apiUrl}/receipts`, receiptData)
-      .subscribe({
-        next: (response: any) => {
-          console.log('Receipt saved:', response);
-          
-          // Update the processing message to show next step
-          this.processingMessage = "Finding matching promotions...";
-          
-          // Extract receipt and points data from response
-          const savedReceipt = response.receipt;
-          const pointsAwarded = response.pointsAwarded || 0;
-          
-          // Store the recently saved receipt for reference
-          this.recentlySavedReceipt = {
-            ...receiptData,
-            id: savedReceipt.id
-          };
-          
-          // Update monthly expenses with the new receipt amount
-          this.monthlyExpenses += this.extractedData.totalAmount;
-          
-          // Customize notification message to include points
-          this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
-          
-          // Show the success notification
-          this.showNotification();
-  
-          // Fetch matching promotions for the receipt
-          this.fetchMatchingPromotions(this.extractedData.merchantName, category, savedReceipt.id);
-          
-          // Also refresh the recommended promotions as we have a new receipt
-          this.loadUserReceiptHistory();
-        },
-        error: (error) => {
-          console.error('Error saving receipt:', error);
-          alert('Failed to save receipt. Please try again.');
-          this.isProcessing = false;
-          this.processingMessage = "";
-        }
-      });
-  }
-  
   // Updated fetchMatchingPromotions method to properly clear loading state
   fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
     this.isLoadingPromotions = true;
@@ -426,14 +355,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
             });
             
             this.isLoadingPromotions = false;
-            this.isProcessing = false;
-            this.processingMessage = "";
+            this.cameraService.isProcessing = false;
+            this.cameraService.processingMessage = "";
             
-            // Clear the receipt data
-            this.resetScanner();
+            // Clear the receipt data in camera service
+            this.cameraService.resetScanner();
           } else {
             // Update processing message for fallback attempt
-            this.processingMessage = "Searching for more promotions...";
+            this.cameraService.processingMessage = "Searching for more promotions...";
             
             // If no promotions found, try fallback to receipt-based API
             this.fetchPromotionsByReceiptId(receiptId);
@@ -442,7 +371,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error fetching matching promotions:', error);
           // Update processing message for fallback attempt
-          this.processingMessage = "Searching for more promotions...";
+          this.cameraService.processingMessage = "Searching for more promotions...";
           
           // Try fallback to receipt-based API
           this.fetchPromotionsByReceiptId(receiptId);
@@ -487,26 +416,20 @@ export class HomePageComponent implements OnInit, OnDestroy {
           }
           
           // Set final processing message before completion
-          this.processingMessage = "Completing...";
+          this.cameraService.processingMessage = "Completing...";
           
           // Short timeout to show the final step before clearing
           setTimeout(() => {
             this.isLoadingPromotions = false;
-            this.isProcessing = false;
-            this.processingMessage = "";
-            
-            // Clear the receipt data
-            this.resetScanner();
+            this.cameraService.isProcessing = false;
+            this.cameraService.processingMessage = "";
           }, 500);
         },
         error: (error) => {
           console.error('Error fetching promotions by receipt ID:', error);
           this.isLoadingPromotions = false;
-          this.isProcessing = false;
-          this.processingMessage = "";
-          
-          // Even if promotions fail, clear the scanner
-          this.resetScanner();
+          this.cameraService.isProcessing = false;
+          this.cameraService.processingMessage = "";
         }
       });
   }
@@ -538,127 +461,75 @@ export class HomePageComponent implements OnInit, OnDestroy {
       });
     }
   }
-  
-  // Reset scanner state
-  resetScanner(): void {
-    this.selectedFile = null;
-    this.imagePreview = null;
-    this.ocrText = '';
-    this.extractedData = null;
-    this.showFullText = false;
-    this.recentlySavedReceipt = null;
+
+  // Save a promotion
+  savePromotion(promotion: any): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    // Check if already saved to avoid duplicates
+    const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
+    if (alreadySaved) {
+      alert('This promotion is already saved!');
+      return;
+    }
+    
+    this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
+      next: () => {
+        // Show success notification
+        this.successNotificationMessage = 'Promotion saved successfully!';
+        this.showNotification();
+        
+        // Close promotion details if open
+        this.closePromotionDetails();
+      },
+      error: (error) => {
+        console.error('Error saving promotion:', error);
+        alert('Failed to save promotion. Please try again.');
+      }
+    });
   }
   
-  // Helper method to determine category from merchant name
-  determineCategoryFromMerchant(merchantName: string): string {
-    if (!merchantName) return 'Others';
+  // Remove a saved promotion
+  removeSavedPromotion(promotionId: string): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) return;
     
-    merchantName = merchantName.toLowerCase();
-    
-    // Grocery stores
-    if (merchantName.includes('cold storage') || 
-        merchantName.includes('fairprice') || 
-        merchantName.includes('ntuc') || 
-        merchantName.includes('giant') || 
-        merchantName.includes('sheng siong')) {
-      return 'Groceries';
+    if (!confirm('Are you sure you want to remove this promotion?')) {
+      return;
     }
     
-    // Fast food
-    if (merchantName.includes('mcdonald') || 
-        merchantName.includes('burger king') || 
-        merchantName.includes('kfc') || 
-        merchantName.includes('subway') ||
-        merchantName.includes('jollibee')) {
-      return 'Fast Food';
-    }
-    
-    // Cafes
-    if (merchantName.includes('starbucks') || 
-        merchantName.includes('coffee bean') || 
-        merchantName.includes('toast box') ||
-        merchantName.includes('ya kun') ||
-        merchantName.includes('cafe')) {
-      return 'Cafes';
-    }
-    
-    // Retail
-    if (merchantName.includes('uniqlo') || 
-        merchantName.includes('zara') || 
-        merchantName.includes('h&m') ||
-        merchantName.includes('cotton on')) {
-      return 'Retail';
-    }
-    
-    // Healthcare
-    if (merchantName.includes('guardian') || 
-        merchantName.includes('watsons') || 
-        merchantName.includes('unity') ||
-        merchantName.includes('pharmacy')) {
-      return 'Health & Beauty';
-    }
-    
-    // Default to "Others" if no match
-    return 'Others';
+    this.savedPromotionService.removePromotion(currentUser.id, promotionId).subscribe({
+      next: () => {
+        // Show success notification
+        this.successNotificationMessage = 'Promotion removed!';
+        this.showNotification();
+      },
+      error: (error) => {
+        console.error('Error removing promotion:', error);
+        alert('Failed to remove promotion. Please try again.');
+      }
+    });
   }
 
-  triggerFileInput() {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLElement;
-    fileInput?.click();
-  }
-
-  toggleFullText() {
-    this.showFullText = !this.showFullText;
-  }
-
-  // Update the logout method in HomePage component
-  logout() {
-    this.firebaseAuthService.signOut()
-      .then(() => {
-        // The navigation is already handled in the FirebaseAuthService
-        console.log("User logged out");
-      })
-      .catch(error => {
-        console.error("Logout error:", error);
-      });
-  }
-  
-  // Helper method to format currency values
-  formatCurrency(value: number): string {
-    return value.toFixed(2);
-  }
-  
-  // Helper method to get first name only
-  get userFirstName(): string {
-    return this.userName.split(' ')[0];
-  }
-  
-  // Calculate if file size is acceptable
-  isFileSizeAcceptable(file: File): boolean {
-    const maxSizeInMB = 5;
-    const fileSizeInMB = file.size / (1024 * 1024);
-    return fileSizeInMB <= maxSizeInMB;
-  }
-  
-  // Get file extension
-  getFileExtension(filename: string): string {
-    return filename.split('.').pop()?.toLowerCase() || '';
-  }
-
-  // Add this method to handle promotion click
+  // View promotion details
   viewPromotionDetails(promotion: any) {
     this.selectedPromotion = promotion;
   }
 
-  // Add this method to close the promotion details modal
+  // Close promotion details modal
   closePromotionDetails() {
     this.selectedPromotion = null;
   }
 
+  // Show notification
   showNotification() {
     this.showSuccessNotification = true;
     this.notificationTimeRemaining = 100;
-    
+
     // Clear any existing timer
     if (this.notificationTimer) {
       clearInterval(this.notificationTimer);
@@ -680,5 +551,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
       clearInterval(this.notificationTimer);
       this.notificationTimer = null;
     }
+  }
+
+  // Toggle OCR full text
+  toggleFullText() {
+    this.showFullText = !this.showFullText;
   }
 }

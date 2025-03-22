@@ -1,9 +1,6 @@
-<!-- Hidden File Input -->
-<input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" capture="environment" hidden>
-
 <!-- Main Content Container -->
 <div class="app-container">
-  <!-- Compact Hero Section - Uncommented and enhanced -->
+  <!-- Compact Hero Section -->
   <section class="hero">
     <div class="hero-content">
       <h1>Save More with Every Receipt!</h1>
@@ -28,8 +25,53 @@
     </div>
   </div>
 
+  <!-- RECEIPT DATA PREVIEW - Show when processing is complete but extracted data is available -->
+  <div class="receipt-preview-section" *ngIf="cameraService.extractedData && !cameraService.isProcessing">
+    <div class="section-header">
+      <h3>Scanned Receipt</h3>
+      <button class="close-preview-btn" (click)="cameraService.resetScanner()">Clear</button>
+    </div>
+    
+    <div class="receipt-preview-content">
+      <!-- Receipt Image Preview -->
+      <div class="receipt-image-preview">
+        <img [src]="cameraService.imagePreview" alt="Receipt Image" class="preview-image">
+      </div>
+      
+      <!-- Extracted Data -->
+      <div class="extracted-data-container">
+        <div class="data-row">
+          <span class="data-label">Merchant:</span>
+          <span class="data-value">{{ cameraService.extractedData.merchantName }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Total Amount:</span>
+          <span class="data-value">${{ cameraService.extractedData.totalAmount.toFixed(2) }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Date:</span>
+          <span class="data-value">{{ cameraService.extractedData.dateOfPurchase }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Category:</span>
+          <span class="data-value">{{ cameraService.extractedData.category || cameraService.determineCategoryFromMerchant(cameraService.extractedData.merchantName) }}</span>
+        </div>
+        
+        <!-- OCR Text Toggle Button -->
+        <button class="toggle-ocr-btn" (click)="toggleFullText()">
+          {{ showFullText ? 'Hide' : 'Show' }} Full Extracted Text
+        </button>
+        
+        <!-- Full OCR Text -->
+        <div class="ocr-text" *ngIf="showFullText && cameraService.ocrText">
+          <pre>{{ cameraService.ocrText }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SAVED PROMOTIONS SECTION (Moved up for better accessibility) -->
-  <div class="promotions-section" *ngIf="!selectedFile && !extractedData">
+  <div class="promotions-section" *ngIf="!cameraService.isProcessing">
     <div class="section-header">
       <h3>Your Saved Promotions</h3>
       <a routerLink="/saved-promotions" class="view-all">View All <span class="arrow-icon">→</span></a>
@@ -85,10 +127,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Show More/Less Button -->
+    <div class="show-more-container" *ngIf="savedPromotions.length > savedPromotionsLimit">
+      <button class="show-more-btn" (click)="toggleShowMoreSavedPromotions()">
+        {{ showMoreSavedPromotions ? 'Show Less' : 'Show More' }}
+      </button>
+    </div>
   </div>
 
   <!-- PROMOTIONS SECTION -->
-  <div class="promotions" *ngIf="!selectedFile && !extractedData">
+  <div class="promotions" *ngIf="!cameraService.isProcessing">
     <!-- Loading promotions indicator -->
     <div *ngIf="isLoadingPromotions" class="loading-promotions">
       <div class="spinner"></div>
@@ -144,89 +193,15 @@
       </div>
     </div>
   </div>
-</div>
 
-<!-- RECEIPT SCANNING SECTION -->
-<!-- Modal Overlay for Receipt Preview -->
-<div class="modal-overlay" *ngIf="selectedFile && !extractedData" (click)="resetScanner()"></div>
-
-<!-- Receipt Preview Modal -->
-<div class="receipt-modal" *ngIf="selectedFile && !extractedData">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Receipt Preview</h3>
-      <button class="close-btn" (click)="resetScanner()">×</button>
-    </div>
-    <div class="modal-body">
-      <img [src]="imagePreview" class="preview-image">
-    </div>
-    <div class="modal-footer">
-      <button class="action-btn secondary" (click)="resetScanner()">Cancel</button>
-      <button class="action-btn primary" [disabled]="isProcessing" (click)="uploadImage()">
-        {{ isProcessing ? 'Processing...' : 'Extract Information' }}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Extracted Data Modal -->
-<div class="modal-overlay" *ngIf="extractedData" (click)="resetScanner()"></div>
-
-<div class="receipt-modal" *ngIf="extractedData">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Extracted Information</h3>
-      <button class="close-btn" (click)="resetScanner()">×</button>
-    </div>
-    <div class="modal-body">
-      <!-- Loading Indicator for Save Process -->
-      <div class="save-loading-container" *ngIf="isProcessing">
-        <div class="spinner"></div>
-        <p class="processing-message">{{ processingMessage || 'Processing...' }}</p>
-        <div class="processing-steps">
-          <div class="step" [class.active]="processingMessage === 'Saving your receipt...'" [class.completed]="processingMessage === 'Finding matching promotions...' || processingMessage === 'Searching for more promotions...' || processingMessage === 'Completing...'">Saving Receipt</div>
-          <div class="step" [class.active]="processingMessage === 'Finding matching promotions...' || processingMessage === 'Searching for more promotions...'" [class.completed]="processingMessage === 'Completing...'">Finding Promotions</div>
-          <div class="step" [class.active]="processingMessage === 'Completing...'">Completing</div>
-        </div>
-      </div>
-
-      <!-- Basic Receipt Information (Only show when not processing) -->
-      <div class="data-container" *ngIf="!isProcessing">
-        <div class="data-row">
-          <span class="data-label">Merchant:</span>
-          <span class="data-value">{{ extractedData.merchantName }}</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Total Amount:</span>
-          <span class="data-value">${{ extractedData.totalAmount.toFixed(2) }}</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Date:</span>
-          <span class="data-value">{{ extractedData.dateOfPurchase }}</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Category:</span>
-          <span class="data-value">{{ extractedData.category || determineCategoryFromMerchant(extractedData.merchantName) }}</span>
-        </div>
-      </div>
-      
-      <!-- OCR Result (collapsible and not shown when processing) -->
-      <div class="ocr-result-container" *ngIf="!isProcessing">
-        <button class="toggle-ocr-btn" (click)="showFullText = !showFullText">
-          {{ showFullText ? 'Hide' : 'Show' }} Full Extracted Text
-        </button>
-        <div class="ocr-result" *ngIf="showFullText && ocrText">
-          <pre>{{ ocrText }}</pre>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="action-btn secondary" [disabled]="isProcessing" (click)="resetScanner()">
-        {{ isProcessing ? 'Please wait...' : 'Cancel' }}
-      </button>
-      <button class="action-btn primary save-btn" [disabled]="isProcessing" (click)="saveReceipt()">
-        {{ isProcessing ? 'Saving...' : 'Save Receipt' }}
-      </button>
+  <!-- RECEIPT PROCESSING INDICATOR -->
+  <div class="save-loading-container" *ngIf="cameraService.isProcessing">
+    <div class="spinner"></div>
+    <p class="processing-message">{{ cameraService.processingMessage || 'Processing...' }}</p>
+    <div class="processing-steps">
+      <div class="step" [class.active]="cameraService.processingMessage === 'Saving your receipt...'" [class.completed]="cameraService.processingMessage === 'Finding matching promotions...' || cameraService.processingMessage === 'Searching for more promotions...' || cameraService.processingMessage === 'Completing...'">Saving Receipt</div>
+      <div class="step" [class.active]="cameraService.processingMessage === 'Finding matching promotions...' || cameraService.processingMessage === 'Searching for more promotions...'" [class.completed]="cameraService.processingMessage === 'Completing...'">Finding Promotions</div>
+      <div class="step" [class.active]="cameraService.processingMessage === 'Completing...'">Completing</div>
     </div>
   </div>
 </div>

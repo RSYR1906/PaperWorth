@@ -1353,3 +1353,136 @@
   justify-content: center;
   gap: 8px;
 }
+
+/* Receipt Preview Section - Add to home-page.component.css */
+.receipt-preview-section {
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  margin: 16px 0;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.receipt-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .receipt-preview-content {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .receipt-image-preview {
+    flex: 1;
+    max-width: 45%;
+  }
+  
+  .extracted-data-container {
+    flex: 1;
+  }
+}
+
+.receipt-image-preview {
+  text-align: center;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.extracted-data-container {
+  background-color: #f8f9fa;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.data-row:last-of-type {
+  border-bottom: none;
+  margin-bottom: 16px;
+}
+
+.data-label {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.data-value {
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: right;
+}
+
+.close-preview-btn {
+  background-color: #f8f9fa;
+  color: var(--text-muted);
+  border: 1px solid #e0e0e0;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-preview-btn:active {
+  background-color: #e9ecef;
+  transform: scale(0.98);
+}
+
+.toggle-ocr-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.toggle-ocr-btn:active {
+  background-color: #dee2e6;
+  transform: scale(0.98);
+}
+
+.ocr-text {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ocr-text pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
