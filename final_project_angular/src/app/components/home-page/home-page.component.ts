@@ -557,4 +557,35 @@ export class HomePageComponent implements OnInit, OnDestroy {
   toggleFullText() {
     this.showFullText = !this.showFullText;
   }
+
+  // Add these methods to the HomePageComponent class
+
+/**
+ * Cancel receipt processing and reset the scanner
+ */
+  cancelReceiptProcessing(): void {
+    // Clear the extracted data and reset scanner
+    this.cameraService.resetScanner();
+  }
+
+/**
+ * Confirm and save the receipt
+ */
+  confirmAndSaveReceipt(): void {
+    const currentUser = this.getCurrentUser();
+    
+    if (!currentUser?.id) {
+      // Redirect to login if user is not logged in
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    // Save the receipt using data from camera service
+    this.saveReceipt(
+      currentUser.id, 
+      this.cameraService.extractedData, 
+      this.cameraService.imagePreview, 
+      this.cameraService.ocrText
+    );
+  }
 }

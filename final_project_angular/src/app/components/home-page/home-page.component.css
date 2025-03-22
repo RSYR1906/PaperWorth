@@ -1486,3 +1486,270 @@
   margin: 0;
   white-space: pre-wrap;
 }
+
+/* Receipt Confirmation Modal Styles - Add to home-page.component.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.receipt-confirmation-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: 92%;
+  max-width: 700px;
+  max-height: 85vh;
+  animation: zoomIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.receipt-confirmation-modal .modal-content {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  height: 32px;
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.close-button:active {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-dark);
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.modal-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .modal-columns {
+    flex-direction: row;
+  }
+  
+  .image-column {
+    flex: 1;
+    max-width: 50%;
+  }
+  
+  .data-column {
+    flex: 1;
+  }
+}
+
+.image-column {
+  background-color: #f8f9fa;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+}
+
+.receipt-preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+
+.data-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.extracted-data {
+  background-color: #f8f9fa;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.data-row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.data-label {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.data-value {
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: right;
+  font-size: 14px;
+}
+
+.toggle-ocr-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #f1f3f5;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.toggle-ocr-btn:active {
+  background-color: #e9ecef;
+  transform: scale(0.98);
+}
+
+.ocr-text {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ocr-text pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid #eee;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.action-btn {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 42px;
+  min-width: 100px;
+  border: none;
+}
+
+.action-btn.secondary {
+  background-color: white;
+  color: var(--text-dark);
+  border: 1px solid #e0e0e0;
+}
+
+.action-btn.secondary:active {
+  background-color: #f1f3f5;
+  transform: scale(0.98);
+}
+
+.action-btn.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.action-btn.primary:active {
+  background-color: var(--primary-dark);
+  transform: scale(0.98);
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .modal-body {
+    padding-left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+    padding-right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+  }
+  
+  .modal-footer {
+    padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+  
+  .receipt-confirmation-modal {
+    max-height: calc(85vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}

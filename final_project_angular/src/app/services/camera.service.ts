@@ -178,6 +178,8 @@ export class CameraService {
     this.uploadImage();
   }
 
+  // Update the CameraService's uploadImage method to not automatically navigate
+// This way, the confirmation modal will be displayed instead
   uploadImage(): void {
     const file = this.selectedFileSubject.getValue();
     if (!file) {
@@ -209,14 +211,8 @@ export class CameraService {
               ocrText: response.fullText || "No additional text extracted."
             });
             
-            // Navigate to the homepage with the extracted data
-            this.router.navigate(['/homepage'], { 
-              state: { 
-                extractedData: response,
-                imagePreview: this.imagePreviewSubject.getValue(),
-                ocrText: response.fullText || "No additional text extracted."
-              } 
-            });
+            // CHANGED: Do not navigate automatically
+            // Instead, the component will display the confirmation modal
           } else {
             this.ocrTextSubject.next(response?.fullText || "No text extracted");
             this.setError('Could not extract receipt details. Please try again with a clearer image.');
