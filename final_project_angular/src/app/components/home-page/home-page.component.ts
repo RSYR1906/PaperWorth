@@ -558,34 +558,43 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.showFullText = !this.showFullText;
   }
 
-  // Add these methods to the HomePageComponent class
-
-/**
- * Cancel receipt processing and reset the scanner
- */
+  /**
+   * Cancel receipt processing and reset the scanner
+   */
   cancelReceiptProcessing(): void {
     // Clear the extracted data and reset scanner
     this.cameraService.resetScanner();
+    
+    // Ensure all UI flags are reset
+    this.showFullText = false;
   }
 
 /**
  * Confirm and save the receipt
  */
-  confirmAndSaveReceipt(): void {
-    const currentUser = this.getCurrentUser();
-    
-    if (!currentUser?.id) {
-      // Redirect to login if user is not logged in
-      this.router.navigate(['/login']);
-      return;
-    }
-    
-    // Save the receipt using data from camera service
-    this.saveReceipt(
-      currentUser.id, 
-      this.cameraService.extractedData, 
-      this.cameraService.imagePreview, 
-      this.cameraService.ocrText
-    );
+confirmAndSaveReceipt(): void {
+  const currentUser = this.getCurrentUser();
+  
+  if (!currentUser?.id) {
+    // Redirect to login if user is not logged in
+    this.router.navigate(['/login']);
+    return;
   }
+  
+  // Get the extracted data from camera service
+  const extractedData = {...this.cameraService.extractedData};
+  const imagePreview = this.cameraService.imagePreview;
+  const ocrText = this.cameraService.ocrText;
+  
+  // Important: Clear the extracted data BEFORE saving to prevent loop
+  this.cameraService.resetScanner();
+  
+  // Save the receipt using the local copy of the data
+  this.saveReceipt(
+    currentUser.id, 
+    extractedData, 
+    imagePreview, 
+    ocrText
+  );
+}
 }
