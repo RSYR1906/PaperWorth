@@ -1,5 +1,6 @@
 package sg.nus.iss.final_project.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -9,7 +10,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -191,18 +191,9 @@ public class ReceiptController {
 
         System.out.println("Attempting to parse date: " + dateStr);
 
-        // Try the most common format for your receipts first (dd/MM/yyyy)
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            LocalDateTime date = LocalDateTime.parse(dateStr, formatter);
-            System.out.println("Successfully parsed date with dd/MM/yyyy format: " + date);
-            return date;
-        } catch (DateTimeParseException e) {
-            System.out.println("Failed to parse as dd/MM/yyyy format");
-        }
-
-        // Try other formats if needed
-        String[] formats = {
+        // Try to parse date-only formats first, then convert to LocalDateTime
+        String[] dateFormats = {
+                "dd/MM/yyyy",
                 "MM/dd/yyyy",
                 "yyyy-MM-dd",
                 "dd-MM-yyyy",
@@ -211,12 +202,30 @@ public class ReceiptController {
                 "dd.MM.yyyy"
         };
 
-        for (String format : formats) {
+        for (String format : dateFormats) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-                LocalDateTime date = LocalDateTime.parse(dateStr, formatter);
-                System.out.println("Successfully parsed date with " + format + " format: " + date);
-                return date;
+                // Parse as LocalDate first, then convert to LocalDateTime
+                LocalDate date = LocalDate.parse(dateStr, formatter);
+                // Convert to LocalDateTime with time set to noon (12:00)
+                return date.atTime(12, 0);
+            } catch (DateTimeParseException e) {
+                System.out.println("Failed to parse as " + format + " format");
+            }
+        }
+
+        // Try with time formats
+        String[] dateTimeFormats = {
+                "dd/MM/yyyy HH:mm:ss",
+                "MM/dd/yyyy HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss"
+        };
+
+        for (String format : dateTimeFormats) {
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+                return LocalDateTime.parse(dateStr, formatter);
             } catch (DateTimeParseException e) {
                 System.out.println("Failed to parse as " + format + " format");
             }
