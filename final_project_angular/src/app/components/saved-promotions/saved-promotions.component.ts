@@ -18,11 +18,13 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   isLoading = false;
   selectedPromotion: Promotion | null = null;
   errorMessage: string = '';
+  errorType: 'general' | 'network' | 'server' = 'general';
   
   // Success notification variables
   showSuccessNotification = false;
   successNotificationMessage = '';
   notificationTimeRemaining = 100;
+  notificationTimer: any = null;
   
   // Category filtering
   selectedCategory = 'all';
@@ -49,11 +51,24 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadSavedPromotions();
+    
+    // Subscribe to changes in savedPromotions$ from the service
+    this.subscriptions.add(
+      this.savedPromotionsService.savedPromotions$.subscribe(promotions => {
+        console.log('Received promotions update:', promotions);
+        this.savedPromotions = promotions;
+        this.filterPromotions();
+      })
+    );
   }
   
   ngOnDestroy(): void {
-    // Clean up subscriptions
+    // Clean up subscriptions and timers
     this.subscriptions.unsubscribe();
+    
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
   }
   
   // Load saved promotions for the current user
@@ -65,18 +80,19 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     }
     
     this.isLoading = true;
+    this.errorMessage = '';
     
     // Get saved promotions from the service
     this.subscriptions.add(
       this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
-          this.savedPromotions = promotions;
-          this.filterPromotions();
+          console.log('Loaded saved promotions:', promotions);
+          // savedPromotions will be updated via the subscription to savedPromotions$
           this.isLoading = false;
         },
         error: (error) => {
           console.error('Error loading saved promotions:', error);
-          this.errorMessage = 'Failed to load saved promotions. Please try again.';
+          this.handleError(error);
           this.isLoading = false;
         }
       })
@@ -108,9 +124,13 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
         
         return promoCategory === selectedCategoryId || 
                promoCategory === selectedCategoryName ||
-               (this.selectedCategory === 'health&beauty' && promoCategory === 'health&beauty');
+               (this.selectedCategory === 'health&beauty' && 
+                (promoCategory === 'health&beauty' || promoCategory === 'healthandbeauty' || 
+                 promoCategory === 'health' || promoCategory === 'beauty'));
       });
     }
+    
+    console.log(`Filtered promotions (${this.selectedCategory}):`, this.filteredPromotions);
   }
   
   // Get current user
@@ -134,11 +154,11 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) return;
     
+    this.isLoading = true;
+    
     this.savedPromotionsService.removePromotion(currentUser.id, promotion.id).subscribe({
       next: () => {
-        // Remove from local array
-        this.savedPromotions = this.savedPromotions.filter(p => p.id !== promotion.id);
-        this.filterPromotions();
+        // savedPromotions will be updated via the subscription to savedPromotions$
         
         // Close modal if it's the one being deleted
         if (this.selectedPromotion && this.selectedPromotion.id === promotion.id) {
@@ -148,27 +168,48 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
         // Show success notification
         this.successNotificationMessage = 'Promotion removed successfully';
         this.showNotification();
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error removing promotion:', error);
-        this.successNotificationMessage = 'Failed to remove promotion. Please try again.';
-        this.showNotification();
+        this.handleError(error);
+        this.isLoading = false;
       }
     });
   }
   
   // Show notification
-  private showNotification(): void {
+  showNotification(): void {
     this.showSuccessNotification = true;
     this.notificationTimeRemaining = 100;
 
-    setTimeout(() => {
-      this.showSuccessNotification = false;
-    }, 3000);
+    // Clear any existing timer
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
+
+    this.notificationTimer = setInterval(() => {
+      this.notificationTimeRemaining -= 2;
+
+      if (this.notificationTimeRemaining <= 0) {
+        this.closeNotification();
+      }
+    }, 60);
+  }
+  
+  // Close notification
+  closeNotification(): void {
+    this.showSuccessNotification = false;
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
+    }
   }
   
   // Check if a promotion is expiring soon (within 7 days)
   isExpiringSoon(expiryDate: string): boolean {
+    if (!expiryDate) return false;
+    
     const expiry = new Date(expiryDate);
     const now = new Date();
     const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
@@ -177,6 +218,8 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   
   // Check if a promotion has expired
   hasExpired(expiryDate: string): boolean {
+    if (!expiryDate) return false;
+    
     const expiry = new Date(expiryDate);
     const now = new Date();
     return expiry < now;
@@ -184,6 +227,8 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   
   // Format date for display
   formatDate(dateString: string): string {
+    if (!dateString) return 'No expiry date';
+    
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -214,19 +259,16 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Add to your component class
-errorType: 'general' | 'network' | 'server' = 'general';
-
-// Update your error handling method
-handleError(error: any) {
-  this.errorMessage = error.message || 'An unexpected error occurred';
-  
-  if (!navigator.onLine || error.status === 0) {
-    this.errorType = 'network';
-  } else if (error.status >= 500) {
-    this.errorType = 'server';
-  } else {
-    this.errorType = 'general';
+  // Error handling method
+  handleError(error: any) {
+    this.errorMessage = error.message || 'An unexpected error occurred';
+    
+    if (!navigator.onLine || error.status === 0) {
+      this.errorType = 'network';
+    } else if (error.status >= 500) {
+      this.errorType = 'server';
+    } else {
+      this.errorType = 'general';
+    }
   }
-}
 }

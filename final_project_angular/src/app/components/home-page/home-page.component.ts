@@ -312,35 +312,46 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   // Save a promotion
-  savePromotion(promotion: any): void {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    
-    // Check if already saved to avoid duplicates
-    const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
-    if (alreadySaved) {
-      alert('This promotion is already saved!');
-      return;
-    }
-    
-    this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
-      next: () => {
-        // Show success notification
-        this.successNotificationMessage = 'Promotion saved successfully!';
-        this.showNotification();
-        
-        // Close promotion details if open
-        this.closePromotionDetails();
-      },
-      error: (error) => {
-        console.error('Error saving promotion:', error);
-        alert('Failed to save promotion. Please try again.');
-      }
-    });
+  // Update to savePromotion method in home-page.component.ts
+savePromotion(promotion: any): void {
+  const currentUser = this.getCurrentUser();
+  if (!currentUser?.id) {
+    this.router.navigate(['/login']);
+    return;
   }
+  
+  // Check if already saved to avoid duplicates
+  const alreadySaved = this.savedPromotions.some(p => p.id === promotion.id);
+  if (alreadySaved) {
+    this.successNotificationMessage = 'This promotion is already saved!';
+    this.showNotification();
+    return;
+  }
+  
+  // Show loading state
+  this.isLoadingSavedPromotions = true;
+  
+  this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
+    next: () => {
+      // Explicitly refresh the saved promotions list
+      this.savedPromotionService.refreshUserSavedPromotions(currentUser.id);
+      
+      // Show success notification
+      this.successNotificationMessage = 'Promotion saved successfully!';
+      this.showNotification();
+      
+      // Close promotion details if open
+      this.closePromotionDetails();
+      this.isLoadingSavedPromotions = false;
+    },
+    error: (error) => {
+      console.error('Error saving promotion:', error);
+      this.isLoadingSavedPromotions = false;
+      this.successNotificationMessage = 'Failed to save promotion. Please try again.';
+      this.showNotification();
+    }
+  });
+}
   
   // Remove a saved promotion
   removeSavedPromotion(promotionId: string): void {
@@ -351,15 +362,23 @@ export class HomePageComponent implements OnInit, OnDestroy {
       return;
     }
     
+    // Show loading state
+    this.isLoadingSavedPromotions = true;
+    
     this.savedPromotionService.removePromotion(currentUser.id, promotionId).subscribe({
       next: () => {
+        // savedPromotions will be updated via the subscription to savedPromotions$
+        
         // Show success notification
         this.successNotificationMessage = 'Promotion removed!';
         this.showNotification();
+        this.isLoadingSavedPromotions = false;
       },
       error: (error) => {
         console.error('Error removing promotion:', error);
-        alert('Failed to remove promotion. Please try again.');
+        this.isLoadingSavedPromotions = false;
+        this.successNotificationMessage = 'Failed to remove promotion. Please try again.';
+        this.showNotification();
       }
     });
   }
