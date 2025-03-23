@@ -86,6 +86,7 @@ export class PastReceiptsComponent implements OnInit {
           
           if (!data || data.length === 0) {
             console.log('No receipts found for this user.');
+            this.receipts = [];
             this.isLoading = false;
             return;
           }
@@ -100,7 +101,7 @@ export class PastReceiptsComponent implements OnInit {
               merchantName: receipt.merchantName || 'Unknown Merchant',
               category: receipt.category || 'Others',
               dateOfPurchase: purchaseDate, // This is the actual receipt date
-              totalAmount: receipt.totalExpense || 0,
+              totalAmount: receipt.totalExpense || 0, // Use totalExpense as that's what the backend returns
               hasPromotion: false, // Will be set later if applicable
               items: receipt.items ? this.parseItems(receipt.items) : [],
               imageUrl: receipt.imageUrl // Store the image URL
@@ -144,8 +145,9 @@ export class PastReceiptsComponent implements OnInit {
     // Lock scroll on body when modal opens
     document.body.style.overflow = 'hidden';
     
-    this.selectedReceipt = receipt;
-    console.log('Viewing receipt details:', receipt);
+    // Make a deep copy of the receipt to avoid modifying the original
+    this.selectedReceipt = JSON.parse(JSON.stringify(receipt));
+    console.log('Viewing receipt details:', this.selectedReceipt);
     
     // Check if the receipt has promotions by calling the promotions API
     if (receipt.id) {
@@ -154,9 +156,9 @@ export class PastReceiptsComponent implements OnInit {
           next: (promotions) => {
             console.log('Receipt promotions:', promotions);
             // Update hasPromotion flag based on API response
-            receipt.hasPromotion = promotions && promotions.length > 0;
+            this.selectedReceipt.hasPromotion = promotions && promotions.length > 0;
             // You could also store the promotions in the receipt object if needed
-            receipt.promotions = promotions;
+            this.selectedReceipt.promotions = promotions;
           },
           error: (error) => {
             console.error('Error loading promotions for receipt:', error);
@@ -264,21 +266,45 @@ export class PastReceiptsComponent implements OnInit {
   
   // Format date
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric'
-    });
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
   }
   
   // Get time from date
   formatTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit'
-    });
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '';
+    }
   }
 
   // Error handling with type

@@ -20,6 +20,10 @@ export class SavedPromotionsService {
 
   // Track if initial load has been done
   private initialLoadDone = false;
+  
+  // Loading state
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
 
   constructor(private http: HttpClient) { }
 
@@ -27,8 +31,9 @@ export class SavedPromotionsService {
    * Get all saved promotions for a user
    */
   getSavedPromotions(userId: string): Observable<Promotion[]> {
-    // Set loading flag in the service
-    console.log(`Fetching saved promotions for user ${userId}`);
+    // Set loading flag
+    this.loadingSubject.next(true);
+    console.log(`Fetching saved promotions for user ${userId} from ${this.apiBaseUrl}/${userId}`);
     
     return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}`).pipe(
       tap(promotions => {
@@ -36,6 +41,7 @@ export class SavedPromotionsService {
         // Update the BehaviorSubject with the new data
         this.savedPromotionsSubject.next(promotions);
         this.initialLoadDone = true;
+        this.loadingSubject.next(false);
       }),
       catchError(error => {
         console.error('Error fetching saved promotions:', error);
@@ -46,8 +52,10 @@ export class SavedPromotionsService {
           this.initialLoadDone = true;
         }
         
+        this.loadingSubject.next(false);
+        
         // Return current value on error
-        return this.savedPromotions$;
+        return of(this.savedPromotionsSubject.value);
       })
     );
   }
@@ -56,9 +64,12 @@ export class SavedPromotionsService {
    * Get saved promotions for a user by category
    */
   getSavedPromotionsByCategory(userId: string, category: string): Observable<Promotion[]> {
+    this.loadingSubject.next(true);
     return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}/category/${category}`).pipe(
+      tap(() => this.loadingSubject.next(false)),
       catchError(error => {
         console.error('Error fetching saved promotions by category:', error);
+        this.loadingSubject.next(false);
         return of([]);
       })
     );
@@ -81,6 +92,7 @@ export class SavedPromotionsService {
    */
   savePromotion(userId: string, promotionId: string): Observable<SavedPromotion> {
     console.log(`Saving promotion ${promotionId} for user ${userId}`);
+    this.loadingSubject.next(true);
     
     return this.http.post<SavedPromotion>(`${this.apiBaseUrl}/${userId}/${promotionId}`, {}).pipe(
       tap(() => {
@@ -90,6 +102,7 @@ export class SavedPromotionsService {
       }),
       catchError(error => {
         console.error('Error saving promotion:', error);
+        this.loadingSubject.next(false);
         throw error; // Rethrow to let component handle it
       })
     );
@@ -100,6 +113,7 @@ export class SavedPromotionsService {
    */
   removePromotion(userId: string, promotionId: string): Observable<{message: string}> {
     console.log(`Removing promotion ${promotionId} for user ${userId}`);
+    this.loadingSubject.next(true);
     
     return this.http.delete<{message: string}>(`${this.apiBaseUrl}/${userId}/${promotionId}`).pipe(
       tap(() => {
@@ -108,9 +122,11 @@ export class SavedPromotionsService {
         const currentPromotions = this.savedPromotionsSubject.getValue();
         const updatedPromotions = currentPromotions.filter(promo => promo.id !== promotionId);
         this.savedPromotionsSubject.next(updatedPromotions);
+        this.loadingSubject.next(false);
       }),
       catchError(error => {
         console.error('Error removing promotion:', error);
+        this.loadingSubject.next(false);
         throw error; // Rethrow to let component handle it
       })
     );
@@ -126,9 +142,11 @@ export class SavedPromotionsService {
       next: (promotions) => {
         console.log('Refreshed saved promotions:', promotions);
         this.savedPromotionsSubject.next(promotions);
+        this.loadingSubject.next(false);
       },
       error: (error) => {
         console.error('Error refreshing saved promotions:', error);
+        this.loadingSubject.next(false);
       }
     });
   }
@@ -137,6 +155,7 @@ export class SavedPromotionsService {
    * Public method to manually refresh saved promotions
    */
   refreshUserSavedPromotions(userId: string): void {
+    this.loadingSubject.next(true);
     this.refreshSavedPromotions(userId);
   }
 
@@ -164,5 +183,12 @@ export class SavedPromotionsService {
    */
   isInitialLoadComplete(): boolean {
     return this.initialLoadDone;
+  }
+  
+  /**
+   * Check if currently loading
+   */
+  isLoading(): boolean {
+    return this.loadingSubject.getValue();
   }
 }

@@ -64,18 +64,32 @@
         <div class="deals-grid">
           <div *ngFor="let promotion of filteredPromotions" class="promotion-card" (click)="viewPromotionDetails(promotion)">
             <div class="promotion-image">
-              <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
+              <img [src]="promotion.imageUrl || 'assets/images/placeholder-image.jpg'" 
                    [alt]="promotion.merchant + ' promotion'"
-                   onerror="this.src='placeholder-image.jpg'">
+                   onerror="this.src='assets/images/placeholder-image.jpg'">
               
               <!-- Status badges -->
               <div *ngIf="promotion.savedAt" class="saved-timestamp">
                 Saved {{getTimeElapsed(promotion.savedAt)}}
               </div>
+              
+              <!-- Expiry Badge -->
+              <div *ngIf="isExpiringSoon(promotion.expiry) && !hasExpired(promotion.expiry)" class="expiry-badge">
+                Expires Soon
+              </div>
+              <div *ngIf="hasExpired(promotion.expiry)" class="expiry-badge expired">
+                Expired
+              </div>
             </div>
             <div class="promotion-info">
               <p class="promotion-merchant">{{promotion.merchant}}</p>
               <p class="promotion-description">{{promotion.description | slice:0:80}}{{promotion.description.length > 80 ? '...' : ''}}</p>
+              <div class="promotion-meta">
+                <div class="promo-expiry" [class.expired-text]="hasExpired(promotion.expiry)">
+                  Valid until: {{ formatDate(promotion.expiry) }}
+                </div>
+                <div class="promo-code" *ngIf="promotion.code">Code: {{ promotion.code }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -96,9 +110,9 @@
       
       <div class="modal-content">
         <div class="modal-image">
-          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" 
+          <img [src]="selectedPromotion.imageUrl || 'assets/images/placeholder-image.jpg'" 
                alt="Promotion Image"
-               onerror="this.src='placeholder-image.jpg'">
+               onerror="this.src='assets/images/placeholder-image.jpg'">
         </div>
         
         <div class="modal-details">
@@ -131,11 +145,6 @@
             <button class="remove-button" (click)="removePromotion(selectedPromotion)">
               <i class="fa fa-trash"></i> Remove from Saved
             </button>
-            
-            <!-- External link button -->
-            <!-- <a *ngIf="selectedPromotion.link" [href]="selectedPromotion.link" target="_blank" class="link-button">
-              <i class="fa fa-external-link"></i> Visit Website
-            </a> -->
           </div>
         </div>
       </div>

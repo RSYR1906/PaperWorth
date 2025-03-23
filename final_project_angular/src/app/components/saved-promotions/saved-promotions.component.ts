@@ -48,12 +48,27 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Subscribe to loading state
+    this.subscriptions.add(
+      this.savedPromotionsService.loading$.subscribe(
+        loading => {
+          this.isLoading = loading;
+        }
+      )
+    );
+    
     // Subscribe to changes in savedPromotions$ from the service
     this.subscriptions.add(
       this.savedPromotionsService.savedPromotions$.subscribe(promotions => {
         console.log('Saved promotions component received promotions update:', promotions);
-        this.savedPromotions = promotions;
-        this.filterPromotions();
+        if (promotions && Array.isArray(promotions)) {
+          this.savedPromotions = promotions;
+          this.filterPromotions();
+        } else {
+          console.error('Received non-array promotions data:', promotions);
+          this.savedPromotions = [];
+          this.filteredPromotions = [];
+        }
         
         // If we're showing loading indicator and received promotions, stop showing it
         if (this.isLoading && this.savedPromotionsService.isInitialLoadComplete()) {
@@ -86,12 +101,12 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     // Check if we already have saved promotions loaded
     if (this.savedPromotionsService.isInitialLoadComplete()) {
       // We already have data, just use what's in the service
-      this.isLoading = false;
       const currentPromotions = this.savedPromotionsService.getCurrentSavedPromotions();
       if (currentPromotions.length > 0) {
         console.log('Using cached saved promotions:', currentPromotions.length);
         this.savedPromotions = currentPromotions;
         this.filterPromotions();
+        this.isLoading = false;
         return;
       }
     }
@@ -105,7 +120,7 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
-          console.log('Successfully loaded saved promotions:', promotions.length);
+          console.log('Successfully loaded saved promotions:', promotions?.length || 0);
           // savedPromotions will be updated via the subscription to savedPromotions$
           this.isLoading = false;
         },
@@ -126,6 +141,12 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   
   // Filter promotions based on selected category
   private filterPromotions(): void {
+    if (!this.savedPromotions || !Array.isArray(this.savedPromotions)) {
+      console.error('savedPromotions is not an array:', this.savedPromotions);
+      this.filteredPromotions = [];
+      return;
+    }
+    
     if (this.selectedCategory === 'all') {
       this.filteredPromotions = [...this.savedPromotions];
     } else {
@@ -160,6 +181,7 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   
   // View promotion details
   viewPromotionDetails(promotion: Promotion): void {
+    console.log('Viewing promotion details:', promotion);
     this.selectedPromotion = promotion;
   }
   
@@ -173,7 +195,7 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) return;
     
-    this.isLoading = true;
+    // Show loading state is handled by the service
     
     this.savedPromotionsService.removePromotion(currentUser.id, promotion.id).subscribe({
       next: () => {
@@ -187,12 +209,10 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
         // Show success notification
         this.successNotificationMessage = 'Promotion removed successfully';
         this.showNotification();
-        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error removing promotion:', error);
         this.handleError(error);
-        this.isLoading = false;
       }
     });
   }
@@ -248,33 +268,45 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   formatDate(dateString: string): string {
     if (!dateString) return 'No expiry date';
     
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   }
   
   // Get time elapsed since promotion was saved
   getTimeElapsed(savedAt: string): string {
     if (!savedAt) return '';
     
-    const savedDate = new Date(savedAt);
-    const now = new Date();
-    const differenceInSeconds = Math.floor((now.getTime() - savedDate.getTime()) / 1000);
-    
-    if (differenceInSeconds < 60) {
-      return 'Just now';
-    } else if (differenceInSeconds < 3600) {
-      const minutes = Math.floor(differenceInSeconds / 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    } else if (differenceInSeconds < 86400) {
-      const hours = Math.floor(differenceInSeconds / 3600);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else {
-      const days = Math.floor(differenceInSeconds / 86400);
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
+    try {
+      const savedDate = new Date(savedAt);
+      const now = new Date();
+      const differenceInSeconds = Math.floor((now.getTime() - savedDate.getTime()) / 1000);
+      
+      if (differenceInSeconds < 60) {
+        return 'Just now';
+      } else if (differenceInSeconds < 3600) {
+        const minutes = Math.floor(differenceInSeconds / 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (differenceInSeconds < 86400) {
+        const hours = Math.floor(differenceInSeconds / 3600);
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else {
+        const days = Math.floor(differenceInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+      }
+    } catch (error) {
+      console.error('Error calculating time elapsed:', error);
+      return '';
     }
   }
 

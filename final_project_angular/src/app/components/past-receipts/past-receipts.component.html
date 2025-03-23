@@ -130,7 +130,7 @@
         <span>Category:</span>
         <span>{{ selectedReceipt.category }}</span>
       </div>
-      <div class="receipt-info-row" *ngIf="selectedReceipt.totalAmount">
+      <div class="receipt-info-row" *ngIf="selectedReceipt.totalAmount !== undefined">
         <span>Total Amount:</span>
         <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
       </div>
