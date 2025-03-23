@@ -64,9 +64,9 @@
         <div class="deals-grid">
           <div *ngFor="let promotion of filteredPromotions" class="promotion-card" (click)="viewPromotionDetails(promotion)">
             <div class="promotion-image">
-              <img [src]="promotion.imageUrl || 'assets/images/placeholder-image.jpg'" 
+              <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
                    [alt]="promotion.merchant + ' promotion'"
-                   onerror="this.src='assets/images/placeholder-image.jpg'">
+                   onerror="this.src='placeholder-image.jpg'">
               
               <!-- Status badges -->
               <div *ngIf="promotion.savedAt" class="saved-timestamp">
@@ -110,9 +110,9 @@
       
       <div class="modal-content">
         <div class="modal-image">
-          <img [src]="selectedPromotion.imageUrl || 'assets/images/placeholder-image.jpg'" 
+          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" 
                alt="Promotion Image"
-               onerror="this.src='assets/images/placeholder-image.jpg'">
+               onerror="this.src='placeholder-image.jpg'">
         </div>
         
         <div class="modal-details">

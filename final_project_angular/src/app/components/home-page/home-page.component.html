@@ -62,7 +62,7 @@
         <div class="promo-image" (click)="viewPromotionDetails(promo)">
           <img [src]="promo.imageUrl" 
               [alt]="promo.merchant + ' promotion'" 
-              onerror="this.src='assets/images/promo-placeholder.jpg'">
+              onerror="this.src='promo-placeholder.jpg'">
         </div>
         <div class="promo-content">
           <div class="promo-merchant">{{ promo.merchant }}</div>
@@ -122,7 +122,7 @@
               <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
                 <img [src]="promo.imageUrl" 
                     alt="Promo Image" 
-                    onerror="this.src='promotions/placeholder-image.jpg'">
+                    onerror="this.src='placeholder-image.jpg'">
                 <div class="promo-content">
                   <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
                   <p class="promo-title">{{ promo.description }}</p>
@@ -160,7 +160,7 @@
     <img [src]="selectedPromotion.imageUrl" 
         alt="Promotion Image" 
         class="promo-detail-image" 
-        onerror="this.src='promotions/placeholder-image.jpg'">
+        onerror="this.src='placeholder-image.jpg'">
     
     <div class="promo-detail-info">
       <h4>{{ selectedPromotion.description }}</h4>
