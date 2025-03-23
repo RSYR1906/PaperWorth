@@ -62,7 +62,7 @@
     <button class="action-btn" (click)="loadUserReceipts()">Try Again</button>
   </div>
   
-  <!-- Receipts List -->
+  <!-- Receipts Table -->
   <div class="receipts-table-container" *ngIf="filteredReceipts.length > 0 && !isLoading">
     <table class="receipts-table">
       <thead>
@@ -82,6 +82,23 @@
         </tr>
       </tbody>
     </table>
+  </div>
+  
+  <!-- Mobile Receipt Cards -->
+  <div class="mobile-receipt-cards" *ngIf="filteredReceipts.length > 0 && !isLoading">
+    <div *ngFor="let receipt of filteredReceipts" class="receipt-card" (click)="viewReceiptDetails(receipt)">
+      <div class="receipt-card-header">
+        <div class="receipt-merchant-info">
+          <div class="receipt-merchant">{{ receipt.merchantName }}</div>
+          <div class="receipt-category">{{ receipt.category }}</div>
+        </div>
+        <div class="receipt-amount">${{ receipt.totalAmount.toFixed(2) }}</div>
+      </div>
+      <div class="receipt-details">
+        <div class="receipt-date">{{ formatDate(receipt.dateOfPurchase) }}</div>
+        <div class="receipt-view">View Details</div>
+      </div>
+    </div>
   </div>
     
   <div class="no-receipts" *ngIf="filteredReceipts.length === 0 && !isLoading && !error">
@@ -117,10 +134,20 @@
         <span>Total Amount:</span>
         <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
       </div>
+      <!-- Display items if available -->
+      <div class="receipt-items" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
+        <h4>Items:</h4>
+        <div class="item" *ngFor="let item of selectedReceipt.items">
+          <span class="item-name">{{ item.name }}</span>
+          <span class="item-details" *ngIf="item.quantity && item.price">
+            {{ item.quantity }} × ${{ item.price.toFixed(2) }}
+          </span>
+        </div>
+      </div>
     </div>
     
     <div class="receipt-actions">
-      <button class="action-button secondary">Download PDF</button>
+      <button class="action-button secondary" (click)="closeReceiptDetails()">Close</button>
       <button class="action-button secondary" (click)="deleteReceipt(selectedReceipt)">Delete Receipt</button>
     </div>
   </div>
