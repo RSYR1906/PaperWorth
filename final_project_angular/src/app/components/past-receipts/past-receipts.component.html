@@ -134,21 +134,25 @@
         <span>Total Amount:</span>
         <span>${{ selectedReceipt.totalAmount.toFixed(2) }}</span>
       </div>
-      <!-- Display items if available -->
-      <div class="receipt-items" *ngIf="selectedReceipt.items && selectedReceipt.items.length > 0">
-        <h4>Items:</h4>
-        <div class="item" *ngFor="let item of selectedReceipt.items">
-          <span class="item-name">{{ item.name }}</span>
-          <span class="item-details" *ngIf="item.quantity && item.price">
-            {{ item.quantity }} × ${{ item.price.toFixed(2) }}
-          </span>
-        </div>
-      </div>
     </div>
     
     <div class="receipt-actions">
       <button class="action-button secondary" (click)="closeReceiptDetails()">Close</button>
       <button class="action-button secondary" (click)="deleteReceipt(selectedReceipt)">Delete Receipt</button>
     </div>
+  </div>
+</div>
+
+<!-- Success Notification -->
+<div class="success-notification" *ngIf="showSuccessNotification">
+  <div class="success-content">
+    <div class="success-icon">✓</div>
+    <div class="success-message">
+      <h4>{{ successNotificationMessage }}</h4>
+    </div>
+    <button class="close-notification" (click)="closeNotification()">×</button>
+  </div>
+  <div class="timer-bar">
+    <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
   </div>
 </div>

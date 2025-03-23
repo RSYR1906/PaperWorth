@@ -17,6 +17,10 @@ export class PastReceiptsComponent implements OnInit {
   error: string = '';
   isClosing: boolean = false;
   errorType: 'general' | 'network' | 'server' = 'general';
+  showSuccessNotification = false;
+  successNotificationMessage = '';
+  notificationTimeRemaining = 100;
+  notificationTimer: any = null;
   
   // Filters
   filters = {
@@ -150,21 +154,21 @@ export class PastReceiptsComponent implements OnInit {
     console.log('Viewing receipt details:', this.selectedReceipt);
     
     // Check if the receipt has promotions by calling the promotions API
-    if (receipt.id) {
-      this.receiptService.getReceiptPromotions(receipt.id)
-        .subscribe({
-          next: (promotions) => {
-            console.log('Receipt promotions:', promotions);
-            // Update hasPromotion flag based on API response
-            this.selectedReceipt.hasPromotion = promotions && promotions.length > 0;
-            // You could also store the promotions in the receipt object if needed
-            this.selectedReceipt.promotions = promotions;
-          },
-          error: (error) => {
-            console.error('Error loading promotions for receipt:', error);
-          }
-        });
-    }
+    // if (receipt.id) {
+    //   this.receiptService.getReceiptPromotions(receipt.id)
+    //     .subscribe({
+    //       next: (promotions) => {
+    //         console.log('Receipt promotions:', promotions);
+    //         // Update hasPromotion flag based on API response
+    //         this.selectedReceipt.hasPromotion = promotions && promotions.length > 0;
+    //         // You could also store the promotions in the receipt object if needed
+    //         this.selectedReceipt.promotions = promotions;
+    //       },
+    //       error: (error) => {
+    //         console.error('Error loading promotions for receipt:', error);
+    //       }
+    //     });
+    // }
   }
   
   closeReceiptDetails() {
@@ -191,12 +195,45 @@ export class PastReceiptsComponent implements OnInit {
           if (this.selectedReceipt && this.selectedReceipt.id === receipt.id) {
             this.closeReceiptDetails();
           }
+          
+          // Show success notification
+          this.successNotificationMessage = 'Receipt deleted successfully!';
+          this.showNotification();
         },
         error: (error) => {
           alert('Failed to delete receipt. Please try again.');
           console.error('Error deleting receipt:', error);
         }
       });
+    }
+  }
+
+  // Show notification with timer
+  showNotification() {
+    this.showSuccessNotification = true;
+    this.notificationTimeRemaining = 100;
+
+    // Clear any existing timer
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
+
+    // Create timer that decreases the progress bar
+    this.notificationTimer = setInterval(() => {
+      this.notificationTimeRemaining -= 2;
+      
+      if (this.notificationTimeRemaining <= 0) {
+        this.closeNotification();
+      }
+    }, 100); // Update every 100ms, will take ~5 seconds to complete
+  }
+
+  // Close the notification
+  closeNotification() {
+    this.showSuccessNotification = false;
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
     }
   }
   
