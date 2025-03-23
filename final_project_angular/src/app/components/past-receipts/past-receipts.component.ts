@@ -18,9 +18,6 @@ export class PastReceiptsComponent implements OnInit {
   isClosing: boolean = false;
   errorType: 'general' | 'network' | 'server' = 'general';
   
-  // Show mock data flag - SET THIS TO TRUE TO FORCE MOCK DATA
-  useMockData: boolean = true;
-  
   // Filters
   filters = {
     dateRange: 'all',
@@ -56,16 +53,13 @@ export class PastReceiptsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Debug localStorage to check current user
-    this.userService.debugLocalStorage();
-    
-    // If no user in localStorage, create a mock user for testing
+    // Check localStorage for current user
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    if (!currentUser.id && this.useMockData) {
-      console.log('No user in localStorage, creating mock user');
-      this.userService.saveMockUserToLocalStorage();
+    if (!currentUser.id) {
+      // If no user in localStorage, redirect to login
+      this.router.navigate(['/login']);
+      return;
     }
-    
     this.loadUserReceipts();
   }
   
@@ -81,23 +75,6 @@ export class PastReceiptsComponent implements OnInit {
       this.error = 'User not logged in';
       this.errorType = 'general';
       this.isLoading = false;
-      
-      if (this.useMockData) {
-        console.log('Using mock data because user is not logged in');
-        this.loadMockReceipts();
-      } else {
-        this.receipts = [];
-      }
-      return;
-    }
-    
-    // If we're forcing mock data, skip the API call
-    if (this.useMockData) {
-      console.log('Using mock data (forced)');
-      setTimeout(() => {
-        this.loadMockReceipts();
-        this.isLoading = false;
-      }, 1000); // Simulate network delay
       return;
     }
     
@@ -108,8 +85,7 @@ export class PastReceiptsComponent implements OnInit {
           console.log('Receipts loaded:', data);
           
           if (!data || data.length === 0) {
-            console.log('No receipts found, loading mock data');
-            this.loadMockReceipts();
+            console.log('No receipts found for this user.');
             this.isLoading = false;
             return;
           }
@@ -138,9 +114,6 @@ export class PastReceiptsComponent implements OnInit {
           console.error('Error loading receipts:', error);
           this.handleError(error);
           this.isLoading = false;
-          
-          // Add mock receipts since the backend might not be working
-          this.loadMockReceipts();
         }
       });
   }
@@ -165,79 +138,6 @@ export class PastReceiptsComponent implements OnInit {
       }
       return item;
     });
-  }
-  
-  loadMockReceipts() {
-    console.log('Loading mock receipts');
-    this.receipts = [
-      {
-        id: '1',
-        merchantName: 'Cold Storage',
-        category: 'Groceries',
-        dateOfPurchase: '2025-03-10T13:45:00',
-        totalAmount: 87.50,
-        hasPromotion: true,
-        items: [
-          { name: 'Milk', quantity: 2, price: 6.50 },
-          { name: 'Bread', quantity: 1, price: 3.20 },
-          { name: 'Eggs', quantity: 1, price: 4.80 }
-        ]
-      },
-      {
-        id: '2',
-        merchantName: 'Starbucks',
-        category: 'Cafes',
-        dateOfPurchase: '2025-03-05T09:15:00',
-        totalAmount: 15.80,
-        hasPromotion: true,
-        items: [
-          { name: 'Caffè Latte', quantity: 1, price: 6.50 },
-          { name: 'Chocolate Croissant', quantity: 1, price: 4.90 }
-        ]
-      },
-      {
-        id: '3',
-        merchantName: 'McDonald\'s',
-        category: 'Fast Food',
-        dateOfPurchase: '2025-03-15T12:30:00',
-        totalAmount: 22.50,
-        hasPromotion: false,
-        items: [
-          { name: 'Big Mac', quantity: 2, price: 12.00 },
-          { name: 'Fries', quantity: 2, price: 7.00 },
-          { name: 'Coca Cola', quantity: 2, price: 3.50 }
-        ]
-      },
-      {
-        id: '4',
-        merchantName: 'NTUC FairPrice',
-        category: 'Groceries',
-        dateOfPurchase: '2025-03-18T10:15:00',
-        totalAmount: 63.75,
-        hasPromotion: false,
-        items: [
-          { name: 'Rice', quantity: 1, price: 15.90 },
-          { name: 'Vegetables', quantity: 1, price: 8.50 },
-          { name: 'Chicken', quantity: 1, price: 12.80 },
-          { name: 'Fruit', quantity: 1, price: 7.60 }
-        ]
-      },
-      {
-        id: '5',
-        merchantName: 'Guardian Pharmacy',
-        category: 'Healthcare',
-        dateOfPurchase: '2025-03-20T15:30:00',
-        totalAmount: 32.40,
-        hasPromotion: true,
-        items: [
-          { name: 'Vitamins', quantity: 1, price: 18.90 },
-          { name: 'Bandages', quantity: 1, price: 5.50 },
-          { name: 'Hand Sanitizer', quantity: 1, price: 8.00 }
-        ]
-      }
-    ];
-    
-    console.log('Loaded mock receipts:', this.receipts);
   }
   
   viewReceiptDetails(receipt: any) {
@@ -280,13 +180,6 @@ export class PastReceiptsComponent implements OnInit {
 
   deleteReceipt(receipt: any) {
     if (confirm('Are you sure you want to delete this receipt?')) {
-      // If using mock data, just remove from local array
-      if (this.useMockData) {
-        this.receipts = this.receipts.filter(r => r.id !== receipt.id);
-        this.closeReceiptDetails();
-        return;
-      }
-      
       this.receiptService.deleteReceipt(receipt.id).subscribe({
         next: () => {
           // Remove from local array
@@ -307,11 +200,6 @@ export class PastReceiptsComponent implements OnInit {
   
   // Get filtered receipts
   get filteredReceipts() {
-    // Add debugging to troubleshoot filtering issues
-    console.log('Filtering receipts. Total receipts:', this.receipts.length);
-    console.log('Current filters:', this.filters);
-    console.log('Search term:', this.searchTerm);
-    
     return this.receipts.filter(receipt => {
       // Filter by search term
       if (this.searchTerm && !receipt.merchantName.toLowerCase().includes(this.searchTerm.toLowerCase())) {
@@ -327,14 +215,13 @@ export class PastReceiptsComponent implements OnInit {
       if (this.filters.category !== 'all') {
         const receiptCategory = receipt.category?.toLowerCase().replace(/\s+/g, '') || 'others';
         const filterCategory = this.filters.category.toLowerCase();
-        console.log(`Comparing category: ${receiptCategory} vs ${filterCategory}`);
         
         if (receiptCategory !== filterCategory) {
           return false;
         }
       }
       
-      // Filter by date range - now using dateOfPurchase instead of scanDate
+      // Filter by date range - using dateOfPurchase
       if (this.filters.dateRange !== 'all') {
         const receiptDate = new Date(receipt.dateOfPurchase);
         const today = new Date();
