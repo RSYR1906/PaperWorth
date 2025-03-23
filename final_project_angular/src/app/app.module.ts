@@ -18,8 +18,10 @@ import { SignupComponent } from './components/signup/signup.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { MaterialModule } from './material.module';
 import { BudgetService } from './services/budget.service';
+import { CameraService } from './services/camera.service';
 import { FirebaseAuthService } from './services/firebase-auth.service';
 import { PromotionService } from './services/promotions.service';
+import { ReceiptProcessingService } from './services/receipt-processing.service';
 import { ReceiptService } from './services/receipt.service';
 import { RewardsService } from './services/rewards.service';
 import { SavedPromotionsService } from './services/saved-promotions.service';
@@ -47,7 +49,16 @@ import { UserService } from './services/user.service';
   // or after 30 seconds (whichever comes first).
   registrationStrategy: 'registerWhenStable:30000'
 })],
-  providers: [PromotionService,ReceiptService,UserService,FirebaseAuthService,RewardsService,BudgetService,SavedPromotionsService,
+  providers: [
+    PromotionService,
+    ReceiptService,
+    UserService,
+    FirebaseAuthService,
+    RewardsService,
+    BudgetService,
+    SavedPromotionsService,
+    CameraService,
+    ReceiptProcessingService,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]

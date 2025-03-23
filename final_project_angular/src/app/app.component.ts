@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { CameraService } from './services/camera.service';
 import { FirebaseAuthService } from './services/firebase-auth.service';
+import { ReceiptProcessingService } from './services/receipt-processing.service';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private firebaseAuthService: FirebaseAuthService,
-    public cameraService: CameraService
+    public cameraService: CameraService,
+    public receiptProcessingService: ReceiptProcessingService
   ) {}
 
   ngOnInit() {
@@ -42,6 +44,15 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.cameraService.triggerCamera$.subscribe(() => {
         this.triggerFileInput();
+      })
+    );
+    
+    // Subscribe to OCR processed events from the camera service
+    this.subscriptions.add(
+      this.cameraService.ocrProcessed$.subscribe(result => {
+        if (result) {
+          console.log('OCR processing result received', result);
+        }
       })
     );
   }
@@ -100,5 +111,23 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       console.warn("No file selected or event is invalid");
     }
+  }
+  
+  // Handle receipt confirmation
+  cancelReceiptProcessing(): void {
+    this.receiptProcessingService.cancelReceiptProcessing();
+  }
+  
+  // Confirm and save receipt
+  confirmAndSaveReceipt(): void {
+    const currentUser = this.firebaseAuthService.getCurrentUser() || 
+                       JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (!currentUser?.id) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.receiptProcessingService.confirmAndSaveReceipt(currentUser.id);
   }
 }

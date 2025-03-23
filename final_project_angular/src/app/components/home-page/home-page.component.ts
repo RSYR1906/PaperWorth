@@ -8,6 +8,7 @@ import { BudgetService } from '../../services/budget.service';
 import { CameraService } from '../../services/camera.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
+import { ReceiptProcessingService } from '../../services/receipt-processing.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
 
 @Component({
@@ -49,7 +50,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
     private savedPromotionService: SavedPromotionsService,
-    public cameraService: CameraService
+    public cameraService: CameraService,
+    public receiptProcessingService: ReceiptProcessingService
   ) {}
 
   ngOnInit(): void {
@@ -71,8 +73,52 @@ export class HomePageComponent implements OnInit, OnDestroy {
     // Initial load of saved promotions
     this.loadSavedPromotions();
     
-    // Check for any receipt data passed from the camera service
-    this.checkForReceiptData();
+    // Check for receipt processing state
+    this.checkReceiptProcessingState();
+    
+    // Subscribe to receipt processing service for new receipts
+    this.subscriptions.add(
+      this.receiptProcessingService.recentlySavedReceipt$.subscribe(receipt => {
+        if (receipt) {
+          this.recentlySavedReceipt = receipt;
+          
+          // Update monthly expenses with the new receipt amount
+          if (receipt.totalAmount) {
+            this.monthlyExpenses += receipt.totalAmount;
+          }
+          
+          // Refresh the recommended promotions as we have a new receipt
+          this.loadUserReceiptHistory();
+        }
+      })
+    );
+    
+    // Subscribe to success message changes
+    this.subscriptions.add(
+      this.receiptProcessingService.successMessage$.subscribe(message => {
+        if (message) {
+          this.successNotificationMessage = message;
+          this.showNotification();
+        }
+      })
+    );
+    
+    // Subscribe to matching promotions
+    this.subscriptions.add(
+      this.receiptProcessingService.matchingPromotions$.subscribe(promotions => {
+        if (promotions && promotions.length > 0) {
+          this.matchingPromotions = promotions;
+          
+          // Group promotions by category
+          const groupedPromotions = this.receiptProcessingService.groupPromotionsByCategory(promotions);
+          
+          // Add each category group to recommendations
+          groupedPromotions.forEach(group => {
+            this.addPromotionsToRecommendations(group.name, group.deals);
+          });
+        }
+      })
+    );
   }
 
   ngOnDestroy() {
@@ -86,31 +132,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Check if there's any receipt data passed from navigation state
-   * FIXED: No longer auto-saves receipt, only displays confirmation modal
+   * Check for receipt processing state from router
    */
-  private checkForReceiptData(): void {
-    // Get navigation state
+  private checkReceiptProcessingState(): void {
+    // Check router state for receipt processing data
     const state = history.state;
-    if (state?.extractedData) {
-      console.log('Received extracted data:', state.extractedData);
-      
-      // Instead of auto-saving, just make sure the camera service has the data
-      // for the confirmation modal to display
-      this.cameraService.extractedDataSubject.next(state.extractedData);
-      this.cameraService.imagePreviewSubject.next(state.imagePreview);
-      this.cameraService.ocrTextSubject.next(state.ocrText || "");
+    if (state?.fromReceiptProcessing) {
+      console.log('Navigated from receipt processing, receipt ID:', state.savedReceiptId);
     }
-    
-    // Also subscribe to OCR processed events from the camera service
-    // FIXED: No longer auto-processes extracted data, just lets the modal display
-    this.subscriptions.add(
-      this.cameraService.ocrProcessed$.subscribe(result => {
-        // No further action needed - the modal will show based on
-        // the data already in the camera service
-        console.log('OCR processing result received', result);
-      })
-    );
   }
   
   private loadUserData(): void {
@@ -151,78 +180,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
         this.isLoadingSavedPromotions = false;
       }
     });
-  }
-  
-  // Save the receipt to the backend
-  saveReceipt(userId: string, extractedData: any, imagePreview: any, ocrText: string): void {
-    if (!extractedData || !extractedData.merchantName || !extractedData.totalAmount || !extractedData.dateOfPurchase) {
-      console.error("Incomplete receipt data:", extractedData);
-      return;
-    }
-
-    this.cameraService.isProcessing = true;
-    this.cameraService.processingMessage = "Saving your receipt...";
-    
-    // Determine category based on merchant name
-    const category = extractedData.category || this.cameraService.determineCategoryFromMerchant(extractedData.merchantName);
-    
-    // Create receipt object based on our updated model
-    const receiptData = {
-      userId: userId,
-      merchantName: extractedData.merchantName,
-      totalAmount: extractedData.totalAmount,
-      dateOfPurchase: extractedData.dateOfPurchase,
-      category: category,
-      imageUrl: imagePreview, // Store the image preview URL
-      additionalFields: {
-        fullText: extractedData.fullText || ocrText,
-        // Include any other fields from extracted data
-        ...Object.entries(extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
-          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
-      }
-    };
-  
-    this.http.post(`${this.apiUrl}/receipts`, receiptData)
-      .subscribe({
-        next: (response: any) => {
-          console.log('Receipt saved:', response);
-          
-          // Update the processing message to show next step
-          this.cameraService.processingMessage = "Finding matching promotions...";
-          
-          // Extract receipt and points data from response
-          const savedReceipt = response.receipt;
-          const pointsAwarded = response.pointsAwarded || 0;
-          
-          // Store the recently saved receipt for reference
-          this.recentlySavedReceipt = {
-            ...receiptData,
-            id: savedReceipt.id
-          };
-          
-          // Update monthly expenses with the new receipt amount
-          this.monthlyExpenses += extractedData.totalAmount;
-          
-          // Customize notification message to include points
-          this.successNotificationMessage = `Receipt saved! You earned ${pointsAwarded} points.`;
-          
-          // Show the success notification
-          this.showNotification();
-  
-          // Fetch matching promotions for the receipt
-          this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
-          
-          // Also refresh the recommended promotions as we have a new receipt
-          this.loadUserReceiptHistory();
-        },
-        error: (error) => {
-          console.error('Error saving receipt:', error);
-          alert('Failed to save receipt. Please try again.');
-          this.cameraService.isProcessing = false;
-          this.cameraService.processingMessage = "";
-        }
-      });
   }
   
   /** Toggle show more/less saved promotions */
@@ -324,104 +281,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
         }
       });
     });
-  }
-
-  // Updated fetchMatchingPromotions method to properly clear loading state
-  fetchMatchingPromotions(merchant: string, category: string, receiptId: string) {
-    this.isLoadingPromotions = true;
-    
-    // Use the match endpoint to find promotions by merchant or category
-    this.http.get<any[]>(`${this.apiUrl}/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
-      .subscribe({
-        next: (promotions) => {
-          console.log('Matching promotions:', promotions);
-          if (promotions && promotions.length > 0) {
-            // Group promotions by category
-            const groupedPromotions = this.groupPromotionsByCategory(promotions);
-            
-            // Add each category group to recommendations
-            groupedPromotions.forEach(group => {
-              this.addPromotionsToRecommendations(group.name, group.deals);
-            });
-            
-            this.isLoadingPromotions = false;
-            this.cameraService.isProcessing = false;
-            this.cameraService.processingMessage = "";
-            
-            // Clear the receipt data in camera service
-            this.cameraService.resetScanner();
-          } else {
-            // Update processing message for fallback attempt
-            this.cameraService.processingMessage = "Searching for more promotions...";
-            
-            // If no promotions found, try fallback to receipt-based API
-            this.fetchPromotionsByReceiptId(receiptId);
-          }
-        },
-        error: (error) => {
-          console.error('Error fetching matching promotions:', error);
-          // Update processing message for fallback attempt
-          this.cameraService.processingMessage = "Searching for more promotions...";
-          
-          // Try fallback to receipt-based API
-          this.fetchPromotionsByReceiptId(receiptId);
-        }
-      });
-  }
-  
-  // Group flat promotions by category
-  groupPromotionsByCategory(promotions: any[]): any[] {
-    // Group the promotions by category
-    const categoryMap = new Map<string, any[]>();
-    
-    promotions.forEach(promo => {
-      const category = promo.category || 'Uncategorized';
-      if (!categoryMap.has(category)) {
-        categoryMap.set(category, []);
-      }
-      categoryMap.get(category)?.push(promo);
-    });
-    
-    // Convert map to array of category objects
-    return Array.from(categoryMap.entries()).map(([name, deals]) => ({
-      name,
-      deals
-    }));
-  }
-  
-  // Fallback method if direct matching fails
-  fetchPromotionsByReceiptId(receiptId: string) {
-    this.http.get<any[]>(`${this.apiUrl}/promotions/receipt/${receiptId}`)
-      .subscribe({
-        next: (promotions) => {
-          console.log('Promotions by receipt ID:', promotions);
-          if (promotions && promotions.length > 0) {
-            // Group promotions by category
-            const groupedPromotions = this.groupPromotionsByCategory(promotions);
-            
-            // Add each category group to recommendations
-            groupedPromotions.forEach(group => {
-              this.addPromotionsToRecommendations(group.name, group.deals);
-            });
-          }
-          
-          // Set final processing message before completion
-          this.cameraService.processingMessage = "Completing...";
-          
-          // Short timeout to show the final step before clearing
-          setTimeout(() => {
-            this.isLoadingPromotions = false;
-            this.cameraService.isProcessing = false;
-            this.cameraService.processingMessage = "";
-          }, 500);
-        },
-        error: (error) => {
-          console.error('Error fetching promotions by receipt ID:', error);
-          this.isLoadingPromotions = false;
-          this.cameraService.isProcessing = false;
-          this.cameraService.processingMessage = "";
-        }
-      });
   }
   
   // Helper method to add promotions to recommendations
@@ -546,45 +405,5 @@ export class HomePageComponent implements OnInit, OnDestroy {
   // Toggle OCR full text
   toggleFullText() {
     this.showFullText = !this.showFullText;
-  }
-
-  /**
-   * Cancel receipt processing and reset the scanner
-   */
-  cancelReceiptProcessing(): void {
-    // Clear the extracted data and reset scanner
-    this.cameraService.resetScanner();
-    
-    // Ensure all UI flags are reset
-    this.showFullText = false;
-  }
-
-  /**
-   * Confirm and save the receipt - This is called when the user clicks "Save Receipt"
-   */
-  confirmAndSaveReceipt(): void {
-    const currentUser = this.getCurrentUser();
-    
-    if (!currentUser?.id) {
-      // Redirect to login if user is not logged in
-      this.router.navigate(['/login']);
-      return;
-    }
-    
-    // Get the extracted data from camera service
-    const extractedData = {...this.cameraService.extractedData};
-    const imagePreview = this.cameraService.imagePreview;
-    const ocrText = this.cameraService.ocrText;
-    
-    // Important: Clear the extracted data BEFORE saving to prevent loop
-    this.cameraService.resetScanner();
-    
-    // Save the receipt using the local copy of the data
-    this.saveReceipt(
-      currentUser.id, 
-      extractedData, 
-      imagePreview, 
-      ocrText
-    );
   }
 }

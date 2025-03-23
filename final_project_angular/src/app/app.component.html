@@ -63,10 +63,71 @@
       >
       
       <!-- Processing Overlay -->
-      <div class="processing-overlay" *ngIf="cameraService.isProcessing">
+      <div class="processing-overlay" *ngIf="cameraService.isProcessing || (receiptProcessingService.processing$ | async)">
         <div class="processing-content">
           <mat-spinner diameter="50"></mat-spinner>
-          <p class="processing-message">{{cameraService.processingMessage || 'Processing your receipt...'}}</p>
+          <p class="processing-message">
+            {{ cameraService.processingMessage || (receiptProcessingService.processingMessage$ | async) || 'Processing your receipt...' }}
+          </p>
+        </div>
+      </div>
+  
+      <!-- Receipt Confirmation Modal -->
+      <div class="modal-overlay" *ngIf="cameraService.extractedData && !cameraService.isProcessing" 
+          (click)="cancelReceiptProcessing()"></div>
+
+      <div class="receipt-confirmation-modal" *ngIf="cameraService.extractedData && !cameraService.isProcessing">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Confirm Receipt Details</h3>
+            <button class="close-button" (click)="cancelReceiptProcessing()">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <!-- Split into two columns on larger screens -->
+            <div class="modal-columns">
+              <!-- Receipt Image Preview -->
+              <div class="image-column">
+                <img [src]="cameraService.imagePreview" alt="Receipt Image" class="receipt-preview-image">
+              </div>
+              
+              <!-- Extracted Data -->
+              <div class="data-column">
+                <div class="extracted-data">
+                  <div class="data-row">
+                    <span class="data-label">Merchant:</span>
+                    <div class="data-value">
+                      <!-- Editable merchant name field -->
+                      <input 
+                        type="text" 
+                        class="merchant-input" 
+                        [(ngModel)]="cameraService.extractedData.merchantName"
+                        placeholder="Enter merchant name">
+                    </div>
+                  </div>
+                  <div class="data-row">
+                    <span class="data-label">Total Amount:</span>
+                    <span class="data-value">${{ cameraService.extractedData.totalAmount.toFixed(2) }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="data-label">Date:</span>
+                    <span class="data-value">{{ cameraService.extractedData.dateOfPurchase }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="data-label">Category:</span>
+                    <span class="data-value">
+                      {{ cameraService.extractedData.category || cameraService.determineCategoryFromMerchant(cameraService.extractedData.merchantName) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button class="action-btn secondary" (click)="cancelReceiptProcessing()">Cancel</button>
+            <button class="action-btn primary" (click)="confirmAndSaveReceipt()">Save Receipt</button>
+          </div>
         </div>
       </div>
   

@@ -17,7 +17,7 @@ export class CameraService {
   private apiUrl = environment.apiUrl;
   
   // Camera functionality variables
-  // These are now exposed to allow direct manipulation in HomePageComponent
+  // These are exposed to allow direct manipulation in components
   public selectedFileSubject = new BehaviorSubject<File | null>(null);
   public imagePreviewSubject = new BehaviorSubject<string | ArrayBuffer | null>(null);
   public extractedDataSubject = new BehaviorSubject<any>(null);
@@ -27,6 +27,7 @@ export class CameraService {
   private showFullTextSubject = new BehaviorSubject<boolean>(false);
   private processingMessageSubject = new BehaviorSubject<string>('');
   private errorMessageSubject = new BehaviorSubject<string | null>(null);
+  private shouldRedirectToHomeSubject = new BehaviorSubject<boolean>(false);
   
   // Observable to emit when image is selected and processed
   private imageSelectedSource = new Subject<{file: File | null, preview: string | ArrayBuffer | null}>();
@@ -72,6 +73,10 @@ export class CameraService {
   
   get errorMessage$(): Observable<string | null> {
     return this.errorMessageSubject.asObservable();
+  }
+  
+  get shouldRedirectToHome$(): Observable<boolean> {
+    return this.shouldRedirectToHomeSubject.asObservable();
   }
   
   // Observable that app component subscribes to
@@ -128,6 +133,32 @@ export class CameraService {
     }
   }
   
+  // Redirect to homepage if needed - call this after successful processing
+  redirectToHomepageIfNeeded(): void {
+    const shouldRedirect = this.shouldRedirectToHomeSubject.getValue();
+    if (shouldRedirect && this.extractedData) {
+      // Prepare navigation data
+      const navigationData = {
+        extractedData: this.extractedData,
+        imagePreview: this.imagePreview,
+        ocrText: this.ocrText
+      };
+      
+      // Reset the flag immediately to prevent multiple redirects
+      this.shouldRedirectToHomeSubject.next(false);
+      
+      // Navigate to home page with the processed data
+      this.router.navigate(['/homepage'], { 
+        state: navigationData
+      });
+    }
+  }
+  
+  // Set whether redirection is needed
+  setShouldRedirectToHome(value: boolean): void {
+    this.shouldRedirectToHomeSubject.next(value);
+  }
+  
   // Handle file selection
   onFileSelected(event: any): void {
     const file: File = event.target.files?.[0];
@@ -175,11 +206,14 @@ export class CameraService {
     this.ocrTextSubject.next('');
     this.extractedDataSubject.next(null);
     
+    // Check if we're on the homepage already
+    const currentRoute = this.router.url;
+    this.setShouldRedirectToHome(currentRoute !== '/homepage');
+    
     // Automatically upload the image after selection
     this.uploadImage();
   }
 
-  // FIXED: Modified to not automatically navigate
   uploadImage(): void {
     const file = this.selectedFileSubject.getValue();
     if (!file) {
@@ -211,8 +245,8 @@ export class CameraService {
               ocrText: response.fullText || "No additional text extracted."
             });
             
-            // FIXED: Do not navigate automatically
-            // Instead, the component will display the confirmation modal
+            // Redirect to homepage if we're not already there
+            this.redirectToHomepageIfNeeded();
           } else {
             this.ocrTextSubject.next(response?.fullText || "No text extracted");
             this.setError('Could not extract receipt details. Please try again with a clearer image.');
@@ -253,6 +287,10 @@ export class CameraService {
       
     this.imagePreviewSubject.next(formattedBase64);
     
+    // Check if we're on the homepage already
+    const currentRoute = this.router.url;
+    this.setShouldRedirectToHome(currentRoute !== '/homepage');
+    
     // Send the base64 data to the backend
     this.http.post<any>(`${this.apiUrl}/ocr/scan/base64`, { 
       base64Image: base64Image 
@@ -273,8 +311,8 @@ export class CameraService {
             ocrText: response.fullText || "No additional text extracted."
           });
           
-          // FIXED: Do not navigate automatically
-          // Instead let the confirmation modal handle it
+          // Redirect to homepage if we're not already there
+          this.redirectToHomepageIfNeeded();
         } else {
           this.ocrTextSubject.next(response?.fullText || "No text extracted");
           this.setError('Could not extract receipt details. Please try again with a clearer image.');
@@ -347,6 +385,7 @@ export class CameraService {
     this.isProcessingSubject.next(false);
     this.processingMessageSubject.next('');
     this.errorMessageSubject.next(null);
+    // Don't reset the redirect flag here, as it might be needed elsewhere
   }
   
   toggleFullText(): void {

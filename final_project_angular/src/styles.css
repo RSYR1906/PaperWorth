@@ -28,26 +28,53 @@
   --safe-bottom: env(safe-area-inset-bottom, 20px);
 }
 
+/* Prevent page movement on touch/drag for mobile */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  position: fixed;
+  overflow-y: auto;
+  background-color: #f5f7fa;
+  color: #212529;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  touch-action: pan-y;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   -webkit-tap-highlight-color: transparent;
-  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
 }
 
-html, body {
+/* Application root container */
+app-root {
+  display: block;
   height: 100%;
-  background-color: #f8f9fa;
-  color: #212529;
-  touch-action: manipulation;
-  scroll-behavior: smooth;
-  font-size: 16px;
-  margin: 0;
-  padding: 0;
-  overscroll-behavior-y: none;
-  background-color: #f5f7fa;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Content containers */
+.promotions-container,
+.content-container,
+.app-container {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Headers */
@@ -251,6 +278,7 @@ mat-icon {
 /* Sidenav */
 .sidenav-container {
   height: 100vh;
+  overflow: hidden;
 }
 
 .sidenav {
@@ -293,6 +321,45 @@ input:focus, select:focus, textarea:focus {
   outline: none;
 }
 
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  overscroll-behavior: contain;
+}
+
+.modal-content {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fixed elements */
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 99;
+}
+
+/* Loading and notification containers */
+.loading-container, 
+.notification-container {
+  pointer-events: none;
+}
+
+/* Notification elements that need interaction */
+.notification-container button,
+.notification-container a {
+  pointer-events: auto;
+}
+
 /* Modal Headers */
 .modal-header h3 {
   font-weight: 700;
@@ -322,4 +389,25 @@ input:focus, select:focus, textarea:focus {
   .nav-links a { font-size: 14px; }
   .logout-button { padding: 6px 12px; font-size: 13px; }
   .scan-button { width: 55px; height: 55px; font-size: 24px; right: 20px; bottom: 20px; }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+  .scan-button {
+    bottom: max(30px, calc(30px + env(safe-area-inset-bottom, 0px)));
+    right: max(30px, calc(30px + env(safe-area-inset-right, 0px)));
+  }
+  
+  .fixed-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Fix for iPhone input zooming */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px;
+  }
 }
