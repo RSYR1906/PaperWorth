@@ -313,6 +313,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   // Save a promotion
   // Update to savePromotion method in home-page.component.ts
+// Update to savePromotion method in home-page.component.ts
 savePromotion(promotion: any): void {
   const currentUser = this.getCurrentUser();
   if (!currentUser?.id) {
@@ -325,6 +326,7 @@ savePromotion(promotion: any): void {
   if (alreadySaved) {
     this.successNotificationMessage = 'This promotion is already saved!';
     this.showNotification();
+    this.closePromotionDetails();
     return;
   }
   
@@ -333,7 +335,7 @@ savePromotion(promotion: any): void {
   
   this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
     next: () => {
-      // Explicitly refresh the saved promotions list
+      // Explicitly refresh the saved promotions list to ensure updates propagate
       this.savedPromotionService.refreshUserSavedPromotions(currentUser.id);
       
       // Show success notification

@@ -1,7 +1,7 @@
 // src/app/services/saved-promotions.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
 import { Promotion, SavedPromotion } from '../model';
 
@@ -18,20 +18,34 @@ export class SavedPromotionsService {
   // Observable that components can subscribe to
   public savedPromotions$ = this.savedPromotionsSubject.asObservable();
 
+  // Track if initial load has been done
+  private initialLoadDone = false;
+
   constructor(private http: HttpClient) { }
 
   /**
    * Get all saved promotions for a user
    */
   getSavedPromotions(userId: string): Observable<Promotion[]> {
+    // Set loading flag in the service
+    console.log(`Fetching saved promotions for user ${userId}`);
+    
     return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}`).pipe(
       tap(promotions => {
         console.log('Fetched saved promotions:', promotions);
         // Update the BehaviorSubject with the new data
         this.savedPromotionsSubject.next(promotions);
+        this.initialLoadDone = true;
       }),
       catchError(error => {
         console.error('Error fetching saved promotions:', error);
+        
+        // If this is the initial load, set an empty array
+        if (!this.initialLoadDone) {
+          this.savedPromotionsSubject.next([]);
+          this.initialLoadDone = true;
+        }
+        
         // Return current value on error
         return this.savedPromotions$;
       })
@@ -45,7 +59,7 @@ export class SavedPromotionsService {
     return this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}/category/${category}`).pipe(
       catchError(error => {
         console.error('Error fetching saved promotions by category:', error);
-        return this.savedPromotions$;
+        return of([]);
       })
     );
   }
@@ -57,10 +71,7 @@ export class SavedPromotionsService {
     return this.http.get<{saved: boolean}>(`${this.apiBaseUrl}/${userId}/${promotionId}`).pipe(
       catchError(error => {
         console.error('Error checking if promotion is saved:', error);
-        return new Observable<{saved: boolean}>(observer => {
-          observer.next({ saved: false });
-          observer.complete();
-        });
+        return of({ saved: false });
       })
     );
   }
@@ -69,6 +80,8 @@ export class SavedPromotionsService {
    * Save a promotion for a user
    */
   savePromotion(userId: string, promotionId: string): Observable<SavedPromotion> {
+    console.log(`Saving promotion ${promotionId} for user ${userId}`);
+    
     return this.http.post<SavedPromotion>(`${this.apiBaseUrl}/${userId}/${promotionId}`, {}).pipe(
       tap(() => {
         console.log(`Saved promotion id=${promotionId} for user=${userId}`);
@@ -86,6 +99,8 @@ export class SavedPromotionsService {
    * Remove a saved promotion
    */
   removePromotion(userId: string, promotionId: string): Observable<{message: string}> {
+    console.log(`Removing promotion ${promotionId} for user ${userId}`);
+    
     return this.http.delete<{message: string}>(`${this.apiBaseUrl}/${userId}/${promotionId}`).pipe(
       tap(() => {
         console.log(`Removed promotion id=${promotionId} for user=${userId}`);
@@ -105,6 +120,8 @@ export class SavedPromotionsService {
    * Helper method to refresh the saved promotions list
    */
   private refreshSavedPromotions(userId: string): void {
+    console.log(`Refreshing saved promotions for user ${userId}`);
+    
     this.http.get<Promotion[]>(`${this.apiBaseUrl}/${userId}`).subscribe({
       next: (promotions) => {
         console.log('Refreshed saved promotions:', promotions);
@@ -130,11 +147,22 @@ export class SavedPromotionsService {
     return this.http.get<{count: number}>(`${this.apiBaseUrl}/count/${promotionId}`).pipe(
       catchError(error => {
         console.error('Error getting save count:', error);
-        return new Observable<{count: number}>(observer => {
-          observer.next({ count: 0 });
-          observer.complete();
-        });
+        return of({ count: 0 });
       })
     );
+  }
+  
+  /**
+   * Get the current saved promotions without making an API call
+   */
+  getCurrentSavedPromotions(): Promotion[] {
+    return this.savedPromotionsSubject.getValue();
+  }
+  
+  /**
+   * Check if initial load has been done
+   */
+  isInitialLoadComplete(): boolean {
+    return this.initialLoadDone;
   }
 }

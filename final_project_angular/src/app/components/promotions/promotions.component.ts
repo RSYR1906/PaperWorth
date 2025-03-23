@@ -22,6 +22,7 @@ interface CategoryGroup {
 export class PromotionsComponent implements OnInit {
   receivedReceiptId: string | null = null;
   isLoading = false;
+  isSaving = false;
   selectedCategory = 'all';
   allPromotions: Promotion[] = [];
   promotionsByCategory: CategoryGroup[] = [];
@@ -60,7 +61,7 @@ export class PromotionsComponent implements OnInit {
     private router: Router,
     private http: HttpClient,
     private firebaseAuthService: FirebaseAuthService,
-    private savedPromotionService: SavedPromotionsService
+    private savedPromotionsService: SavedPromotionsService
   ) { }
 
   ngOnInit(): void {
@@ -249,7 +250,7 @@ export class PromotionsComponent implements OnInit {
     // Check if this promotion is saved by the current user
     const currentUser = this.getCurrentUser();
     if (currentUser?.id) {
-      this.savedPromotionService.isPromotionSaved(currentUser.id, promotion.id)
+      this.savedPromotionsService.isPromotionSaved(currentUser.id, promotion.id)
         .subscribe({
           next: (result) => {
             this.savedPromotionMap.set(promotion.id, result.saved);
@@ -272,7 +273,7 @@ export class PromotionsComponent implements OnInit {
       return;
     }
     
-    this.savedPromotionService.getSavedPromotions(currentUser.id)
+    this.savedPromotionsService.getSavedPromotions(currentUser.id)
       .subscribe({
         next: (promotions) => {
           this.savedPromotions = promotions;
@@ -297,7 +298,7 @@ export class PromotionsComponent implements OnInit {
     
     // Create an array of observables for each promotion
     const checkRequests = this.allPromotions.map(promo => 
-      this.savedPromotionService.isPromotionSaved(currentUser.id, promo.id).pipe(
+      this.savedPromotionsService.isPromotionSaved(currentUser.id, promo.id).pipe(
         tap(result => {
           this.savedPromotionMap.set(promo.id, result.saved);
         }),
@@ -318,41 +319,71 @@ export class PromotionsComponent implements OnInit {
   }
 
   // Save Promotion
-  savePromotion(promotion: Promotion): void {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    // Check if already saved to prevent duplicate API calls
-    if (this.isPromotionSaved(promotion.id)) {
-      this.successNotificationMessage = 'This promotion is already saved!';
-      this.showNotification();
-      return;
-    }
-
-    this.savedPromotionService.savePromotion(currentUser.id, promotion.id).subscribe({
-      next: () => {
-        // Mark the promotion as saved
-        this.savedPromotionMap.set(promotion.id, true);
-        
-        // Add to saved promotions list with saved timestamp
-        const savedPromotion = { ...promotion, savedAt: new Date().toISOString() };
-        this.savedPromotions.unshift(savedPromotion);
-        
-        this.successNotificationMessage = 'Promotion saved successfully!';
-        this.showNotification();
-
-        this.closePromotionDetails();
-      },
-      error: (error) => {
-        console.error('Error saving promotion:', error);
-        this.successNotificationMessage = 'Failed to save promotion. Please try again.';
-        this.showNotification();
-      }
-    });
+  // Updated savePromotion method for PromotionsComponent
+savePromotion(promotion: any): void {
+  const currentUser = this.getCurrentUser();
+  if (!currentUser?.id) {
+    this.router.navigate(['/login']);
+    return;
   }
+  
+  // Set loading state
+  this.isSaving = true;
+  
+  // Check if already saved
+  this.savedPromotionsService.isPromotionSaved(currentUser.id, promotion.id).subscribe({
+    next: (result) => {
+      if (result.saved) {
+        // Already saved
+        this.showNotification('This promotion is already saved!');
+        this.closePromotionDetails();
+        this.isSaving = false;
+      } else {
+        // Not saved yet, proceed to save
+        this.savedPromotionsService.savePromotion(currentUser.id, promotion.id).subscribe({
+          next: () => {
+            // Force refresh the saved promotions list
+            this.savedPromotionsService.refreshUserSavedPromotions(currentUser.id);
+            
+            // Update local UI state
+            promotion.isSaved = true;
+            
+            // Show success notification
+            this.showNotification('Promotion saved successfully!');
+            this.closePromotionDetails();
+            this.isSaving = false;
+          },
+          error: (error) => {
+            console.error('Error saving promotion:', error);
+            this.showNotification('Failed to save promotion. Please try again.');
+            this.isSaving = false;
+          }
+        });
+      }
+    },
+    error: (error) => {
+      console.error('Error checking if promotion is saved:', error);
+      
+      // If we can't check, try to save anyway
+      this.savedPromotionsService.savePromotion(currentUser.id, promotion.id).subscribe({
+        next: () => {
+          // Force refresh the saved promotions list
+          this.savedPromotionsService.refreshUserSavedPromotions(currentUser.id);
+          
+          // Show success notification
+          this.showNotification('Promotion saved successfully!');
+          this.closePromotionDetails();
+          this.isSaving = false;
+        },
+        error: (saveError) => {
+          console.error('Error saving promotion:', saveError);
+          this.showNotification('Failed to save promotion. Please try again.');
+          this.isSaving = false;
+        }
+      });
+    }
+  });
+}
 
   // Remove saved promotion
   removePromotion(promotion: Promotion): void {
@@ -362,7 +393,7 @@ export class PromotionsComponent implements OnInit {
       return;
     }
 
-    this.savedPromotionService.removePromotion(currentUser.id, promotion.id).subscribe({
+    this.savedPromotionsService.removePromotion(currentUser.id, promotion.id).subscribe({
       next: () => {
         // Remove from saved map
         this.savedPromotionMap.set(promotion.id, false);
@@ -385,7 +416,11 @@ export class PromotionsComponent implements OnInit {
     this.selectedPromotion = null;
   }
 
-  private showNotification(): void {
+  private showNotification(message?: string): void {
+    if (message) {
+      this.successNotificationMessage = message;
+    }
+    
     this.showSuccessNotification = true;
     this.notificationTimeRemaining = 100;
 

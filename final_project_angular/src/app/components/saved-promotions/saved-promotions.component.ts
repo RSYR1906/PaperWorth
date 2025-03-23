@@ -1,5 +1,4 @@
 // src/app/components/saved-promotions/saved-promotions.component.ts
-import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -15,7 +14,7 @@ import { SavedPromotionsService } from '../../services/saved-promotions.service'
 })
 export class SavedPromotionsComponent implements OnInit, OnDestroy {
   savedPromotions: Promotion[] = [];
-  isLoading = false;
+  isLoading = true;
   selectedPromotion: Promotion | null = null;
   errorMessage: string = '';
   errorType: 'general' | 'network' | 'server' = 'general';
@@ -43,23 +42,28 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
   private subscriptions = new Subscription();
   
   constructor(
-    private http: HttpClient,
     private router: Router,
     private firebaseAuthService: FirebaseAuthService,
     private savedPromotionsService: SavedPromotionsService
   ) { }
 
   ngOnInit(): void {
-    this.loadSavedPromotions();
-    
     // Subscribe to changes in savedPromotions$ from the service
     this.subscriptions.add(
       this.savedPromotionsService.savedPromotions$.subscribe(promotions => {
-        console.log('Received promotions update:', promotions);
+        console.log('Saved promotions component received promotions update:', promotions);
         this.savedPromotions = promotions;
         this.filterPromotions();
+        
+        // If we're showing loading indicator and received promotions, stop showing it
+        if (this.isLoading && this.savedPromotionsService.isInitialLoadComplete()) {
+          this.isLoading = false;
+        }
       })
     );
+    
+    // Load saved promotions (only if not already loaded)
+    this.loadSavedPromotions();
   }
   
   ngOnDestroy(): void {
@@ -79,14 +83,29 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
       return;
     }
     
+    // Check if we already have saved promotions loaded
+    if (this.savedPromotionsService.isInitialLoadComplete()) {
+      // We already have data, just use what's in the service
+      this.isLoading = false;
+      const currentPromotions = this.savedPromotionsService.getCurrentSavedPromotions();
+      if (currentPromotions.length > 0) {
+        console.log('Using cached saved promotions:', currentPromotions.length);
+        this.savedPromotions = currentPromotions;
+        this.filterPromotions();
+        return;
+      }
+    }
+    
+    // Need to fetch from API
     this.isLoading = true;
     this.errorMessage = '';
     
+    console.log('Fetching saved promotions from API');
     // Get saved promotions from the service
     this.subscriptions.add(
       this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
-          console.log('Loaded saved promotions:', promotions);
+          console.log('Successfully loaded saved promotions:', promotions.length);
           // savedPromotions will be updated via the subscription to savedPromotions$
           this.isLoading = false;
         },
@@ -130,7 +149,7 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
       });
     }
     
-    console.log(`Filtered promotions (${this.selectedCategory}):`, this.filteredPromotions);
+    console.log(`Filtered promotions (${this.selectedCategory}):`, this.filteredPromotions.length);
   }
   
   // Get current user
