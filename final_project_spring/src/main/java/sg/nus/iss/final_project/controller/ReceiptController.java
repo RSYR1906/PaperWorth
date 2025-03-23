@@ -29,7 +29,6 @@ import sg.nus.iss.final_project.service.RewardsService;
 
 @RestController
 @RequestMapping("/api/receipts")
-@CrossOrigin(origins = "*")
 public class ReceiptController {
     private final ReceiptRepository receiptRepository;
 
