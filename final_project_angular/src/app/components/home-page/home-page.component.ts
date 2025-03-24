@@ -97,8 +97,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.receiptProcessingService.successMessage$.subscribe(message => {
         if (message) {
+          console.log('Success message received:', message);
           this.successNotificationMessage = message;
           this.showNotification();
+          // Clear the message in the service so it won't show again on next navigation
+          this.receiptProcessingService.resetSuccessMessage();
         }
       })
     );
@@ -125,6 +128,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (this.notificationTimer) {
       clearInterval(this.notificationTimer);
     }
+
+    this.showSuccessNotification = false;
+
 
     if (this.subscriptions) {
       this.subscriptions.unsubscribe();
@@ -397,22 +403,32 @@ savePromotion(promotion: any): void {
 
   // Show notification
   showNotification() {
-    this.showSuccessNotification = true;
-    this.notificationTimeRemaining = 100;
+    if (!this.successNotificationMessage) {
+      return;
+    }
 
+    this.showSuccessNotification = true;
+    
     // Clear any existing timer
     if (this.notificationTimer) {
       clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
     }
     
-    // Create timer that decreases the progress bar
-    this.notificationTimer = setInterval(() => {
+    // Use setTimeout instead of interval for more reliability
+    this.notificationTimer = setTimeout(() => {
+      this.closeSuccessNotification();
+    }, 5000); // 5 seconds timeout
+    
+    // If you still want the progress bar
+    this.notificationTimeRemaining = 100;
+    const progressInterval = setInterval(() => {
       this.notificationTimeRemaining -= 2;
       
       if (this.notificationTimeRemaining <= 0) {
-        this.closeSuccessNotification();
+        clearInterval(progressInterval);
       }
-    }, 100); // Update every 100ms, will take ~5 seconds to complete
+    }, 100);
   }
 
   closeSuccessNotification() {
@@ -421,6 +437,9 @@ savePromotion(promotion: any): void {
       clearInterval(this.notificationTimer);
       this.notificationTimer = null;
     }
+    
+    // Reset the success message after closing the notification
+    this.successNotificationMessage = '';
   }
 
   // Toggle OCR full text

@@ -152,11 +152,14 @@
   </div>
 
   <!-- Success notification -->
-  <div *ngIf="showSuccessNotification" class="notification-container">
-    <div class="success-notification">
-      <i class="fa fa-check-circle"></i>
-      <span>{{successNotificationMessage}}</span>
-      <div class="notification-progress" [style.width.%]="notificationTimeRemaining"></div>
+  <div class="success-notification" [style.display]="showSuccessNotification ? 'block' : 'none'">
+    <div class="success-content">
+        <div class="success-icon">✓</div>
+        <div class="success-message">
+          <h4>{{ successNotificationMessage }}</h4>
+        </div>
+      </div>
+      <div class="timer-bar">
+        <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+      </div>
     </div>
-  </div>
-</div>

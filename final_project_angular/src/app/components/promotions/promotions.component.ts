@@ -36,6 +36,8 @@ export class PromotionsComponent implements OnInit {
   showSuccessNotification = false;
   successNotificationMessage = '';
   notificationTimeRemaining = 100;
+  notificationTimer: any;
+
 
   // Base URL for Digital Ocean Spaces
   private readonly spacesBaseUrl = 'https://paperworth.sgp1.digitaloceanspaces.com';
@@ -416,21 +418,31 @@ savePromotion(promotion: any): void {
     this.selectedPromotion = null;
   }
 
-  private showNotification(message?: string): void {
-    if (message) {
-      this.successNotificationMessage = message;
-    }
-    
+  showNotification(message?: string) {
+    this.successNotificationMessage = message || 'Action completed successfully';
     this.showSuccessNotification = true;
     this.notificationTimeRemaining = 100;
-
-    setTimeout(() => {
-      this.showSuccessNotification = false;
-    }, 3000);
+    
+    // Clear any existing timer
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+    }
+    
+    // Start the countdown timer (updates every 100ms)
+    this.notificationTimer = setInterval(() => {
+      this.notificationTimeRemaining -= 2; // Decrease by 2% each time
+      
+      if (this.notificationTimeRemaining <= 0) {
+        this.closeSuccessNotification();
+      }
+    }, 100);
   }
-  
-  logout(): void {
-    localStorage.removeItem('currentUser');
-    this.router.navigate(['/login']);
+
+  closeSuccessNotification() {
+    this.showSuccessNotification = false;
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
+    }
   }
 }

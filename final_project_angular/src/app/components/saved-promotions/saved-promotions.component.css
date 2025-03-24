@@ -817,12 +817,26 @@
   color: #666;
 }
 
+/* Timer bar for success notification */
+.timer-bar {
+  height: 3px;
+  background-color: #f1f1f1;
+  width: 100%;
+}
+
+.timer-progress {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.1s linear;
+}
+
+/* Update existing notification-progress class (if you want to keep it) */
 .notification-progress {
   position: absolute;
   bottom: 0;
   left: 0;
   height: 3px;
-  background-color: #4CAF50;
+  background-color: rgba(255, 255, 255, 0.6);
   transition: width 3s linear;
 }
 

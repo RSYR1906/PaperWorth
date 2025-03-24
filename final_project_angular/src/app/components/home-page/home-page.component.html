@@ -193,7 +193,7 @@
 </div>
 
 <!-- Success Notification -->
-<div class="success-notification" *ngIf="showSuccessNotification">
+<div class="success-notification" [style.display]="showSuccessNotification ? 'block' : 'none'">
   <div class="success-content">
     <div class="success-icon">✓</div>
     <div class="success-message">

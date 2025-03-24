@@ -212,4 +212,8 @@ export class ReceiptProcessingService {
       deals
     }));
   }
+
+  resetSuccessMessage(): void {
+    this.successMessageSubject.next('');
+  }
 }
