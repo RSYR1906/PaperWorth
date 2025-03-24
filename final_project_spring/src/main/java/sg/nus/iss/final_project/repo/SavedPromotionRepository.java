@@ -3,33 +3,98 @@ package sg.nus.iss.final_project.repo;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 
 import sg.nus.iss.final_project.model.SavedPromotion;
 
-public interface SavedPromotionRepository extends MongoRepository<SavedPromotion, String> {
+@Repository
+public class SavedPromotionRepository {
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    // Find all saved promotions
+    public List<SavedPromotion> findAll() {
+        return mongoTemplate.findAll(SavedPromotion.class);
+    }
+
+    // Find saved promotion by ID
+    public SavedPromotion findById(String id) {
+        return mongoTemplate.findById(id, SavedPromotion.class);
+    }
+
+    // Find by ID with Optional wrapper
+    public Optional<SavedPromotion> findByIdOptional(String id) {
+        SavedPromotion savedPromotion = mongoTemplate.findById(id, SavedPromotion.class);
+        return Optional.ofNullable(savedPromotion);
+    }
+
+    // Save saved promotion
+    public SavedPromotion save(SavedPromotion savedPromotion) {
+        return mongoTemplate.save(savedPromotion);
+    }
 
     // Find all saved promotions for a specific user
-    List<SavedPromotion> findByUserId(String userId);
+    public List<SavedPromotion> findByUserId(String userId) {
+        Query query = new Query(Criteria.where("userId").is(userId));
+        return mongoTemplate.find(query, SavedPromotion.class);
+    }
 
     // Find a specific saved promotion by user ID and promotion ID
-    Optional<SavedPromotion> findByUserIdAndPromotionId(String userId, String promotionId);
+    public Optional<SavedPromotion> findByUserIdAndPromotionId(String userId, String promotionId) {
+        Query query = new Query(Criteria.where("userId").is(userId)
+                .and("promotionId").is(promotionId));
+        SavedPromotion savedPromotion = mongoTemplate.findOne(query, SavedPromotion.class);
+        return Optional.ofNullable(savedPromotion);
+    }
 
     // Delete a saved promotion by user ID and promotion ID
-    void deleteByUserIdAndPromotionId(String userId, String promotionId);
+    public void deleteByUserIdAndPromotionId(String userId, String promotionId) {
+        Query query = new Query(Criteria.where("userId").is(userId)
+                .and("promotionId").is(promotionId));
+        mongoTemplate.remove(query, SavedPromotion.class);
+    }
 
     // Check if a promotion is saved by a specific user
-    boolean existsByUserIdAndPromotionId(String userId, String promotionId);
+    public boolean existsByUserIdAndPromotionId(String userId, String promotionId) {
+        Query query = new Query(Criteria.where("userId").is(userId)
+                .and("promotionId").is(promotionId));
+        return mongoTemplate.exists(query, SavedPromotion.class);
+    }
 
     // Count how many users have saved a specific promotion
-    long countByPromotionId(String promotionId);
+    public long countByPromotionId(String promotionId) {
+        Query query = new Query(Criteria.where("promotionId").is(promotionId));
+        return mongoTemplate.count(query, SavedPromotion.class);
+    }
 
     // Find the most recently saved promotions for a user
-    List<SavedPromotion> findByUserIdOrderBySavedAtDesc(String userId);
+    public List<SavedPromotion> findByUserIdOrderBySavedAtDesc(String userId) {
+        Query query = new Query(Criteria.where("userId").is(userId))
+                .with(Sort.by(Sort.Direction.DESC, "savedAt"));
+        return mongoTemplate.find(query, SavedPromotion.class);
+    }
 
     // Find promotions saved by a user within a specific category
-    // This requires a custom query to join with promotions collection
-    @Query("{ 'userId': ?0, 'promotionId': { $in: ?1 } }")
-    List<SavedPromotion> findByUserIdAndPromotionIdIn(String userId, List<String> promotionIds);
+    public List<SavedPromotion> findByUserIdAndPromotionIdIn(String userId, List<String> promotionIds) {
+        Query query = new Query(Criteria.where("userId").is(userId)
+                .and("promotionId").in(promotionIds));
+        return mongoTemplate.find(query, SavedPromotion.class);
+    }
+
+    // Delete a saved promotion
+    public void delete(SavedPromotion savedPromotion) {
+        mongoTemplate.remove(savedPromotion);
+    }
+
+    // Delete a saved promotion by ID
+    public void deleteById(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        mongoTemplate.remove(query, SavedPromotion.class);
+    }
 }

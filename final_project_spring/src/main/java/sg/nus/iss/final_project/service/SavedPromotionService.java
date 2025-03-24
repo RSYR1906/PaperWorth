@@ -28,8 +28,8 @@ public class SavedPromotionService {
      */
     public SavedPromotion savePromotion(String userId, String promotionId) {
         // Check if the promotion exists
-        Optional<Promotion> promotionOpt = promotionRepository.findById(promotionId);
-        if (promotionOpt.isEmpty()) {
+        Promotion promotion = promotionRepository.findById(promotionId);
+        if (promotion == null) {
             throw new IllegalArgumentException("Promotion not found with ID: " + promotionId);
         }
 
@@ -69,7 +69,13 @@ public class SavedPromotionService {
                 .collect(Collectors.toList());
 
         // Fetch all promotions
-        List<Promotion> promotions = promotionRepository.findAllById(promotionIds);
+        List<Promotion> promotions = new ArrayList<>();
+        for (String id : promotionIds) {
+            Promotion promotion = promotionRepository.findById(id);
+            if (promotion != null) {
+                promotions.add(promotion);
+            }
+        }
 
         // Add saved datetime to each promotion
         return promotions.stream().map(promotion -> {

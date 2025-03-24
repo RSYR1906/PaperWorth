@@ -65,7 +65,8 @@ public class RewardsService {
 
     // Get a specific reward
     public Optional<Reward> getRewardById(String rewardId) {
-        return rewardRepository.findById(rewardId);
+        Reward reward = rewardRepository.findById(rewardId);
+        return Optional.ofNullable(reward);
     }
 
     // Get user points
@@ -98,10 +99,9 @@ public class RewardsService {
     // Award points for scanning a receipt
     @Transactional
     public PointTransaction awardPointsForReceipt(String receiptId) {
-        Optional<Receipt> receiptOpt = receiptRepository.findById(receiptId);
+        Receipt receipt = receiptRepository.findById(receiptId);
 
-        if (receiptOpt.isPresent()) {
-            Receipt receipt = receiptOpt.get();
+        if (receipt != null) {
             String userId = receipt.getUserId();
 
             // Calculate points based on receipt total
@@ -146,87 +146,85 @@ public class RewardsService {
         UserPoints userPoints = getUserPoints(userId);
 
         // Get the reward
-        Optional<Reward> rewardOpt = rewardRepository.findById(rewardId);
+        Reward reward = rewardRepository.findById(rewardId);
 
-        if (rewardOpt.isPresent()) {
-            Reward reward = rewardOpt.get();
-
-            // Check if reward is available
-            if (!reward.isAvailable() || reward.getQuantity() <= 0) {
-                throw new Exception("This reward is no longer available");
-            }
-
-            // Check if user has enough points
-            if (userPoints.getAvailablePoints() < reward.getPointsCost()) {
-                throw new Exception("Not enough points to redeem this reward");
-            }
-
-            // Deduct points from user
-            boolean deducted = userPoints.spendPoints(reward.getPointsCost());
-
-            if (!deducted) {
-                throw new Exception("Failed to deduct points");
-            }
-
-            // Update user points
-            userPointsRepository.save(userPoints);
-
-            // Decrease reward quantity
-            reward.setQuantity(reward.getQuantity() - 1);
-
-            // If quantity reaches 0, mark as unavailable
-            if (reward.getQuantity() <= 0) {
-                reward.setAvailable(false);
-            }
-
-            // Update reward
-            rewardRepository.save(reward);
-
-            // Generate redemption code for vouchers
-            String redemptionCode = null;
-            if ("VOUCHER".equals(reward.getCategory())) {
-                redemptionCode = generateRedemptionCode();
-            }
-
-            // Create user reward record
-            UserReward userReward = new UserReward(
-                    userId,
-                    rewardId,
-                    reward.getName(),
-                    reward.getPointsCost(),
-                    "PENDING");
-
-            // Set redemption code for vouchers
-            if (redemptionCode != null) {
-                userReward.setRedemptionCode(redemptionCode);
-                userReward.setStatus("FULFILLED");
-
-                // Set expiry date for vouchers (e.g., 6 months from now)
-                if (reward.getExpiryDate() != null) {
-                    userReward.setExpiryDate(reward.getExpiryDate());
-                } else {
-                    userReward.setExpiryDate(LocalDateTime.now().plusMonths(6));
-                }
-            }
-
-            // Save user reward
-            UserReward savedUserReward = userRewardRepository.save(userReward);
-
-            // Create point transaction record
-            PointTransaction transaction = new PointTransaction(
-                    userId,
-                    reward.getPointsCost(),
-                    "SPENT",
-                    "REWARD_REDEMPTION",
-                    rewardId,
-                    "Points spent on redeeming " + reward.getName());
-
-            pointTransactionRepository.save(transaction);
-
-            return savedUserReward;
-        } else {
+        if (reward == null) {
             throw new Exception("Reward not found");
         }
+
+        // Check if reward is available
+        if (!reward.isAvailable() || reward.getQuantity() <= 0) {
+            throw new Exception("This reward is no longer available");
+        }
+
+        // Check if user has enough points
+        if (userPoints.getAvailablePoints() < reward.getPointsCost()) {
+            throw new Exception("Not enough points to redeem this reward");
+        }
+
+        // Deduct points from user
+        boolean deducted = userPoints.spendPoints(reward.getPointsCost());
+
+        if (!deducted) {
+            throw new Exception("Failed to deduct points");
+        }
+
+        // Update user points
+        userPointsRepository.save(userPoints);
+
+        // Decrease reward quantity
+        reward.setQuantity(reward.getQuantity() - 1);
+
+        // If quantity reaches 0, mark as unavailable
+        if (reward.getQuantity() <= 0) {
+            reward.setAvailable(false);
+        }
+
+        // Update reward
+        rewardRepository.save(reward);
+
+        // Generate redemption code for vouchers
+        String redemptionCode = null;
+        if ("VOUCHER".equals(reward.getCategory())) {
+            redemptionCode = generateRedemptionCode();
+        }
+
+        // Create user reward record
+        UserReward userReward = new UserReward(
+                userId,
+                rewardId,
+                reward.getName(),
+                reward.getPointsCost(),
+                "PENDING");
+
+        // Set redemption code for vouchers
+        if (redemptionCode != null) {
+            userReward.setRedemptionCode(redemptionCode);
+            userReward.setStatus("FULFILLED");
+
+            // Set expiry date for vouchers (e.g., 6 months from now)
+            if (reward.getExpiryDate() != null) {
+                userReward.setExpiryDate(reward.getExpiryDate());
+            } else {
+                userReward.setExpiryDate(LocalDateTime.now().plusMonths(6));
+            }
+        }
+
+        // Save user reward
+        UserReward savedUserReward = userRewardRepository.save(userReward);
+
+        // Create point transaction record
+        PointTransaction transaction = new PointTransaction(
+                userId,
+                reward.getPointsCost(),
+                "SPENT",
+                "REWARD_REDEMPTION",
+                rewardId,
+                "Points spent on redeeming " + reward.getName());
+
+        pointTransactionRepository.save(transaction);
+
+        return savedUserReward;
     }
 
     // Generate a random redemption code
@@ -241,27 +239,25 @@ public class RewardsService {
 
     // Update a reward (admin function)
     public Reward updateReward(String rewardId, Reward updatedReward) throws Exception {
-        Optional<Reward> existingRewardOpt = rewardRepository.findById(rewardId);
+        Reward existingReward = rewardRepository.findById(rewardId);
 
-        if (existingRewardOpt.isPresent()) {
-            Reward existingReward = existingRewardOpt.get();
-
-            // Update fields
-            existingReward.setName(updatedReward.getName());
-            existingReward.setDescription(updatedReward.getDescription());
-            existingReward.setPointsCost(updatedReward.getPointsCost());
-            existingReward.setImageUrl(updatedReward.getImageUrl());
-            existingReward.setCategory(updatedReward.getCategory());
-            existingReward.setAvailable(updatedReward.isAvailable());
-            existingReward.setQuantity(updatedReward.getQuantity());
-            existingReward.setMerchantName(updatedReward.getMerchantName());
-            existingReward.setTermsConditions(updatedReward.getTermsConditions());
-            existingReward.setExpiryDate(updatedReward.getExpiryDate());
-
-            return rewardRepository.save(existingReward);
-        } else {
+        if (existingReward == null) {
             throw new Exception("Reward not found");
         }
+
+        // Update fields
+        existingReward.setName(updatedReward.getName());
+        existingReward.setDescription(updatedReward.getDescription());
+        existingReward.setPointsCost(updatedReward.getPointsCost());
+        existingReward.setImageUrl(updatedReward.getImageUrl());
+        existingReward.setCategory(updatedReward.getCategory());
+        existingReward.setAvailable(updatedReward.isAvailable());
+        existingReward.setQuantity(updatedReward.getQuantity());
+        existingReward.setMerchantName(updatedReward.getMerchantName());
+        existingReward.setTermsConditions(updatedReward.getTermsConditions());
+        existingReward.setExpiryDate(updatedReward.getExpiryDate());
+
+        return rewardRepository.save(existingReward);
     }
 
     // Delete a reward (admin function)
@@ -275,28 +271,26 @@ public class RewardsService {
 
     // Update redemption status (admin function)
     public UserReward updateRedemptionStatus(String redemptionId, String status) throws Exception {
-        Optional<UserReward> userRewardOpt = userRewardRepository.findById(redemptionId);
+        UserReward userReward = userRewardRepository.findById(redemptionId);
 
-        if (userRewardOpt.isPresent()) {
-            UserReward userReward = userRewardOpt.get();
-            userReward.setStatus(status);
-            return userRewardRepository.save(userReward);
-        } else {
+        if (userReward == null) {
             throw new Exception("Redemption record not found");
         }
+
+        userReward.setStatus(status);
+        return userRewardRepository.save(userReward);
     }
 
     // Add tracking/delivery info to a redemption (admin function)
     public UserReward addDeliveryInfo(String redemptionId, String deliveryInfo) throws Exception {
-        Optional<UserReward> userRewardOpt = userRewardRepository.findById(redemptionId);
+        UserReward userReward = userRewardRepository.findById(redemptionId);
 
-        if (userRewardOpt.isPresent()) {
-            UserReward userReward = userRewardOpt.get();
-            userReward.setDeliveryInfo(deliveryInfo);
-            return userRewardRepository.save(userReward);
-        } else {
+        if (userReward == null) {
             throw new Exception("Redemption record not found");
         }
+
+        userReward.setDeliveryInfo(deliveryInfo);
+        return userRewardRepository.save(userReward);
     }
 
     @Transactional

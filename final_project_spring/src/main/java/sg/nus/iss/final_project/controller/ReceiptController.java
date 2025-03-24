@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -150,7 +149,7 @@ public class ReceiptController {
                             ", amount=" + receipt.getTotalExpense());
                 }
 
-                // Try a direct MongoDB query to see if there might be format issues with IDs
+                // Try a manual approach to see if there might be format issues with IDs
                 receipts = receiptRepository.findAll().stream()
                         .filter(r -> r.getUserId() != null &&
                                 (r.getUserId().equals(userId) ||
@@ -171,15 +170,14 @@ public class ReceiptController {
     @GetMapping("/{receiptId}")
     public ResponseEntity<?> getReceiptById(@PathVariable String receiptId) {
         System.out.println("Getting receipt with ID: " + receiptId);
-        return receiptRepository.findById(receiptId)
-                .map(receipt -> {
-                    System.out.println("Found receipt: " + receipt);
-                    return ResponseEntity.ok(receipt);
-                })
-                .orElseGet(() -> {
-                    System.out.println("Receipt not found with ID: " + receiptId);
-                    return ResponseEntity.notFound().build();
-                });
+        Receipt receipt = receiptRepository.findById(receiptId);
+        if (receipt != null) {
+            System.out.println("Found receipt: " + receipt);
+            return ResponseEntity.ok(receipt);
+        } else {
+            System.out.println("Receipt not found with ID: " + receiptId);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
@@ -291,11 +289,9 @@ public class ReceiptController {
         try {
             System.out.println("Deleting receipt with ID: " + receiptId);
             // Find receipt before deleting it
-            Optional<Receipt> receiptOpt = receiptRepository.findById(receiptId);
+            Receipt receipt = receiptRepository.findById(receiptId);
 
-            if (receiptOpt.isPresent()) {
-                Receipt receipt = receiptOpt.get();
-
+            if (receipt != null) {
                 // Delete the receipt
                 receiptRepository.deleteById(receiptId);
                 System.out.println("Receipt deleted successfully");
