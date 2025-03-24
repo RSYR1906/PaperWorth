@@ -94,6 +94,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
    */
   viewPromotionDetails(promotion: any): void {
     console.log('[VIEW] Clicked promotion:', promotion);
+
     if (promotion) {
       this.store.updateSelectedPromotion(promotion);
     }

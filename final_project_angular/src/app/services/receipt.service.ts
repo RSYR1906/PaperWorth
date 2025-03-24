@@ -1,7 +1,7 @@
 // src/app/services/receipt.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment.prod';
 import { Receipt } from '../model';
@@ -53,15 +53,15 @@ export class ReceiptService {
   }
 
   // Get promotions for a receipt
-  // getReceiptPromotions(receiptId: string): Observable<any[]> {
-  //   return this.http.get<any[]>(`${this.apiUrl}/${receiptId}/promotions`).pipe(
-  //     tap(promotions => console.log(`Received promotions for receipt ${receiptId}:`, promotions)),
-  //     catchError(error => {
-  //       console.error('Error fetching receipt promotions:', error);
-  //       return of([]); // Return empty array on error
-  //     })
-  //   );
-  // }
+  getReceiptPromotions(receiptId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${receiptId}/promotions`).pipe(
+      tap(promotions => console.log(`Received promotions for receipt ${receiptId}:`, promotions)),
+      catchError(error => {
+        console.error('Error fetching receipt promotions:', error);
+        return of([]); // Return empty array on error
+      })
+    );
+  }
 
   // Delete a receipt
   deleteReceipt(receiptId: string): Observable<any> {

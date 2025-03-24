@@ -155,21 +155,21 @@ export class PastReceiptsComponent implements OnInit {
     console.log('Viewing receipt details:', this.selectedReceipt);
     
     // Check if the receipt has promotions by calling the promotions API
-    // if (receipt.id) {
-    //   this.receiptService.getReceiptPromotions(receipt.id)
-    //     .subscribe({
-    //       next: (promotions) => {
-    //         console.log('Receipt promotions:', promotions);
-    //         // Update hasPromotion flag based on API response
-    //         this.selectedReceipt.hasPromotion = promotions && promotions.length > 0;
-    //         // You could also store the promotions in the receipt object if needed
-    //         this.selectedReceipt.promotions = promotions;
-    //       },
-    //       error: (error) => {
-    //         console.error('Error loading promotions for receipt:', error);
-    //       }
-    //     });
-    // }
+    if (receipt.id) {
+      this.receiptService.getReceiptPromotions(receipt.id)
+        .subscribe({
+          next: (promotions) => {
+            console.log('Receipt promotions:', promotions);
+            // Update hasPromotion flag based on API response
+            this.selectedReceipt.hasPromotion = promotions && promotions.length > 0;
+            // You could also store the promotions in the receipt object if needed
+            this.selectedReceipt.promotions = promotions;
+          },
+          error: (error) => {
+            console.error('Error loading promotions for receipt:', error);
+          }
+        });
+    }
   }
   
   closeReceiptDetails() {
