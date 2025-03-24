@@ -1,5 +1,6 @@
 package sg.nus.iss.final_project.controller;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -133,6 +139,64 @@ public class PromotionController {
 
         // If all else fails, return empty list
         return ResponseEntity.ok(Collections.emptyList());
+    }
+
+    // Additional methods for PromotionController
+
+    // Search promotions by text in merchant name or description
+    @GetMapping("/search")
+    public ResponseEntity<List<Promotion>> searchPromotions(@RequestParam String query) {
+        List<Promotion> promotions = promotionRepository.findByMerchantOrDescriptionContaining(query);
+        return ResponseEntity.ok(promotions);
+    }
+
+    // Get promotions that have not expired
+    @GetMapping("/active")
+    public ResponseEntity<List<Promotion>> getActivePromotions() {
+        String currentDate = LocalDate.now().toString();
+        List<Promotion> promotions = promotionRepository.findByExpiryGreaterThan(currentDate);
+        return ResponseEntity.ok(promotions);
+    }
+
+    // Get promotion by promotionId (numeric ID)
+    @GetMapping("/id/{promotionId}")
+    public ResponseEntity<?> getPromotionByNumericId(@PathVariable int promotionId) {
+        Promotion promotion = promotionRepository.findByPromotionId(promotionId);
+        if (promotion != null) {
+            return ResponseEntity.ok(promotion);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Add new promotion
+    @PostMapping
+    public ResponseEntity<Promotion> addPromotion(@RequestBody Promotion promotion) {
+        Promotion savedPromotion = promotionRepository.save(promotion);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedPromotion);
+    }
+
+    // Update promotion
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePromotion(@PathVariable String id, @RequestBody Promotion promotion) {
+        if (!promotionRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        promotion.setId(id); // Ensure ID is set correctly
+        Promotion updatedPromotion = promotionRepository.save(promotion);
+        return ResponseEntity.ok(updatedPromotion);
+    }
+
+    // Delete promotion
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePromotion(@PathVariable String id) {
+        if (!promotionRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        promotionRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
