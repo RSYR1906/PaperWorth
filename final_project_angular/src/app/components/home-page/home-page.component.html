@@ -132,7 +132,7 @@
                   <div class="promo-content">
                     <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
                     <p class="promo-title">{{ promo.description }}</p>
-                    <p class="expiry">Valid until: {{ promo.expiry }}</p>
+                    <p class="expiry">Valid until: {{ formatDate(promo.expiry) }}</p>
                     <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
                   </div>
                 </div>
@@ -152,45 +152,81 @@
         </ng-container>
       </ng-container>
     </div>
+  </div>
 
-<!-- Promotion details modal - Consistent with saved-promotions style -->
-<div *ngIf="selectedPromotion$ | async as promotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
-  <div class="promotion-modal" (click)="$event.stopPropagation()">
-    <button class="close-button" (click)="closePromotionDetails()">×</button>
-    
-    <div class="modal-content">
-      <div class="modal-image">
-        <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
-             alt="Promotion Image"
-             onerror="this.src='placeholder-image.jpg'">
+  <!-- Success Notification -->
+  <div class="success-notification" *ngIf="showSuccessNotification$ | async">
+    <div class="notification-content">
+      <span class="success-icon">✓</span>
+      <p>{{ successNotificationMessage$ | async }}</p>
+      <div class="timer-bar">
+        <ng-container *ngIf="notificationTimeRemaining$ | async as timeRemaining">
+        <div class="timer-progress" [style.width.%]="timeRemaining * 10"></div>
+      </ng-container>
       </div>
+    </div>
+    <button class="close-notification" (click)="closeSuccessNotification()">×</button>
+  </div>
+
+  <!-- OCR Text Toggle Button (if needed) -->
+  <button *ngIf="cameraService.isProcessing || (receiptProcessingService.processing$ | async)" 
+          class="toggle-text-btn" 
+          (click)="toggleFullText()">
+    {{ (store.showFullText$ | async) ? 'Hide Full Text' : 'Show Full Text' }}
+  </button>
+
+  <!-- Promotion details modal - Consistent with saved-promotions style -->
+  <div *ngIf="selectedPromotion$ | async as promotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
+    <div class="promotion-modal" (click)="$event.stopPropagation()">
+      <button class="close-button" (click)="closePromotionDetails()">×</button>
       
-      <div class="modal-details">
-        <p class="merchant-name">{{promotion.merchant}}</p>
-        <p class="description-text">{{promotion.description}}</p>
+      <div class="modal-content">
+        <div class="modal-image">
+          <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
+               alt="Promotion Image"
+               onerror="this.src='placeholder-image.jpg'">
+        </div>
         
-        <!-- Promo code if available -->
-        <div *ngIf="promotion.code" class="promo-code-container">
-          <h3>Promotion Code:</h3>
-          <div class="promo-code">
-            <span>{{promotion.code}}</span>
+        <div class="modal-details">
+          <p class="merchant-name">{{promotion.merchant}}</p>
+          <p class="description-text">{{promotion.description}}</p>
+          
+          <!-- Promo code if available -->
+          <div *ngIf="promotion.code" class="promo-code-container">
+            <h3>Promotion Code:</h3>
+            <div class="promo-code">
+              <span>{{promotion.code}}</span>
+            </div>
           </div>
-        </div>
-        
-        <div *ngIf="promotion.location" class="location-info">
-          <p><strong>Location:</strong> {{promotion.location}}</p>
-        </div>
-        
-        <div *ngIf="promotion.conditions" class="terms-conditions">
-          <h3>Terms & Conditions</h3>
-          <p>{{promotion.conditions}}</p>
-        </div>
-        
-        <div *ngIf="promotion.category" class="category-info">
-          <span class="category-badge">{{promotion.category}}</span>
+          
+          <div *ngIf="promotion.location" class="location-info">
+            <p><strong>Location:</strong> {{promotion.location}}</p>
+          </div>
+          
+          <div *ngIf="promotion.conditions" class="terms-conditions">
+            <h3>Terms & Conditions</h3>
+            <p>{{promotion.conditions}}</p>
+          </div>
+          
+          <div *ngIf="promotion.category" class="category-info">
+            <span class="category-badge">{{promotion.category}}</span>
+          </div>
+          
+          <!-- Save or Remove button based on saved status -->
+          <ng-container *ngIf="(isSavedPromotion(promotion) | async) as isSaved">
+            <button *ngIf="!isSaved" 
+                    class="save-promotion-btn" 
+                    (click)="savePromotion(promotion)">
+              Save Promotion
+            </button>
+            <button *ngIf="isSaved" 
+                    class="remove-promotion-btn" 
+                    (click)="removeSavedPromotion(promotion.id)">
+              Remove from Saved
+            </button>
+          </ng-container>
         </div>
       </div>
     </div>
   </div>
 </div>
-  </div>

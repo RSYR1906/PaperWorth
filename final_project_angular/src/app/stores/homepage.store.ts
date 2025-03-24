@@ -103,23 +103,17 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     
     // Subscribe to matching promotions
     this.receiptProcessingService.matchingPromotions$.subscribe(promotions => {
-        if (promotions && promotions.length > 0) {
-        console.log('HomePageStore: Received matching promotions, length:', promotions.length);
+      if (promotions && promotions.length > 0) {
         this.patchState({ matchingPromotions: promotions });
         
         // Group promotions by category
         const groupedPromotions = this.receiptProcessingService.groupPromotionsByCategory(promotions);
-        console.log('HomePageStore: Grouped promotions by category:', groupedPromotions);
         
         // Add each category group to recommendations
         groupedPromotions.forEach(group => {
-            console.log('HomePageStore: Adding category to recommendations:', group.name);
-            this.addPromotionsToRecommendations(group.name, group.deals);
+          this.addPromotionsToRecommendations(group.name, group.deals);
         });
-        
-        // Log the current recommendations state after updates
-        console.log('HomePageStore: Current recommendations state:', this.get().recommendedPromotions);
-        }
+      }
     });
 
     // Subscribe to savedPromotions observable
@@ -157,11 +151,11 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     }
   );
 
-    // Helper selector to check if a promotion is saved
-    readonly isSaved = (promotion: any) => this.select(
-        this.savedPromotions$,
-        (savedPromotions) => savedPromotions.some(p => p.id === promotion.id)
-    );
+  // Helper selector to check if a promotion is saved
+  readonly isSavedPromotion = (promotion: any) => this.select(
+    this.savedPromotions$,
+    (savedPromotions) => savedPromotions.some(p => p.id === promotion?.id)
+  );
 
   // Updaters
   readonly updateUserName = this.updater((state, userName: string) => ({
@@ -381,7 +375,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
         return this.savedPromotionService.removePromotion(currentUser.id, promotionId).pipe(
           tap(() => {
             // Show success notification
-            this.showNotification('Promotion removed!');
+            this.showNotification('Promotion removed successfully!');
             
             this.patchState(state => ({
               isLoading: { ...state.isLoading, savedPromotions: false }
@@ -408,10 +402,17 @@ export class HomePageStore extends ComponentStore<HomePageState> {
 
   // Analyze receipts & determine frequent categories
   private analyzeReceiptHistory(receipts: any[]): string[] {
+    if (!receipts || !Array.isArray(receipts) || receipts.length === 0) {
+      return [];
+    }
+    
     const categoryCounts: Record<string, number> = {};
     receipts.forEach(({ category, merchantName, additionalFields }) => {
-      const detectedCategory = category || additionalFields?.category || 
-                              this.cameraService.determineCategoryFromMerchant(merchantName);
+      const detectedCategory = category || 
+                              (additionalFields && additionalFields.category) || 
+                              (merchantName && this.cameraService.determineCategoryFromMerchant(merchantName)) ||
+                              'Others';
+      
       if (detectedCategory) {
         categoryCounts[detectedCategory] = (categoryCounts[detectedCategory] || 0) + 1;
       }
@@ -428,7 +429,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
       isLoading: { ...state.isLoading, promotions: true }
     }));
 
-    if (!categories.length) {
+    if (!categories || categories.length === 0) {
       this.patchState({
         recommendedPromotions: [],
         isLoading: { ...this.get().isLoading, promotions: false }
@@ -442,7 +443,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     categories.forEach(category => {
       this.promotionService.getPromotionsByCategory(category).subscribe({
         next: (promotions) => {
-          if (promotions?.length) {
+          if (promotions && promotions.length > 0) {
             categoryPromotions.push({ name: category, deals: promotions });
           }
         },
@@ -459,49 +460,45 @@ export class HomePageStore extends ComponentStore<HomePageState> {
   }
 
   // Helper method to add promotions to recommendations
-    private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
-        console.log(`Adding promotions to category ${categoryName}:`, promotions);
-    
-        const state = this.get();
-        const recommendedPromotions = [...state.recommendedPromotions];
-        
-        // Check if this category already exists in recommendations
-        const existingCategoryIndex = recommendedPromotions.findIndex(
-        category => category.name.toLowerCase() === categoryName.toLowerCase()
-        );
-        
-        if (existingCategoryIndex >= 0) {
-        console.log(`Category ${categoryName} already exists at index ${existingCategoryIndex}`);
-        // Category exists, merge promotions (avoiding duplicates)
-        const existingDeals = recommendedPromotions[existingCategoryIndex].deals;
-        const existingIds = new Set(existingDeals.map((deal: { id: any; promotionId: any; }) => 
-            deal.id || deal.promotionId
-        ));
-        
-        // Add only new promotions
-        let newPromosAdded = 0;
-        promotions.forEach(promo => {
-            const promoId = promo.id || promo.promotionId;
-            if (!existingIds.has(promoId)) {
-            existingDeals.push(promo);
-            newPromosAdded++;
-            }
-        });
-        
-        console.log(`Added ${newPromosAdded} new promotions to existing category ${categoryName}`);
-        recommendedPromotions[existingCategoryIndex].deals = existingDeals;
-        } else {
-        console.log(`Creating new category ${categoryName} with ${promotions.length} promotions`);
-        // Category doesn't exist, add it to the beginning for visibility
-        recommendedPromotions.unshift({
-            name: categoryName,
-            deals: promotions
-        });
-        }
-        
-        console.log('Updated recommendedPromotions:', recommendedPromotions);
-        this.patchState({ recommendedPromotions });
+  private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
+    if (!categoryName || !promotions || !Array.isArray(promotions)) {
+      return;
     }
+    
+    const state = this.get();
+    const recommendedPromotions = [...state.recommendedPromotions];
+    
+    // Check if this category already exists in recommendations
+    const existingCategoryIndex = recommendedPromotions.findIndex(
+      category => category.name && category.name.toLowerCase() === categoryName.toLowerCase()
+    );
+    
+    if (existingCategoryIndex >= 0) {
+      // Category exists, merge promotions (avoiding duplicates)
+      const existingDeals = recommendedPromotions[existingCategoryIndex].deals || [];
+      const existingIds = new Set(existingDeals.map((deal: { id: any; promotionId: any; }) => 
+        deal.id || deal.promotionId
+      ));
+      
+      // Add only new promotions
+      promotions.forEach(promo => {
+        const promoId = promo.id || promo.promotionId;
+        if (promoId && !existingIds.has(promoId)) {
+          existingDeals.push(promo);
+        }
+      });
+      
+      recommendedPromotions[existingCategoryIndex].deals = existingDeals;
+    } else {
+      // Category doesn't exist, add it to the beginning for visibility
+      recommendedPromotions.unshift({
+        name: categoryName,
+        deals: promotions
+      });
+    }
+    
+    this.patchState({ recommendedPromotions });
+  }
 
   // Show notification with countdown timer
   private showNotification(message: string): void {
@@ -539,28 +536,49 @@ export class HomePageStore extends ComponentStore<HomePageState> {
   isExpiringSoon(expiryDate: string): boolean {
     if (!expiryDate) return false;
     
-    const expiry = new Date(expiryDate);
-    const now = new Date();
-    const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
-    return differenceInDays >= 0 && differenceInDays <= 7;
+    try {
+      const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return false;
+      
+      const now = new Date();
+      const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
+      return differenceInDays >= 0 && differenceInDays <= 7;
+    } catch (error) {
+      console.error('Error checking if date is expiring soon:', error);
+      return false;
+    }
   }
 
   hasExpired(expiryDate: string): boolean {
     if (!expiryDate) return false;
     
-    const expiry = new Date(expiryDate);
-    const now = new Date();
-    return expiry < now;
+    try {
+      const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return false;
+      
+      const now = new Date();
+      return expiry < now;
+    } catch (error) {
+      console.error('Error checking if date has expired:', error);
+      return false;
+    }
   }
 
   formatDate(dateString: string): string {
     if (!dateString) return '';
     
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   }
 }

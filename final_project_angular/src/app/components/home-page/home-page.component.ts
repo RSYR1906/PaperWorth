@@ -1,7 +1,7 @@
 // src/app/components/home-page/home-page.component.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { CameraService } from '../../services/camera.service';
 import { ReceiptProcessingService } from '../../services/receipt-processing.service';
 import { HomePageStore } from '../../stores/homepage.store';
@@ -26,12 +26,15 @@ export class HomePageComponent implements OnInit, OnDestroy {
   notificationTimeRemaining$!: Observable<number>;
   isLoading$!: Observable<any>;
   showMoreSavedPromotions$!: Observable<boolean>;
+  
+  // Subject for unsubscribing from observables when component is destroyed
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
     public cameraService: CameraService,
     public receiptProcessingService: ReceiptProcessingService,
-    private store: HomePageStore
+    public store: HomePageStore // Changed to public for template access
   ) {}
 
   ngOnInit(): void {
@@ -48,11 +51,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.isLoading$ = this.store.isLoading$;
     this.showMoreSavedPromotions$ = this.store.showMoreSavedPromotions$;
     
-
-    this.recommendedPromotions$.subscribe(promotions => {
-      console.log('Recommended promotions updated:', promotions?.length || 0);
-    });
-    
     // Load data on component initialization
     this.store.loadUserData();
     this.store.loadSavedPromotions();
@@ -66,14 +64,18 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // The store handles clearing any timers, and subscriptions are handled by the async pipe
+    // Complete the destroy subject to unsubscribe from all subscriptions
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
    * View details of a promotion
    */
   viewPromotionDetails(promotion: any): void {
-    this.store.updateSelectedPromotion(promotion);
+    if (promotion) {
+      this.store.updateSelectedPromotion(promotion);
+    }
   }
 
   /**
@@ -96,16 +98,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   /**
- * Check if a promotion is already saved
- */
-isSaved(promotion: any): boolean {
-  // Get the current savedPromotions array
-  let saved = false;
-  this.savedPromotions$.subscribe(savedPromotions => {
-    saved = savedPromotions.some(p => p.id === promotion.id);
-  });
-  return saved;
-}
+   * Check if a promotion is already saved
+   * Uses the store's selector for efficiency
+   */
+  isSavedPromotion(promotion: any): Observable<boolean> {
+    return this.store.isSavedPromotion(promotion);
+  }
 
   /**
    * Remove a saved promotion
