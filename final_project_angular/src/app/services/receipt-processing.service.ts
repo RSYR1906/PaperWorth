@@ -38,9 +38,7 @@ export class ReceiptProcessingService {
     private cameraService: CameraService,
     private promotionService: PromotionService,
     private budgetService: BudgetService
-  ) {
-    // No need to subscribe here - we'll let the app component handle subscriptions
-  }
+  ) {}
 
   // Reset processing state
   resetProcessing(): void {

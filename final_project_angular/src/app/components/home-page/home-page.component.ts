@@ -1,7 +1,7 @@
 // src/app/components/home-page/home-page.component.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { CameraService } from '../../services/camera.service';
 import { ReceiptProcessingService } from '../../services/receipt-processing.service';
 import { HomePageStore } from '../../stores/homepage.store';
@@ -52,15 +52,35 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.showMoreSavedPromotions$ = this.store.showMoreSavedPromotions$;
     
     // Load data on component initialization
-    this.store.loadUserData();
-    this.store.loadSavedPromotions();
-    this.store.loadUserReceiptHistory();
-    
+    const trigger$ = of(void 0);
+    this.store.loadUserData(trigger$);
+    this.store.loadSavedPromotions(trigger$);
+    this.store.loadUserReceiptHistory(trigger$);
+
     // Check for receipt processing state from router
     const state = history.state;
     if (state?.fromReceiptProcessing) {
       console.log('Navigated from receipt processing, receipt ID:', state.savedReceiptId);
     }
+
+    this.recommendedPromotions$.subscribe(promotions => {
+      console.log('Component received recommendedPromotions:', promotions);
+    });
+
+    // this.recommendedPromotions$ = of([
+    //   {
+    //     name: 'Test Category',
+    //     deals: [
+    //       {
+    //         merchant: 'Test Merchant',
+    //         description: '50% off!',
+    //         expiry: '2025-12-31',
+    //         imageUrl: 'https://via.placeholder.com/150',
+    //         code: 'TESTCODE'
+    //       }
+    //     ]
+    //   }
+    // ]);
   }
 
   ngOnDestroy(): void {
@@ -73,6 +93,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
    * View details of a promotion
    */
   viewPromotionDetails(promotion: any): void {
+    console.log('[VIEW] Clicked promotion:', promotion);
     if (promotion) {
       this.store.updateSelectedPromotion(promotion);
     }

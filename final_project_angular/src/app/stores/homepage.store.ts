@@ -101,19 +101,26 @@ export class HomePageStore extends ComponentStore<HomePageState> {
       }
     });
     
-    // Subscribe to matching promotions
+        // Subscribe to matching promotions
     this.receiptProcessingService.matchingPromotions$.subscribe(promotions => {
-      if (promotions && promotions.length > 0) {
+        console.log('Received matching promotions:', promotions);
+        
+        if (promotions && promotions.length > 0) {
         this.patchState({ matchingPromotions: promotions });
         
         // Group promotions by category
         const groupedPromotions = this.receiptProcessingService.groupPromotionsByCategory(promotions);
+        console.log('Grouped promotions by category:', groupedPromotions);
         
         // Add each category group to recommendations
         groupedPromotions.forEach(group => {
-          this.addPromotionsToRecommendations(group.name, group.deals);
+            console.log('Adding promotion group to recommendations:', group.name, group.deals);
+            this.addPromotionsToRecommendations(group.name, group.deals);
         });
-      }
+        
+        // Log final state of recommendedPromotions
+        console.log('Updated recommendedPromotions state:', this.get().recommendedPromotions);
+        }
     });
 
     // Subscribe to savedPromotions observable
@@ -173,10 +180,12 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     recentlySavedReceipt: receipt
   }));
 
-  readonly updateSelectedPromotion = this.updater((state, promotion: any) => ({
-    ...state,
+  readonly updateSelectedPromotion = this.updater((state, promotion: any) => {
+    console.log('[STORE] Updating selected promotion:', promotion);
+    return{...state,
     selectedPromotion: promotion
-  }));
+    };
+  });
 
   readonly toggleShowMoreSavedPromotions = this.updater((state) => ({
     ...state,
@@ -286,7 +295,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
         }
         
         this.patchState(state => ({
-          isLoading: { ...state.isLoading, receipts: true }
+          isLoading: { ...state.isLoading, receipts: false }
         }));
         
         return this.http.get<any[]>(`${this.apiUrl}/receipts/user/${currentUser.id}`).pipe(
@@ -453,6 +462,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
               recommendedPromotions: categoryPromotions,
               isLoading: { ...this.get().isLoading, promotions: false }
             });
+            console.log('[RECOMMENDED] Final state updated');
           }
         }
       });
@@ -461,11 +471,14 @@ export class HomePageStore extends ComponentStore<HomePageState> {
 
   // Helper method to add promotions to recommendations
   private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
+    console.log(`Adding promotions to recommendations - Category: ${categoryName}, Count: ${promotions?.length || 0}`);
     if (!categoryName || !promotions || !Array.isArray(promotions)) {
-      return;
+        console.warn('Invalid promotions data:', { categoryName, promotions });
+        return;
     }
     
     const state = this.get();
+    console.log('Current recommendedPromotions state:', state.recommendedPromotions);
     const recommendedPromotions = [...state.recommendedPromotions];
     
     // Check if this category already exists in recommendations

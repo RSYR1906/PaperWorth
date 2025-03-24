@@ -1,4 +1,3 @@
-<!-- src/app/components/home-page/home-page.component.html -->
 <!-- Main Content Container -->
 <div class="app-container">
   <!-- Compact Hero Section -->
@@ -65,7 +64,7 @@
             <div class="promo-image" (click)="viewPromotionDetails(promo)">
               <img [src]="promo.imageUrl" 
                   [alt]="promo.merchant + ' promotion'" 
-                  onerror="this.src='promo-placeholder.jpg'">
+                  onerror="this.src='placeholder-image.jpg'">
             </div>
             <div class="promo-content">
               <div class="promo-merchant">{{ promo.merchant }}</div>
@@ -97,75 +96,56 @@
   </div>
 
   <!-- PROMOTIONS SECTION -->
-  <div class="promotions" *ngIf="!cameraService.isProcessing && !(receiptProcessingService.processing$ | async)">
-    <!-- Loading promotions indicator -->
-    <div *ngIf="(isLoading$ | async)?.promotions" class="loading-promotions">
+  <div class="recommendations-section" *ngIf="!cameraService.isProcessing && !(receiptProcessingService.processing$ | async)">
+    <!-- Section header -->
+    <h3 class="personalized-title">Recommended For You</h3>
+      
+    <!-- Loading indicator for recommendations -->
+    <div *ngIf="(isLoading$ | async)?.receipts || (isLoading$ | async)?.promotions" class="loading-promotions">
       <div class="spinner"></div>
-      <p>Finding matching promotions...</p>
+      <p>Preparing your personalized recommendations...</p>
     </div>
-
-    <!-- Recommendations Section -->
-    <div class="recommendations-section">
-      <h3 class="personalized-title">Recommended For You</h3>
       
-      <!-- Loading indicator for recommendations -->
-      <div *ngIf="(isLoading$ | async)?.receipts" class="loading-promotions">
-        <div class="spinner"></div>
-        <p>Preparing your personalized recommendations...</p>
-      </div>
-      
-      <!-- Personalized recommendations based on receipt history -->
-      <ng-container *ngIf="!(isLoading$ | async)?.receipts">
-        <ng-container *ngIf="recommendedPromotions$ | async as recommendedPromotions">
-          <div *ngFor="let category of recommendedPromotions" class="category-section">
-            <div class="category-header">
-              <h4>{{ category.name }}</h4>
-            </div>
-            
-            <!-- Horizontal scrollable promotions list -->
-            <div class="promo-scroll-container">
-              <div class="promo-list">
-                <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
+    <!-- Personalized recommendations based on receipt history -->
+    <ng-container *ngIf="!(isLoading$ | async)?.receipts && !(isLoading$ | async)?.promotions">
+      <ng-container *ngIf="recommendedPromotions$ | async as recommendedPromotions">
+        <!-- Display each category group -->
+        <div *ngFor="let category of recommendedPromotions" class="category-section">
+          <div class="category-header">
+            <h4>{{ category.name }}</h4>
+          </div>
+          
+          <!-- Horizontal scrollable promotions list -->
+          <div class="promo-scroll-container" *ngIf="category.deals && category.deals.length > 0">
+            <div class="promo-list">
+              <div *ngFor="let promo of category.deals" class="promo-card" (click)="viewPromotionDetails(promo)">
+                <div class="promo-image">
                   <img [src]="promo.imageUrl" 
                       alt="Promo Image" 
                       onerror="this.src='placeholder-image.jpg'">
-                  <div class="promo-content">
-                    <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
-                    <p class="promo-title">{{ promo.description }}</p>
-                    <p class="expiry">Valid until: {{ formatDate(promo.expiry) }}</p>
-                    <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
-                  </div>
+                </div>
+                <div class="promo-content">
+                  <div class="promo-merchant" *ngIf="promo.merchant">{{ promo.merchant }}</div>
+                  <p class="promo-title">{{ promo.description }}</p>
+                  <p class="expiry">Valid until: {{ formatDate(promo.expiry) }}</p>
+                  <div class="promo-code" *ngIf="promo.code">Code: <span>{{ promo.code }}</span></div>
                 </div>
               </div>
             </div>
-            
-            <!-- Empty state for a category with no promotions -->
-            <div *ngIf="!category.deals || category.deals.length === 0" class="no-deals-message">
-              <p>No current deals available for {{ category.name }}</p>
-            </div>
           </div>
           
-          <!-- Empty state if no recommendations at all -->
-          <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
-            <p>Scan more receipts to get personalized recommendations!</p>
+          <!-- Empty state for a category with no promotions -->
+          <div *ngIf="!category.deals || category.deals.length === 0" class="no-deals-message">
+            <p>No current deals available for {{ category.name }}</p>
           </div>
-        </ng-container>
+        </div>
+        
+        <!-- Empty state if no recommendations at all -->
+        <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
+          <p>Scan more receipts to get personalized recommendations!</p>
+        </div>
       </ng-container>
-    </div>
-  </div>
-
-  <!-- Success Notification -->
-  <div class="success-notification" *ngIf="showSuccessNotification$ | async">
-    <div class="notification-content">
-      <span class="success-icon">✓</span>
-      <p>{{ successNotificationMessage$ | async }}</p>
-      <div class="timer-bar">
-        <ng-container *ngIf="notificationTimeRemaining$ | async as timeRemaining">
-        <div class="timer-progress" [style.width.%]="timeRemaining * 10"></div>
-      </ng-container>
-      </div>
-    </div>
-    <button class="close-notification" (click)="closeSuccessNotification()">×</button>
+    </ng-container>
   </div>
 
   <!-- OCR Text Toggle Button (if needed) -->
@@ -176,57 +156,72 @@
   </button>
 
   <!-- Promotion details modal - Consistent with saved-promotions style -->
-  <div *ngIf="selectedPromotion$ | async as promotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
-    <div class="promotion-modal" (click)="$event.stopPropagation()">
-      <button class="close-button" (click)="closePromotionDetails()">×</button>
+<div *ngIf="selectedPromotion$ | async as promotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
+  <div class="promotion-modal" (click)="$event.stopPropagation()">
+    <button class="close-button" (click)="closePromotionDetails()">×</button>
+    
+    <div class="modal-content">
+      <div class="modal-image">
+        <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
+             alt="Promotion Image"
+             onerror="this.src='placeholder-image.jpg'">
+      </div>
       
-      <div class="modal-content">
-        <div class="modal-image">
-          <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
-               alt="Promotion Image"
-               onerror="this.src='placeholder-image.jpg'">
+      <div class="modal-details">
+        <p class="merchant-name">{{ promotion.merchant }}</p>
+        <p class="description-text">{{ promotion.description }}</p>
+
+        <!-- Promo code if available -->
+        <div *ngIf="promotion.code" class="promo-code-container">
+          <h3>Promotion Code:</h3>
+          <div class="promo-code">
+            <span>{{ promotion.code }}</span>
+          </div>
         </div>
-        
-        <div class="modal-details">
-          <p class="merchant-name">{{promotion.merchant}}</p>
-          <p class="description-text">{{promotion.description}}</p>
-          
-          <!-- Promo code if available -->
-          <div *ngIf="promotion.code" class="promo-code-container">
-            <h3>Promotion Code:</h3>
-            <div class="promo-code">
-              <span>{{promotion.code}}</span>
-            </div>
-          </div>
-          
-          <div *ngIf="promotion.location" class="location-info">
-            <p><strong>Location:</strong> {{promotion.location}}</p>
-          </div>
-          
-          <div *ngIf="promotion.conditions" class="terms-conditions">
-            <h3>Terms & Conditions</h3>
-            <p>{{promotion.conditions}}</p>
-          </div>
-          
-          <div *ngIf="promotion.category" class="category-info">
-            <span class="category-badge">{{promotion.category}}</span>
-          </div>
-          
-          <!-- Save or Remove button based on saved status -->
+
+        <!-- Optional metadata -->
+        <div *ngIf="promotion.location" class="location-info">
+          <p><strong>Location:</strong> {{ promotion.location }}</p>
+        </div>
+
+        <div *ngIf="promotion.conditions" class="terms-conditions">
+          <h3>Terms & Conditions</h3>
+          <p>{{ promotion.conditions }}</p>
+        </div>
+
+        <div *ngIf="promotion.category" class="category-info">
+          <span class="category-badge">{{ promotion.category }}</span>
+        </div>
+
+        <!-- Save/Remove Buttons -->
+        <div class="action-buttons" *ngIf="promotion.id">
           <ng-container *ngIf="(isSavedPromotion(promotion) | async) as isSaved">
-            <button *ngIf="!isSaved" 
-                    class="save-promotion-btn" 
-                    (click)="savePromotion(promotion)">
-              Save Promotion
-            </button>
-            <button *ngIf="isSaved" 
-                    class="remove-promotion-btn" 
-                    (click)="removeSavedPromotion(promotion.id)">
-              Remove from Saved
-            </button>
+            <ng-container [ngSwitch]="isSaved">
+              <button *ngSwitchCase="false" class="save-button" (click)="savePromotion(promotion)">
+                <i class="fa fa-bookmark-o"></i> Save Promotion
+              </button>
+              <button *ngSwitchCase="true" class="remove-button" (click)="removeSavedPromotion(promotion.id)">
+                <i class="fa fa-bookmark"></i> Remove Saved
+              </button>
+            </ng-container>
           </ng-container>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+    <!-- Success Notification -->
+    <div class="success-notification" *ngIf="showSuccessNotification$ | async">
+      <div class="success-content">
+        <div class="success-icon">✓</div>
+        <div class="success-message">
+        <p>{{ successNotificationMessage$ | async }}</p>
+        </div>
+        <button class="close-notification" (click)="closeSuccessNotification()">×</button>
+      </div>
+        <div class="timer-bar">
+          <div class="timer-progress" [style.width.%]="(notificationTimeRemaining$ | async) || 0"></div>
+        </div>
+    </div>
 </div>
