@@ -151,6 +151,12 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     }
   );
 
+    // Helper selector to check if a promotion is saved
+    readonly isSaved = (promotion: any) => this.select(
+        this.savedPromotions$,
+        (savedPromotions) => savedPromotions.some(p => p.id === promotion.id)
+    );
+
   // Updaters
   readonly updateUserName = this.updater((state, userName: string) => ({
     ...state,

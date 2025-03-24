@@ -152,4 +152,45 @@
         </ng-container>
       </ng-container>
     </div>
+
+<!-- Promotion details modal - Consistent with saved-promotions style -->
+<div *ngIf="selectedPromotion$ | async as promotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
+  <div class="promotion-modal" (click)="$event.stopPropagation()">
+    <button class="close-button" (click)="closePromotionDetails()">×</button>
+    
+    <div class="modal-content">
+      <div class="modal-image">
+        <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
+             alt="Promotion Image"
+             onerror="this.src='placeholder-image.jpg'">
+      </div>
+      
+      <div class="modal-details">
+        <p class="merchant-name">{{promotion.merchant}}</p>
+        <p class="description-text">{{promotion.description}}</p>
+        
+        <!-- Promo code if available -->
+        <div *ngIf="promotion.code" class="promo-code-container">
+          <h3>Promotion Code:</h3>
+          <div class="promo-code">
+            <span>{{promotion.code}}</span>
+          </div>
+        </div>
+        
+        <div *ngIf="promotion.location" class="location-info">
+          <p><strong>Location:</strong> {{promotion.location}}</p>
+        </div>
+        
+        <div *ngIf="promotion.conditions" class="terms-conditions">
+          <h3>Terms & Conditions</h3>
+          <p>{{promotion.conditions}}</p>
+        </div>
+        
+        <div *ngIf="promotion.category" class="category-info">
+          <span class="category-badge">{{promotion.category}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
   </div>

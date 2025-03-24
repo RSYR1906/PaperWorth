@@ -91,6 +91,18 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   /**
+ * Check if a promotion is already saved
+ */
+isSaved(promotion: any): boolean {
+  // Get the current savedPromotions array
+  let saved = false;
+  this.savedPromotions$.subscribe(savedPromotions => {
+    saved = savedPromotions.some(p => p.id === promotion.id);
+  });
+  return saved;
+}
+
+  /**
    * Remove a saved promotion
    */
   removeSavedPromotion(promotionId: string): void {
