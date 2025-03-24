@@ -91,6 +91,11 @@ public class PromotionController {
         // Build the query criteria
         Criteria criteria = new Criteria();
 
+        if (category != null && !category.trim().isEmpty()) {
+            // Make the category match case-insensitive
+            criteria = Criteria.where("category").regex(category, "i");
+        }
+
         if (merchant != null && !merchant.trim().isEmpty() && category != null && !category.trim().isEmpty()) {
             // Both merchant and category provided, use OR between them
             Criteria merchantCriteria = new Criteria().orOperator(

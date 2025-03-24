@@ -104,7 +104,7 @@ public class RewardsService {
     }
 
     // Award points for scanning a receipt
-    @CacheEvict(value = "userPoints", key = "#userId")
+    @CacheEvict(value = "userPoints", allEntries = true)
     @Transactional
     public PointTransaction awardPointsForReceipt(String receiptId) {
         Receipt receipt = receiptRepository.findById(receiptId);

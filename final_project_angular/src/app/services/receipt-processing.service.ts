@@ -132,7 +132,7 @@ export class ReceiptProcessingService {
           this.router.navigate(['/homepage'], {
             state: { 
               fromReceiptProcessing: true,
-              savedReceiptId: savedReceipt.id 
+              savedReceiptId: savedReceipt.id
             }
           });
         },
@@ -147,6 +147,9 @@ export class ReceiptProcessingService {
 
   // Fetch matching promotions based on merchant name and category
   private fetchMatchingPromotions(merchant: string, category: string, receiptId: string): void {
+    // Add logging to track execution
+    console.log(`Fetching matching promotions for merchant: ${merchant}, category: ${category}`);
+    
     // Use the match endpoint to find promotions by merchant or category
     this.http.get<any[]>(`${this.apiUrl}/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
       .pipe(
@@ -169,15 +172,21 @@ export class ReceiptProcessingService {
       )
       .subscribe({
         next: (promotions) => {
-          console.log('Matching promotions:', promotions);
+          console.log('Matching promotions fetched:', promotions?.length || 0);
           if (promotions && promotions.length > 0) {
             // Store matching promotions
             this.matchingPromotionsSubject.next(promotions);
+            console.log('Matching promotions emitted to subject');
           } else {
+            console.log('No matching promotions found, trying receipt-based API');
             // If no promotions found, try fallback to receipt-based API
             this.processingMessageSubject.next("Searching for more promotions...");
             this.fetchPromotionsByReceiptId(receiptId).subscribe();
           }
+        },
+        error: (error) => {
+          console.error('Error in promotions subscription:', error);
+          this.matchingPromotionsSubject.next([]);
         }
       });
   }

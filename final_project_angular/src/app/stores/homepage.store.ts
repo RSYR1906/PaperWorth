@@ -103,17 +103,23 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     
     // Subscribe to matching promotions
     this.receiptProcessingService.matchingPromotions$.subscribe(promotions => {
-      if (promotions && promotions.length > 0) {
+        if (promotions && promotions.length > 0) {
+        console.log('HomePageStore: Received matching promotions, length:', promotions.length);
         this.patchState({ matchingPromotions: promotions });
         
         // Group promotions by category
         const groupedPromotions = this.receiptProcessingService.groupPromotionsByCategory(promotions);
+        console.log('HomePageStore: Grouped promotions by category:', groupedPromotions);
         
         // Add each category group to recommendations
         groupedPromotions.forEach(group => {
-          this.addPromotionsToRecommendations(group.name, group.deals);
+            console.log('HomePageStore: Adding category to recommendations:', group.name);
+            this.addPromotionsToRecommendations(group.name, group.deals);
         });
-      }
+        
+        // Log the current recommendations state after updates
+        console.log('HomePageStore: Current recommendations state:', this.get().recommendedPromotions);
+        }
     });
 
     // Subscribe to savedPromotions observable
@@ -453,41 +459,49 @@ export class HomePageStore extends ComponentStore<HomePageState> {
   }
 
   // Helper method to add promotions to recommendations
-  private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
-    const state = this.get();
-    const recommendedPromotions = [...state.recommendedPromotions];
+    private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
+        console.log(`Adding promotions to category ${categoryName}:`, promotions);
     
-    // Check if this category already exists in recommendations
-    const existingCategoryIndex = recommendedPromotions.findIndex(
-      category => category.name.toLowerCase() === categoryName.toLowerCase()
-    );
-    
-    if (existingCategoryIndex >= 0) {
-      // Category exists, merge promotions (avoiding duplicates)
-      const existingDeals = recommendedPromotions[existingCategoryIndex].deals;
-      const existingIds = new Set(existingDeals.map((deal: { id: any; promotionId: any; }) => 
-        deal.id || deal.promotionId
-      ));
-      
-      // Add only new promotions
-      promotions.forEach(promo => {
-        const promoId = promo.id || promo.promotionId;
-        if (!existingIds.has(promoId)) {
-          existingDeals.push(promo);
+        const state = this.get();
+        const recommendedPromotions = [...state.recommendedPromotions];
+        
+        // Check if this category already exists in recommendations
+        const existingCategoryIndex = recommendedPromotions.findIndex(
+        category => category.name.toLowerCase() === categoryName.toLowerCase()
+        );
+        
+        if (existingCategoryIndex >= 0) {
+        console.log(`Category ${categoryName} already exists at index ${existingCategoryIndex}`);
+        // Category exists, merge promotions (avoiding duplicates)
+        const existingDeals = recommendedPromotions[existingCategoryIndex].deals;
+        const existingIds = new Set(existingDeals.map((deal: { id: any; promotionId: any; }) => 
+            deal.id || deal.promotionId
+        ));
+        
+        // Add only new promotions
+        let newPromosAdded = 0;
+        promotions.forEach(promo => {
+            const promoId = promo.id || promo.promotionId;
+            if (!existingIds.has(promoId)) {
+            existingDeals.push(promo);
+            newPromosAdded++;
+            }
+        });
+        
+        console.log(`Added ${newPromosAdded} new promotions to existing category ${categoryName}`);
+        recommendedPromotions[existingCategoryIndex].deals = existingDeals;
+        } else {
+        console.log(`Creating new category ${categoryName} with ${promotions.length} promotions`);
+        // Category doesn't exist, add it to the beginning for visibility
+        recommendedPromotions.unshift({
+            name: categoryName,
+            deals: promotions
+        });
         }
-      });
-      
-      recommendedPromotions[existingCategoryIndex].deals = existingDeals;
-    } else {
-      // Category doesn't exist, add it to the beginning for visibility
-      recommendedPromotions.unshift({
-        name: categoryName,
-        deals: promotions
-      });
+        
+        console.log('Updated recommendedPromotions:', recommendedPromotions);
+        this.patchState({ recommendedPromotions });
     }
-    
-    this.patchState({ recommendedPromotions });
-  }
 
   // Show notification with countdown timer
   private showNotification(message: string): void {

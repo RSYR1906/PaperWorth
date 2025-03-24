@@ -48,6 +48,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.isLoading$ = this.store.isLoading$;
     this.showMoreSavedPromotions$ = this.store.showMoreSavedPromotions$;
     
+
+    this.recommendedPromotions$.subscribe(promotions => {
+      console.log('Recommended promotions updated:', promotions?.length || 0);
+    });
+    
     // Load data on component initialization
     this.store.loadUserData();
     this.store.loadSavedPromotions();
