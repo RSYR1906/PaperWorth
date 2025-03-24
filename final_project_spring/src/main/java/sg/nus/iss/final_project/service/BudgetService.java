@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import sg.nus.iss.final_project.model.Budget;
@@ -39,7 +36,7 @@ public class BudgetService {
     }
 
     // Get or create budget for a user and month
-    @Cacheable(value = "budgets", key = "#userId + ':' + #monthYear")
+    // @Cacheable(value = "budgets", key = "#userId + ':' + #monthYear")
     public Budget getUserBudget(String userId, String monthYear) {
         // If monthYear is not provided, use current month
         if (monthYear == null || monthYear.isEmpty()) {
@@ -75,7 +72,8 @@ public class BudgetService {
     }
 
     // Save a budget
-    @CachePut(value = "budgets", key = "#budget.userId + ':' + #budget.monthYear")
+    // @CachePut(value = "budgets", key = "#budget.userId + ':' +
+    // #budget.monthYear")
     public Budget saveBudget(Budget budget) {
         // Ensure totalSpent is accurate
         budget.updateTotalSpent();
@@ -83,7 +81,7 @@ public class BudgetService {
     }
 
     // Remove an expense from a budget
-    @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
+    // @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
     public Budget removeExpenseFromBudget(String userId, String monthYear, String categoryName, double amount) {
         Budget budget = getUserBudget(userId, monthYear);
 
@@ -100,7 +98,7 @@ public class BudgetService {
     }
 
     // Update the total budget amount
-    @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
+    // @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
     public Budget updateTotalBudget(String userId, String monthYear, double newBudgetAmount) {
         Budget budget = getUserBudget(userId, monthYear);
         budget.setTotalBudget(newBudgetAmount);
@@ -120,7 +118,7 @@ public class BudgetService {
     }
 
     // Update a category's budget amount
-    @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
+    // @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
     public Budget updateCategoryBudget(String userId, String monthYear, String categoryName, double newAmount) {
         Budget budget = getUserBudget(userId, monthYear);
 
@@ -136,7 +134,7 @@ public class BudgetService {
     }
 
     // Add an expense to a budget
-    @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
+    // @CacheEvict(value = "budgets", key = "#userId + ':' + #monthYear")
     public Budget addExpenseToBudget(String userId, String monthYear, String categoryName, double amount) {
         Budget budget = getUserBudget(userId, monthYear);
 
@@ -159,13 +157,13 @@ public class BudgetService {
     }
 
     // Get all budgets for a user
-    @Cacheable(value = "budgets", key = "#userId + ':all'")
+    // @Cacheable(value = "budgets", key = "#userId + ':all'")
     public List<Budget> getAllUserBudgets(String userId) {
         return budgetRepository.findByUserId(userId);
     }
 
     // Delete a budget
-    @CacheEvict(value = "budgets", allEntries = true)
+    // @CacheEvict(value = "budgets", allEntries = true)
     public void deleteBudget(String budgetId) {
         budgetRepository.deleteById(budgetId);
     }

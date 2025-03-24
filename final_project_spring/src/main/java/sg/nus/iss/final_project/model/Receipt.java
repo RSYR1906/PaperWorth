@@ -5,18 +5,39 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "receipts") // ✅ Collection name in MongoDB
+/**
+ * Receipt model for storing receipt information in MongoDB
+ * Standardized to match frontend model
+ */
+@Document(collection = "receipts")
 public class Receipt {
     @Id
     private String id;
     private String userId;
     private String merchantName;
     private LocalDateTime dateOfPurchase;
-    private double totalExpense;
+    private double totalExpense; // Standardized from totalAmount in some places
     private String category;
     private String imageUrl;
     private String[] items;
+    private LocalDateTime scanDate; // Added to track when receipt was scanned
 
+    // Default constructor
+    public Receipt() {
+    }
+
+    // Constructor with fields
+    public Receipt(String userId, String merchantName, LocalDateTime dateOfPurchase,
+            double totalExpense, String category) {
+        this.userId = userId;
+        this.merchantName = merchantName;
+        this.dateOfPurchase = dateOfPurchase;
+        this.totalExpense = totalExpense;
+        this.category = category;
+        this.scanDate = LocalDateTime.now(); // Set scan date to current time
+    }
+
+    // Getters and setters
     public String getId() {
         return id;
     }
@@ -57,6 +78,16 @@ public class Receipt {
         this.totalExpense = totalExpense;
     }
 
+    // Backward compatibility method for totalAmount
+    public double getTotalAmount() {
+        return totalExpense;
+    }
+
+    // Backward compatibility method for totalAmount
+    public void setTotalAmount(double totalAmount) {
+        this.totalExpense = totalAmount;
+    }
+
     public String getCategory() {
         return category;
     }
@@ -81,10 +112,17 @@ public class Receipt {
         this.items = items;
     }
 
+    public LocalDateTime getScanDate() {
+        return scanDate;
+    }
+
+    public void setScanDate(LocalDateTime scanDate) {
+        this.scanDate = scanDate;
+    }
+
     @Override
     public String toString() {
         return "Receipt [id=" + id + ", userId=" + userId + ", merchantName=" + merchantName + ", dateOfPurchase="
                 + dateOfPurchase + ", totalExpense=" + totalExpense + ", category=" + category + "]";
     }
-
 }

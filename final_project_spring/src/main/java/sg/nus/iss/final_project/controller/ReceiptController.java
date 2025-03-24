@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import sg.nus.iss.final_project.Util.DateUtil;
 import sg.nus.iss.final_project.model.PointTransaction;
 import sg.nus.iss.final_project.model.Receipt;
 import sg.nus.iss.final_project.repo.ReceiptRepository;
@@ -199,31 +200,33 @@ public class ReceiptController {
                 receipt.setMerchantName(merchantNameObj.toString());
             }
 
-            // Handle numeric total amount - check for different property names
+            // Handle standardized total expense field
+            // Try totalExpense first, but fall back to totalAmount for backward
+            // compatibility
             double totalAmount = 0.0;
-            Object totalAmountObj = receiptData.get("totalAmount");
-            if (totalAmountObj == null) {
-                totalAmountObj = receiptData.get("totalExpense");
+            Object totalExpenseObj = receiptData.get("totalExpense");
+            if (totalExpenseObj == null) {
+                totalExpenseObj = receiptData.get("totalAmount"); // Fallback to legacy field name
             }
 
-            if (totalAmountObj instanceof Number) {
-                totalAmount = ((Number) totalAmountObj).doubleValue();
+            if (totalExpenseObj instanceof Number) {
+                totalAmount = ((Number) totalExpenseObj).doubleValue();
                 receipt.setTotalExpense(totalAmount);
-            } else if (totalAmountObj instanceof String) {
+            } else if (totalExpenseObj instanceof String) {
                 try {
-                    totalAmount = Double.parseDouble((String) totalAmountObj);
+                    totalAmount = Double.parseDouble((String) totalExpenseObj);
                     receipt.setTotalExpense(totalAmount);
                 } catch (NumberFormatException e) {
                     receipt.setTotalExpense(0.0);
                 }
             }
 
-            // Parse and set date
+            // Parse and set date using standardized utility
             LocalDateTime purchaseDate = LocalDateTime.now();
             Object dateObj = receiptData.get("dateOfPurchase");
             if (dateObj != null) {
                 String dateStr = dateObj.toString();
-                LocalDateTime parsedDate = parseDate(dateStr);
+                LocalDateTime parsedDate = DateUtil.parseDate(dateStr);
                 if (parsedDate != null) {
                     purchaseDate = parsedDate;
                 }
@@ -231,12 +234,12 @@ public class ReceiptController {
             receipt.setDateOfPurchase(purchaseDate);
 
             // Set category if provided - handle any type
-            String category = "Others";
+            String category = "Others"; // Default category
             Object categoryObj = receiptData.get("category");
             if (categoryObj != null) {
                 category = categoryObj.toString();
-                receipt.setCategory(category);
             }
+            receipt.setCategory(category);
 
             // Set image URL if provided
             Object imageUrlObj = receiptData.get("imageUrl");
@@ -251,10 +254,19 @@ public class ReceiptController {
                 String[] itemsArray = new String[itemsList.size()];
                 for (int i = 0; i < itemsList.size(); i++) {
                     Object item = itemsList.get(i);
-                    itemsArray[i] = item != null ? item.toString() : "";
+
+                    // Handle case where items are objects with 'name' property
+                    if (item instanceof Map && ((Map<?, ?>) item).containsKey("name")) {
+                        itemsArray[i] = ((Map<?, ?>) item).get("name").toString();
+                    } else {
+                        itemsArray[i] = item != null ? item.toString() : "";
+                    }
                 }
                 receipt.setItems(itemsArray);
             }
+
+            // Set scan date to now
+            receipt.setScanDate(LocalDateTime.now());
 
             // Save receipt to MongoDB
             Receipt savedReceipt = receiptRepository.save(receipt);
