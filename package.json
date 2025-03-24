@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "@ngrx/component-store": "^19.0.1"
-  }
-}

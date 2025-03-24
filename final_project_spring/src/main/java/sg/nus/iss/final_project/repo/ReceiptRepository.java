@@ -4,11 +4,9 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
-import org.springframework.stereotype.Repository;
 
 import sg.nus.iss.final_project.model.Receipt;
 
-@Repository
 public interface ReceiptRepository extends MongoRepository<Receipt, String> {
     // Find receipts by user ID
     List<Receipt> findByUserId(String userId);
