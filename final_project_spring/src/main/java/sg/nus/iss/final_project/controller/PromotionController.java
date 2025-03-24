@@ -23,26 +23,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import sg.nus.iss.final_project.model.Promotion;
 import sg.nus.iss.final_project.repo.PromotionRepository;
+import sg.nus.iss.final_project.service.PromotionService;
 
 @RestController
 @RequestMapping("/api/promotions")
 public class PromotionController {
 
-    private final MongoTemplate mongoTemplate;
-    private final PromotionRepository promotionRepository;
+    @Autowired
+    private PromotionService promotionService;
 
     @Autowired
-    public PromotionController(MongoTemplate mongoTemplate, PromotionRepository promotionRepository) {
-        this.mongoTemplate = mongoTemplate;
-        this.promotionRepository = promotionRepository;
-    }
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private PromotionRepository promotionRepository;
 
     /**
      * Get all promotions
      */
     @GetMapping("")
     public ResponseEntity<List<Promotion>> getAllPromotions() {
-        List<Promotion> promotions = promotionRepository.findAll();
+        List<Promotion> promotions = promotionService.getAllPromotions();
         return ResponseEntity.ok(promotions);
     }
 
@@ -51,8 +52,18 @@ public class PromotionController {
      */
     @GetMapping("/category/{categoryName}")
     public ResponseEntity<List<Promotion>> getPromotionsByCategory(@PathVariable String categoryName) {
-        List<Promotion> promotions = promotionRepository.findByCategory(categoryName);
+        List<Promotion> promotions = promotionService.getPromotionsByCategory(categoryName);
         return ResponseEntity.ok(promotions);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPromotionById(@PathVariable String id) {
+        Promotion promotion = promotionService.getPromotionById(id);
+        if (promotion != null) {
+            return ResponseEntity.ok(promotion);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
@@ -60,7 +71,7 @@ public class PromotionController {
      */
     @GetMapping("/merchant/{merchant}")
     public ResponseEntity<List<Promotion>> getPromotionsByMerchant(@PathVariable String merchant) {
-        List<Promotion> promotions = promotionRepository.findByMerchantContainingIgnoreCase(merchant);
+        List<Promotion> promotions = promotionService.getPromotionsByMerchant(merchant);
         return ResponseEntity.ok(promotions);
     }
 
@@ -133,7 +144,7 @@ public class PromotionController {
         // Fallback logic for demo purpose when receipt not found in database
         String fallbackCategory = getFallbackCategory(receiptId);
         if (!fallbackCategory.isEmpty()) {
-            List<Promotion> promotions = promotionRepository.findByCategory(fallbackCategory);
+            List<Promotion> promotions = promotionService.getPromotionsByCategory(fallbackCategory);
             return ResponseEntity.ok(promotions);
         }
 
@@ -142,7 +153,6 @@ public class PromotionController {
     }
 
     // Additional methods for PromotionController
-
     // Search promotions by text in merchant name or description
     @GetMapping("/search")
     public ResponseEntity<List<Promotion>> searchPromotions(@RequestParam String query) {
@@ -150,7 +160,7 @@ public class PromotionController {
         return ResponseEntity.ok(promotions);
     }
 
-    // Get promotions that have not expired
+    // // Get promotions that have not expired
     @GetMapping("/active")
     public ResponseEntity<List<Promotion>> getActivePromotions() {
         String currentDate = LocalDate.now().toString();
@@ -172,7 +182,7 @@ public class PromotionController {
     // Add new promotion
     @PostMapping
     public ResponseEntity<Promotion> addPromotion(@RequestBody Promotion promotion) {
-        Promotion savedPromotion = promotionRepository.save(promotion);
+        Promotion savedPromotion = promotionService.savePromotion(promotion);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPromotion);
     }
 
@@ -184,7 +194,7 @@ public class PromotionController {
         }
 
         promotion.setId(id); // Ensure ID is set correctly
-        Promotion updatedPromotion = promotionRepository.save(promotion);
+        Promotion updatedPromotion = promotionService.savePromotion(promotion);
         return ResponseEntity.ok(updatedPromotion);
     }
 
@@ -195,7 +205,7 @@ public class PromotionController {
             return ResponseEntity.notFound().build();
         }
 
-        promotionRepository.deleteById(id);
+        promotionService.deletePromotion(id);
         return ResponseEntity.noContent().build();
     }
 

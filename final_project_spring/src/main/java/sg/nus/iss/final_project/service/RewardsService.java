@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,16 +46,19 @@ public class RewardsService {
     private static final double POINTS_PER_DOLLAR = 1.0;
 
     // Get available rewards
+    @Cacheable(value = "rewards", key = "'available'")
     public List<Reward> getAvailableRewards() {
         return rewardRepository.findByIsAvailableTrue();
     }
 
     // Get rewards by category
+    @Cacheable(value = "rewards", key = "'category:' + #category")
     public List<Reward> getRewardsByCategory(String category) {
         return rewardRepository.findByCategoryAndIsAvailableTrue(category);
     }
 
     // Get rewards affordable by user
+    @Cacheable(value = "rewards", key = "'affordable:' + #userId")
     public List<Reward> getAffordableRewards(String userId) {
         Optional<UserPoints> userPointsOpt = userPointsRepository.findByUserId(userId);
         if (userPointsOpt.isPresent()) {
@@ -64,12 +69,14 @@ public class RewardsService {
     }
 
     // Get a specific reward
+    @Cacheable(value = "rewards", key = "'id:' + #rewardId")
     public Optional<Reward> getRewardById(String rewardId) {
         Reward reward = rewardRepository.findById(rewardId);
         return Optional.ofNullable(reward);
     }
 
     // Get user points
+    @Cacheable(value = "userPoints", key = "#userId")
     public UserPoints getUserPoints(String userId) {
         return userPointsRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -97,6 +104,7 @@ public class RewardsService {
     }
 
     // Award points for scanning a receipt
+    @CacheEvict(value = "userPoints", key = "#userId")
     @Transactional
     public PointTransaction awardPointsForReceipt(String receiptId) {
         Receipt receipt = receiptRepository.findById(receiptId);
@@ -140,6 +148,7 @@ public class RewardsService {
     }
 
     // Redeem a reward
+    @CacheEvict(value = { "userPoints", "rewards" }, allEntries = true)
     @Transactional
     public UserReward redeemReward(String userId, String rewardId) throws Exception {
         // Get user points
