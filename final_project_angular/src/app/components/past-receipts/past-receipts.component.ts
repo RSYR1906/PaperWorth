@@ -117,6 +117,7 @@ export class PastReceiptsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading receipts:', error);
+          console.error('Error details:', JSON.stringify(error));
           this.handleError(error);
           this.isLoading = false;
         }
