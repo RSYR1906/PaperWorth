@@ -1,4 +1,3 @@
-<!-- Error Message Component -->
 <div class="promotions-container">
   <!-- Hero Section -->
   <div class="hero">
@@ -14,33 +13,33 @@
     <p>Loading your saved promotions...</p>
   </div>
 
-  <!-- Error message - Standard Error -->
-  <div *ngIf="errorMessage && !isLoading && errorType === 'general'" class="error-message">
-    <div class="error-icon">⚠️</div>
-    <h4>Unable to load promotions</h4>
-    <p>{{errorMessage}}</p>
-    <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
-  </div>
+  <!-- Error Messages -->
+  <ng-container *ngIf="!isLoading && errorMessage">
+    <div *ngIf="errorType === 'general'" class="error-message">
+      <div class="error-icon">⚠️</div>
+      <h4>Unable to load promotions</h4>
+      <p>{{errorMessage}}</p>
+      <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
+    </div>
 
-  <!-- Error message - Network Error -->
-  <div *ngIf="errorMessage && !isLoading && errorType === 'network'" class="error-message network">
-    <div class="error-icon">📶</div>
-    <h4>Connection Issue</h4>
-    <p>It looks like you're offline or having connectivity problems. Please check your internet connection and try again.</p>
-    <button class="action-btn" (click)="loadSavedPromotions()">Retry Connection</button>
-  </div>
+    <div *ngIf="errorType === 'network'" class="error-message network">
+      <div class="error-icon">📶</div>
+      <h4>Connection Issue</h4>
+      <p>Please check your internet connection and try again.</p>
+      <button class="action-btn" (click)="loadSavedPromotions()">Retry Connection</button>
+    </div>
 
-  <!-- Error message - Server Error -->
-  <div *ngIf="errorMessage && !isLoading && errorType === 'server'" class="error-message">
-    <div class="error-icon">🔧</div>
-    <h4>Server Error</h4>
-    <p>Our servers are experiencing some issues. We're working on fixing it as soon as possible. Please try again in a few moments.</p>
-    <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
-  </div>
+    <div *ngIf="errorType === 'server'" class="error-message">
+      <div class="error-icon">🔧</div>
+      <h4>Server Error</h4>
+      <p>We're working on it. Please try again later.</p>
+      <button class="action-btn" (click)="loadSavedPromotions()">Try Again</button>
+    </div>
+  </ng-container>
 
-  <!-- Main content when not loading and no error -->
+  <!-- Main Content -->
   <div *ngIf="!isLoading && !errorMessage" class="promotions-content">
-    <!-- Category filter tabs -->
+    <!-- Category Tabs -->
     <div class="category-tabs">
       <button *ngFor="let category of categories"
               [class.active]="selectedCategory === category.id"
@@ -49,45 +48,30 @@
       </button>
     </div>
 
-    <!-- No saved promotions at all -->
-    <div *ngIf="savedPromotions.length === 0" class="empty-state">
+    <!-- No Promotions -->
+    <div *ngIf="(savedPromotions$ | async)?.length === 0" class="empty-state">
       <div class="empty-icon">🏷️</div>
       <h4>No Saved Promotions</h4>
-      <p>You haven't saved any promotions yet. Browse the available promotions and save the ones you like!</p>
+      <p>You haven't saved any promotions yet.</p>
       <button routerLink="/promotions" class="browse-button">Browse Promotions</button>
     </div>
 
-    <!-- Promotions listing -->
-    <div *ngIf="savedPromotions.length > 0" class="promotions-grid">
-      <!-- Show this when there are filtered promotions -->
-      <ng-container *ngIf="filteredPromotions.length > 0">
+    <!-- Promotions Grid -->
+    <div *ngIf="(savedPromotions$ | async)!.length > 0" class="promotions-grid">
+      <ng-container *ngIf="(filteredPromotions$ | async)!.length > 0">
         <div class="deals-grid">
-          <div *ngFor="let promotion of filteredPromotions" class="promotion-card" (click)="viewPromotionDetails(promotion)">
+          <div *ngFor="let promotion of filteredPromotions$ | async" class="promotion-card" (click)="viewPromotionDetails(promotion)">
             <div class="promotion-image">
-              <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" 
-                   [alt]="promotion.merchant + ' promotion'"
-                   onerror="this.src='placeholder-image.jpg'">
-              
-              <!-- Status badges -->
-              <div *ngIf="promotion.savedAt" class="saved-timestamp">
-                Saved {{getTimeElapsed(promotion.savedAt)}}
-              </div>
-              
-              <!-- Expiry Badge -->
-              <div *ngIf="isExpiringSoon(promotion.expiry) && !hasExpired(promotion.expiry)" class="expiry-badge">
-                Expires Soon
-              </div>
-              <div *ngIf="hasExpired(promotion.expiry)" class="expiry-badge expired">
-                Expired
-              </div>
+              <img [src]="promotion.imageUrl || 'placeholder-image.jpg'" [alt]="promotion.merchant + ' promotion'" onerror="this.src='placeholder-image.jpg'">
+              <div *ngIf="promotion.savedAt" class="saved-timestamp">Saved {{getTimeElapsed(promotion.savedAt)}}</div>
+              <div *ngIf="isExpiringSoon(promotion.expiry) && !hasExpired(promotion.expiry)" class="expiry-badge">Expires Soon</div>
+              <div *ngIf="hasExpired(promotion.expiry)" class="expiry-badge expired">Expired</div>
             </div>
             <div class="promotion-info">
               <p class="promotion-merchant">{{promotion.merchant}}</p>
               <p class="promotion-description">{{promotion.description | slice:0:80}}{{promotion.description.length > 80 ? '...' : ''}}</p>
               <div class="promotion-meta">
-                <div class="promo-expiry" [class.expired-text]="hasExpired(promotion.expiry)">
-                  Valid until: {{ formatDate(promotion.expiry) }}
-                </div>
+                <div class="promo-expiry" [class.expired-text]="hasExpired(promotion.expiry)">Valid until: {{ formatDate(promotion.expiry) }}</div>
                 <div class="promo-code" *ngIf="promotion.code">Code: {{ promotion.code }}</div>
               </div>
             </div>
@@ -95,53 +79,40 @@
         </div>
       </ng-container>
 
-      <!-- Empty state for category filter -->
-      <div *ngIf="filteredPromotions.length === 0 && savedPromotions.length > 0" class="empty-state">
+      <!-- Empty Filter State -->
+      <div *ngIf="(filteredPromotions$ | async)?.length === 0 && (savedPromotions$ | async)!.length > 0" class="empty-state">
         <p>No saved promotions in this category.</p>
         <button (click)="selectCategory('all')" class="view-all-button">View All Categories</button>
       </div>
     </div>
   </div>
 
-  <!-- Promotion details modal -->
+  <!-- Promotion Modal -->
   <div *ngIf="selectedPromotion" class="promotion-modal-overlay" (click)="closePromotionDetails()">
     <div class="promotion-modal" (click)="$event.stopPropagation()">
       <button class="close-button" (click)="closePromotionDetails()">×</button>
-      
       <div class="modal-content">
         <div class="modal-image">
-          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" 
-               alt="Promotion Image"
-               onerror="this.src='placeholder-image.jpg'">
+          <img [src]="selectedPromotion.imageUrl || 'placeholder-image.jpg'" alt="Promotion Image" onerror="this.src='placeholder-image.jpg'">
         </div>
-        
         <div class="modal-details">
           <p class="merchant-name">{{selectedPromotion.merchant}}</p>
           <p class="description-text">{{selectedPromotion.description}}</p>
-          
-          <!-- Promo code if available -->
           <div *ngIf="selectedPromotion.code" class="promo-code-container">
             <h3>Promotion Code:</h3>
-            <div class="promo-code">
-              <span>{{selectedPromotion.code}}</span>
-            </div>
+            <div class="promo-code"><span>{{selectedPromotion.code}}</span></div>
           </div>
-          
           <div *ngIf="selectedPromotion.location" class="location-info">
             <p><strong>Location:</strong> {{selectedPromotion.location}}</p>
           </div>
-          
           <div *ngIf="selectedPromotion.conditions" class="terms-conditions">
             <h3>Terms & Conditions</h3>
             <p>{{selectedPromotion.conditions}}</p>
           </div>
-          
           <div *ngIf="selectedPromotion.category" class="category-info">
             <span class="category-badge">{{selectedPromotion.category}}</span>
           </div>
-          
           <div class="action-buttons">
-            <!-- Remove button -->
             <button class="remove-button" (click)="removePromotion(selectedPromotion)">
               <i class="fa fa-trash"></i> Remove from Saved
             </button>
@@ -151,15 +122,16 @@
     </div>
   </div>
 
-  <!-- Success notification -->
+  <!-- Success Notification -->
   <div class="success-notification" [style.display]="showSuccessNotification ? 'block' : 'none'">
     <div class="success-content">
-        <div class="success-icon">✓</div>
-        <div class="success-message">
-          <h4>{{ successNotificationMessage }}</h4>
-        </div>
-      </div>
-      <div class="timer-bar">
-        <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+      <div class="success-icon">✓</div>
+      <div class="success-message">
+        <h4>{{ successNotificationMessage }}</h4>
       </div>
     </div>
+    <div class="timer-bar">
+      <div class="timer-progress" [style.width.%]="notificationTimeRemaining"></div>
+    </div>
+  </div>
+</div>

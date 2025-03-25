@@ -26,6 +26,7 @@ import { ReceiptService } from './services/receipt.service';
 import { RewardsService } from './services/rewards.service';
 import { SavedPromotionsService } from './services/saved-promotions.service';
 import { UserService } from './services/user.service';
+import { HomePageStore } from './stores/homepage.store';
 
 
 @NgModule({
@@ -59,6 +60,7 @@ import { UserService } from './services/user.service';
     SavedPromotionsService,
     CameraService,
     ReceiptProcessingService,
+    HomePageStore,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]

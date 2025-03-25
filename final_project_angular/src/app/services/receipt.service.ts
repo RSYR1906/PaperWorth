@@ -1,4 +1,5 @@
 // src/app/services/receipt.service.ts
+
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
@@ -16,7 +17,7 @@ export class ReceiptService {
   constructor(
     private http: HttpClient,
     private budgetService: BudgetService
-  ) { }
+  ) {}
 
   // Upload receipt - now uses the backend to update budget automatically
   uploadReceipt(formData: FormData): Observable<Receipt> {
@@ -33,7 +34,10 @@ export class ReceiptService {
   getUserReceipts(userId: string): Observable<Receipt[]> {
     console.log(`Fetching receipts for user ID: ${userId}`);
     return this.http.get<Receipt[]>(`${this.apiUrl}/user/${userId}`).pipe(
-      tap(receipts => console.log('Received receipts from API:', receipts)),
+      tap(receipts => {
+        console.log('Received receipts from API:', receipts);
+        this.standardizeReceiptFields(receipts);
+      }),
       catchError(error => {
         console.error('Error fetching user receipts:', error);
         return throwError(() => new Error('Failed to fetch receipts. Please try again.'));
@@ -73,5 +77,68 @@ export class ReceiptService {
         return throwError(() => new Error('Failed to delete receipt. Please try again.'));
       })
     );
+  }
+
+  // Save a receipt
+  saveReceipt(receiptData: any): Observable<{ receipt: Receipt, pointsAwarded: number }> {
+    const standardizedReceipt = this.prepareReceiptForBackend(receiptData);
+    console.log('Saving receipt with standardized fields:', standardizedReceipt);
+
+    return this.http.post<{ receipt: Receipt, pointsAwarded: number }>(this.apiUrl, standardizedReceipt).pipe(
+      tap(response => {
+        console.log('Receipt saved successfully:', response);
+        if (response.receipt) {
+          this.standardizeReceiptFields([response.receipt]);
+        }
+      }),
+      catchError(error => {
+        console.error('Error saving receipt:', error);
+        return throwError(() => new Error('Failed to save receipt. Please try again.'));
+      })
+    );
+  }
+
+  // Standardize fields in receipt objects
+  private standardizeReceiptFields(receipts: any[]): void {
+    if (!receipts || !Array.isArray(receipts)) return;
+
+    receipts.forEach(receipt => {
+      if (receipt.totalAmount !== undefined && receipt.totalExpense === undefined) {
+        receipt.totalExpense = receipt.totalAmount;
+      }
+
+      if (receipt.dateOfPurchase && typeof receipt.dateOfPurchase === 'string') {
+        try {
+          const date = new Date(receipt.dateOfPurchase);
+          if (!isNaN(date.getTime())) {
+            receipt.dateOfPurchase = date.toISOString();
+          }
+        } catch (e) {
+          console.warn('Could not parse date:', receipt.dateOfPurchase);
+        }
+      }
+    });
+  }
+
+  // Prepare receipt data before sending to backend
+  private prepareReceiptForBackend(receiptData: any): any {
+    const standardizedReceipt: any = { ...receiptData };
+
+    if (standardizedReceipt.totalAmount !== undefined && standardizedReceipt.totalExpense === undefined) {
+      standardizedReceipt.totalExpense = standardizedReceipt.totalAmount;
+    }
+
+    if (standardizedReceipt.dateOfPurchase) {
+      try {
+        const date = new Date(standardizedReceipt.dateOfPurchase);
+        if (!isNaN(date.getTime())) {
+          standardizedReceipt.dateOfPurchase = date.toISOString();
+        }
+      } catch (e) {
+        console.warn('Could not format date:', standardizedReceipt.dateOfPurchase);
+      }
+    }
+
+    return standardizedReceipt;
   }
 }

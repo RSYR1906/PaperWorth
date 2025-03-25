@@ -1,111 +1,124 @@
-// src/app/models/user.model.ts
+// src/app/model.ts
+
+// User Management Models
 export interface User {
-    id: number;
-    name: string;
-    email: string;
-    createdAt: string;
-  }
+  id: string;
+  name: string;
+  email: string;
+  firebaseId?: string;      // Optional as it may not be returned to the client
+  createdAt: string;        // ISO date string
+}
 
-
-// src/app/models/receipt.model.ts
+// Receipt Management Models
 export interface Receipt {
-  id: string;                     // Unique identifier for the receipt
-  userId: string;                 // User who owns this receipt
-  merchantName: string;           // Name of merchant/store (from OCR)
-  totalExpense: number;            // Total expense amount (from OCR)
-  dateOfPurchase: string;         // Date of purchase (from OCR)
-  scanDate: string;               // When the receipt was scanned
-  category: string;               // Category determined from merchant name
+  id: string;
+  userId: string;
+  merchantName: string;
+  dateOfPurchase: string;        // ISO date string
+  totalExpense: number;          // Standardized from totalAmount
+  category: string;
+  imageUrl?: string;             // Optional
+  items?: ReceiptItem[];         // Optional
+  scanDate?: string;             // Optional, ISO date string
   
-  // Optional fields
-  imageUrl?: string;              // URL to stored receipt image
-  items?: ReceiptItem[];          // List of purchased items
-  hasPromotions?: boolean;        // Whether the receipt has promotions
-  
-  // Additional metadata
-  additionalFields?: {            // Container for any other data
-    fullText?: string;            // Complete OCR text
-    [key: string]: any;           // Any other fields
+  // Additional properties for frontend use
+  additionalFields?: {
+      fullText?: string;         // Complete OCR text
+      [key: string]: any;        // Any other fields
   };
 }
 
 export interface ReceiptItem {
-  name: string;                   // Item name
-  price: number;                  // Item price
-  quantity: number;               // Quantity purchased
+  name: string;
+  price: number;
+  quantity: number;
 }
 
-// src/app/models/promotion.model.ts
+// Budget Management Models
+export interface Budget {
+  id?: string;
+  userId: string;
+  monthYear: string;              // Format: YYYY-MM
+  totalBudget: number;
+  totalSpent: number;
+  categories: BudgetCategory[];
+}
+
+export interface BudgetCategory {
+  category: string;
+  budgetAmount: number;
+  spentAmount: number;
+  transactions: number;
+}
+
+// Promotion Management Models
 export interface Promotion {
   id: string;
   merchant: string;
   description: string;
+  expiry: string;               // Format matches backend (YYYY-MM-DD)
+  imageUrl?: string;            // Optional
+  location?: string;            // Optional
+  code?: string;                // Optional
+  conditions?: string;          // Optional
   category: string;
-  expiry: string;
-  location?: string;
-  code?: string;
-  conditions?: string;
-  imageUrl?: string;
-  link?: string;
-  savedAt?: string;
-  }
+  promotionId?: number;         // Optional, for backwards compatibility
+  
+  // Additional fields for frontend use
+  savedAt?: string;             // ISO date string, when user saved this promotion
+}
 
-  export interface SavedPromotion {
-    id: string;
-    userId: string;
-    promotionId: string;
-    savedAt: string;
-  }
+export interface SavedPromotion {
+  id: string;
+  userId: string;
+  promotionId: string;
+  savedAt: string;             // ISO date string
+}
 
-  // src/app/model.ts - Add the following interfaces
-
-// Reward model
+// Rewards Management Models
 export interface Reward {
   id: string;
   name: string;
   description: string;
   pointsCost: number;
   imageUrl: string;
-  category: string;
+  category: string;             // "VOUCHER", "ELECTRONICS", etc.
   isAvailable: boolean;
   quantity: number;
-  merchantName?: string;
-  termsConditions?: string;
-  expiryDate?: string;
+  merchantName?: string;        // Optional, for vouchers
+  termsConditions?: string;     // Optional
+  expiryDate?: string;          // Optional, ISO date string
 }
 
-// User Points model
-export interface UserPoints {
-  id: string;
-  userId: string;
-  totalPoints: number;
-  availablePoints: number;
-  spentPoints: number;
-  lastUpdated: string;
-}
-
-// User Reward model (for redemption history)
 export interface UserReward {
   id: string;
   userId: string;
   rewardId: string;
   rewardName: string;
   pointsSpent: number;
-  redeemedDate: string;
-  status: string;
-  redemptionCode?: string;
-  deliveryInfo?: string;
-  expiryDate?: string;
+  redeemedDate: string;         // ISO date string
+  status: string;               // "PENDING", "FULFILLED", "CANCELLED"
+  redemptionCode?: string;      // Optional
+  deliveryInfo?: string;        // Optional
+  expiryDate?: string;          // Optional, ISO date string
 }
 
-// Point Transaction model
+export interface UserPoints {
+  id: string;
+  userId: number;
+  totalPoints: number;
+  availablePoints: number;
+  spentPoints: number;
+  lastUpdated: string;           // ISO date string
+}
+
 export interface PointTransaction {
   id: string;
-  userId: string;
+  userId: number;
   points: number;
-  transactionType: string;
-  source: string;
+  transactionType: string;        // "EARNED", "SPENT"
+  source: string;                 // "RECEIPT_SCAN", "REWARD_REDEMPTION", etc.
   referenceId: string;
-  transactionDate: string;
+  transactionDate: string;        // ISO date string
   description: string;
 }

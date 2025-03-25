@@ -155,8 +155,7 @@ export class SavedPromotionsService {
    * Public method to manually refresh saved promotions
    */
   refreshUserSavedPromotions(userId: string): void {
-    this.loadingSubject.next(true);
-    this.refreshSavedPromotions(userId);
+    this.getSavedPromotions(userId).subscribe(); // triggers a fresh fetch
   }
 
   /**

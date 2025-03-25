@@ -13,11 +13,14 @@ import { BudgetService } from '../../services/budget.service';
 export class BudgetSettingsComponent implements OnInit {
   budgetForm: FormGroup;
   currentBudget: any = null;
-  isLoading: boolean = true;
-  isSubmitting: boolean = false;
   categories: any[] = [];
-  successMessage: string = '';
-  errorMessage: string = '';
+  
+  isLoading = true;
+  isSubmitting = false;
+  
+  successMessage = '';
+  errorMessage = '';
+  
   originalValues: Map<string, number> = new Map();
 
   constructor(
@@ -25,7 +28,6 @@ export class BudgetSettingsComponent implements OnInit {
     private formBuilder: FormBuilder,
     private budgetService: BudgetService
   ) {
-    // Initialize form
     this.budgetForm = this.formBuilder.group({
       totalBudget: [0, [Validators.required, Validators.min(1)]]
     });
@@ -35,7 +37,7 @@ export class BudgetSettingsComponent implements OnInit {
     this.loadBudgetData();
   }
 
-  loadBudgetData(): void {
+  private loadBudgetData(): void {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (!currentUser.id) {
       this.router.navigate(['/login']);
@@ -44,103 +46,118 @@ export class BudgetSettingsComponent implements OnInit {
 
     this.isLoading = true;
     this.budgetService.loadUserBudget(currentUser.id).subscribe({
-      next: (budget) => {
-        this.currentBudget = budget;
-        this.categories = budget.categories;
-        
-        // Set form values
-        this.budgetForm.patchValue({
-          totalBudget: budget.totalBudget
-        });
-        
-        // Store original values for change detection
-        this.originalValues.set('totalBudget', budget.totalBudget);
-        
-        // Add category form controls dynamically
-        this.categories.forEach(category => {
-          this.budgetForm.addControl(
-            `category_${category.category}`,
-            this.formBuilder.control(category.budgetAmount, [Validators.required, Validators.min(0)])
-          );
-          
-          // Store original category budget values
-          this.originalValues.set(category.category, category.budgetAmount);
-        });
-        
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading budget:', error);
-        this.errorMessage = 'Failed to load budget data. Please try again.';
-        this.isLoading = false;
-      }
+      next: (budget) => this.handleBudgetLoadSuccess(budget),
+      error: (error) => this.handleBudgetLoadError(error)
     });
   }
 
-  // Save the budget
+  private handleBudgetLoadSuccess(budget: any): void {
+    this.currentBudget = budget;
+    this.categories = budget.categories;
+    
+    this.budgetForm.patchValue({ totalBudget: budget.totalBudget });
+    this.originalValues.set('totalBudget', budget.totalBudget);
+    
+    this.setupCategoryControls();
+    this.isLoading = false;
+  }
+
+  private handleBudgetLoadError(error: any): void {
+    console.error('Error loading budget:', error);
+    this.errorMessage = 'Failed to load budget data. Please try again.';
+    this.isLoading = false;
+  }
+
+  private setupCategoryControls(): void {
+    this.categories.forEach(category => {
+      const controlName = `category_${category.category}`;
+      
+      this.budgetForm.addControl(
+        controlName,
+        this.formBuilder.control(category.budgetAmount, [Validators.required, Validators.min(0)])
+      );
+      
+      this.originalValues.set(category.category, category.budgetAmount);
+    });
+  }
+
   saveBudget(): void {
     if (this.budgetForm.invalid) {
       this.errorMessage = 'Please correct the highlighted fields.';
       return;
     }
 
+    this.resetMessages();
     this.isSubmitting = true;
     this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
 
-    // Get the new total budget
     const totalBudget = this.budgetForm.get('totalBudget')?.value;
     
-    // Update the total budget first
     this.budgetService.setTotalBudget(totalBudget).subscribe({
-      next: (budget) => {
-        // Then update each category budget
-        const updatePromises = this.categories.map(category => {
-          const categoryBudget = this.budgetForm.get(`category_${category.category}`)?.value;
-          return this.budgetService.setCategoryBudget(category.category, categoryBudget);
-        });
-        
-        // Once all updates are done
-        Promise.all(updatePromises).then(() => {
-          this.successMessage = 'Budget updated successfully!';
-          this.isLoading = false;
-          this.isSubmitting = false;
-          
-          // Update original values for change detection
-          this.originalValues.set('totalBudget', totalBudget);
-          this.categories.forEach(category => {
-            const categoryBudget = this.budgetForm.get(`category_${category.category}`)?.value;
-            this.originalValues.set(category.category, categoryBudget);
-          });
-          
-          // Navigate back to expense tracker
-          setTimeout(() => {
-            this.router.navigate(['/expense-tracker']);
-          }, 1500);
-        }).catch(error => {
-          console.error('Error updating category budgets:', error);
-          this.errorMessage = 'Failed to update category budgets. Please try again.';
-          this.isLoading = false;
-          this.isSubmitting = false;
-        });
-      },
-      error: (error) => {
-        console.error('Error updating total budget:', error);
-        this.errorMessage = 'Failed to update budget. Please try again.';
-        this.isLoading = false;
-        this.isSubmitting = false;
-      }
+      next: (budget) => this.updateCategoryBudgets(totalBudget),
+      error: (error) => this.handleBudgetUpdateError(error)
     });
   }
 
-  // Calculate the percentage of the total budget for a category
+  private resetMessages(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  private updateCategoryBudgets(totalBudget: number): void {
+    const updatePromises = this.categories.map(category => {
+      const controlName = `category_${category.category}`;
+      const categoryBudget = this.budgetForm.get(controlName)?.value;
+      return this.budgetService.setCategoryBudget(category.category, categoryBudget);
+    });
+    
+    Promise.all(updatePromises).then(() => {
+      this.handleUpdateSuccess(totalBudget);
+    }).catch(error => {
+      this.handleCategoryUpdateError(error);
+    });
+  }
+
+  private handleUpdateSuccess(totalBudget: number): void {
+    this.successMessage = 'Budget updated successfully!';
+    this.isLoading = false;
+    this.isSubmitting = false;
+    
+    this.updateOriginalValues(totalBudget);
+    
+    setTimeout(() => {
+      this.router.navigate(['/expense-tracker']);
+    }, 1500);
+  }
+
+  private updateOriginalValues(totalBudget: number): void {
+    this.originalValues.set('totalBudget', totalBudget);
+    this.categories.forEach(category => {
+      const controlName = `category_${category.category}`;
+      const categoryBudget = this.budgetForm.get(controlName)?.value;
+      this.originalValues.set(category.category, categoryBudget);
+    });
+  }
+
+  private handleBudgetUpdateError(error: any): void {
+    console.error('Error updating total budget:', error);
+    this.errorMessage = 'Failed to update budget. Please try again.';
+    this.isLoading = false;
+    this.isSubmitting = false;
+  }
+
+  private handleCategoryUpdateError(error: any): void {
+    console.error('Error updating category budgets:', error);
+    this.errorMessage = 'Failed to update category budgets. Please try again.';
+    this.isLoading = false;
+    this.isSubmitting = false;
+  }
+
   calculatePercentage(categoryBudget: number): number {
     if (!this.currentBudget || this.currentBudget.totalBudget <= 0) return 0;
     return Math.round((categoryBudget / this.budgetForm.get('totalBudget')?.value) * 100);
   }
 
-  // When total budget changes, recalculate all category budgets proportionally
   onTotalBudgetChange(): void {
     if (!this.currentBudget) return;
     
@@ -149,23 +166,24 @@ export class BudgetSettingsComponent implements OnInit {
     
     if (oldTotalBudget <= 0 || newTotalBudget <= 0) return;
     
-    // Update each category budget proportionally
+    this.adjustCategoryBudgets(oldTotalBudget, newTotalBudget);
+  }
+
+  private adjustCategoryBudgets(oldTotalBudget: number, newTotalBudget: number): void {
     this.categories.forEach(category => {
-      const oldCategoryBudget = this.budgetForm.get(`category_${category.category}`)?.value || 0;
+      const controlName = `category_${category.category}`;
+      const oldCategoryBudget = this.budgetForm.get(controlName)?.value || 0;
       const newCategoryBudget = (oldCategoryBudget / oldTotalBudget) * newTotalBudget;
       
-      this.budgetForm.get(`category_${category.category}`)?.setValue(
-        Math.round(newCategoryBudget * 100) / 100 // Round to 2 decimal places
-      );
+      this.budgetForm.get(controlName)?.setValue(Math.round(newCategoryBudget * 100) / 100);
     });
   }
 
-  // Navigate back to expense tracker
   goBack(): void {
     this.router.navigate(['/expense-tracker']);
   }
   
-  // Helper function to get category colors (match with expense tracker component)
+  // UI Helper Methods
   getCategoryColor(category: string): string {
     const lowerCategory = category.toLowerCase();
     
@@ -179,11 +197,9 @@ export class BudgetSettingsComponent implements OnInit {
     if (lowerCategory.includes('transportation')) return '#9C27B0';
     if (lowerCategory.includes('entertainment')) return '#E91E63';
     
-    // Default color
     return '#607D8B';
   }
   
-  // Get appropriate icons for categories
   getCategoryIcon(category: string): string {
     const lowerCategory = category.toLowerCase();
     
@@ -197,11 +213,9 @@ export class BudgetSettingsComponent implements OnInit {
     if (lowerCategory.includes('transportation')) return '🚗';
     if (lowerCategory.includes('entertainment')) return '🎬';
     
-    // Default icon
     return '💰';
   }
   
-  // Check if a category value has changed from original
   hasChanged(categoryName: string): boolean {
     const currentValue = this.budgetForm.get(`category_${categoryName}`)?.value;
     const originalValue = this.originalValues.get(categoryName);
@@ -209,14 +223,12 @@ export class BudgetSettingsComponent implements OnInit {
     return originalValue !== undefined && Math.abs(originalValue - currentValue) > 0.01;
   }
   
-  // Get percentage class based on value
   getPercentageClass(percentage: number): string {
     if (percentage > 30) return 'high';
     if (percentage > 15) return 'medium';
     return 'low';
   }
   
-  // Format number as currency
   formatCurrency(value: number): string {
     return value.toFixed(2);
   }

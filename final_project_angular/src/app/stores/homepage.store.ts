@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, merge, of } from 'rxjs';
 import { catchError, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { environment } from '../../environments/environment.prod';
 
@@ -13,7 +13,9 @@ import { PromotionService } from '../services/promotions.service';
 import { ReceiptProcessingService } from '../services/receipt-processing.service';
 import { SavedPromotionsService } from '../services/saved-promotions.service';
 
-// Define the state interface
+/**
+ * Interface defining the HomePage component state
+ */
 export interface HomePageState {
   userName: string;
   monthlyExpenses: number;
@@ -37,10 +39,65 @@ export interface HomePageState {
   savedPromotionsLimit: number;
 }
 
+const INITIAL_STATE: HomePageState = {
+  userName: 'User',
+  monthlyExpenses: 0,
+  userReceiptHistory: [],
+  recommendedPromotions: [],
+  savedPromotions: [],
+  matchingPromotions: [],
+  recentlySavedReceipt: null,
+  selectedPromotion: null,
+  showSuccessNotification: false,
+  successNotificationMessage: '',
+  notificationTimeRemaining: 100,
+  showFullText: false,
+  isLoading: {
+    budget: false,
+    receipts: false,
+    promotions: false,
+    savedPromotions: false
+  },
+  showMoreSavedPromotions: false,
+  savedPromotionsLimit: 3
+};
+
 @Injectable()
 export class HomePageStore extends ComponentStore<HomePageState> {
-  private apiUrl = `${environment.apiUrl}`;
+  private readonly apiUrl = `${environment.apiUrl}`;
   private notificationTimer: any = null;
+
+  // Selectors
+  readonly userName$ = this.select(state => state.userName);
+  readonly monthlyExpenses$ = this.select(state => state.monthlyExpenses);
+  readonly userReceiptHistory$ = this.select(state => state.userReceiptHistory);
+  readonly recommendedPromotions$ = this.select(state => state.recommendedPromotions);
+  readonly savedPromotions$ = this.select(state => state.savedPromotions);
+  readonly matchingPromotions$ = this.select(state => state.matchingPromotions);
+  readonly recentlySavedReceipt$ = this.select(state => state.recentlySavedReceipt);
+  readonly selectedPromotion$ = this.select(state => state.selectedPromotion);
+  readonly showSuccessNotification$ = this.select(state => state.showSuccessNotification);
+  readonly successNotificationMessage$ = this.select(state => state.successNotificationMessage);
+  readonly notificationTimeRemaining$ = this.select(state => state.notificationTimeRemaining);
+  readonly showFullText$ = this.select(state => state.showFullText);
+  readonly isLoading$ = this.select(state => state.isLoading);
+  readonly showMoreSavedPromotions$ = this.select(state => state.showMoreSavedPromotions);
+  readonly savedPromotionsLimit$ = this.select(state => state.savedPromotionsLimit);
+
+  // Computed selector for displayed saved promotions
+  readonly displayedSavedPromotions$ = this.select(
+    this.savedPromotions$,
+    this.showMoreSavedPromotions$,
+    this.savedPromotionsLimit$,
+    (savedPromotions, showMore, limit) => 
+      showMore ? savedPromotions : savedPromotions.slice(0, limit)
+  );
+
+  // Helper selector to check if a promotion is saved
+  readonly isSavedPromotion = (promotion: any) => this.select(
+    this.savedPromotions$,
+    (savedPromotions) => savedPromotions.some(p => p.id === promotion?.id)
+  );
 
   constructor(
     private http: HttpClient,
@@ -52,29 +109,271 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     private receiptProcessingService: ReceiptProcessingService
   ) {
     // Initialize the state
-    super({
-      userName: 'User',
-      monthlyExpenses: 0,
-      userReceiptHistory: [],
-      recommendedPromotions: [],
-      savedPromotions: [],
-      matchingPromotions: [],
-      recentlySavedReceipt: null,
-      selectedPromotion: null,
-      showSuccessNotification: false,
-      successNotificationMessage: '',
-      notificationTimeRemaining: 100,
-      showFullText: false,
-      isLoading: {
-        budget: false,
-        receipts: false,
-        promotions: false,
-        savedPromotions: false
-      },
-      showMoreSavedPromotions: false,
-      savedPromotionsLimit: 3
-    });
+    super(INITIAL_STATE);
+    this.setupSubscriptions();
+  }
 
+  // Updaters
+  readonly updateUserName = this.updater(
+    (state, userName: string) => ({ ...state, userName })
+  );
+
+  readonly updateMonthlyExpenses = this.updater(
+    (state, monthlyExpenses: number) => ({ ...state, monthlyExpenses })
+  );
+
+  readonly updateRecentlySavedReceipt = this.updater(
+    (state, receipt: any) => ({ ...state, recentlySavedReceipt: receipt })
+  );
+
+  readonly updateSelectedPromotion = this.updater(
+    (state, promotion: any) => {
+      console.log('[STORE] Updating selected promotion:', promotion);
+      return { ...state, selectedPromotion: promotion };
+    }
+  );
+
+  readonly toggleShowMoreSavedPromotions = this.updater(
+    (state) => ({ ...state, showMoreSavedPromotions: !state.showMoreSavedPromotions })
+  );
+
+  readonly toggleShowFullText = this.updater(
+    (state) => ({ ...state, showFullText: !state.showFullText })
+  );
+
+  readonly closeSuccessNotification = this.updater((state) => {
+    this.clearNotificationTimer();
+    return {
+      ...state,
+      showSuccessNotification: false,
+      successNotificationMessage: ''
+    };
+  });
+
+  readonly updateNotificationTimeRemaining = this.updater(
+    (state, timeRemaining: number) => ({ ...state, notificationTimeRemaining: timeRemaining })
+  );
+
+  // Effects
+  readonly loadUserData = this.effect((trigger$) => {
+    return trigger$.pipe(
+      switchMap(() => {
+        const currentUser = this.getCurrentUser();
+        
+        if (currentUser?.name) {
+          this.updateUserName(currentUser.name);
+        }
+        
+        if (!currentUser?.id) {
+          return of(null);
+        }
+        
+        this.setLoading('budget', true);
+        
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        return this.budgetService.loadUserBudget(currentUser.id, currentMonth).pipe(
+          tap((budget) => {
+            this.updateMonthlyExpenses(budget?.totalSpent || 0);
+            this.setLoading('budget', false);
+          }),
+          catchError((error) => {
+            console.error('Error loading budget data:', error);
+            this.setLoading('budget', false);
+            return of(null);
+          })
+        );
+      })
+    );
+  });
+
+  readonly loadSavedPromotions = this.effect((trigger$) => {
+    return trigger$.pipe(
+      switchMap(() => {
+        const currentUser = this.getCurrentUser();
+        
+        if (!currentUser?.id) {
+          return of([]);
+        }
+        
+        this.setLoading('savedPromotions', true);
+        
+        return this.savedPromotionService.getSavedPromotions(currentUser.id).pipe(
+          tap(() => {
+            this.setLoading('savedPromotions', false);
+          }),
+          catchError((error) => {
+            console.error('Error loading saved promotions:', error);
+            this.setLoading('savedPromotions', false);
+            return of([]);
+          })
+        );
+      })
+    );
+  });
+
+  private readonly refresh$ = new Subject<void>();
+
+  readonly loadUserReceiptHistory = this.effect((trigger$: Observable<void>) => {
+    return merge(trigger$, this.refresh$).pipe( // Merge initial trigger + refresh events
+      switchMap(() => {
+        const currentUser = this.getCurrentUser();
+        if (!currentUser?.id) return of([]);
+        
+        this.setLoading('receipts', true);
+        
+        return this.http.get<any[]>(`${this.apiUrl}/receipts/user/${currentUser.id}`).pipe(
+          tap((receipts) => {
+            this.patchState({ userReceiptHistory: receipts });
+            const categories = this.analyzeReceiptHistory(receipts);
+            this.loadRecommendedPromotions(categories);
+          }),
+          catchError((error) => {
+            console.error('Error fetching receipt history:', error);
+            this.setLoading('receipts', false);
+            return of([]);
+          })
+        );
+      })
+    );
+  });
+  
+  // Add a public refresh method
+  readonly refreshData = () => this.refresh$.next();
+
+  readonly savePromotion = this.effect((promotionId$: Observable<string>) => {
+    return promotionId$.pipe(
+      withLatestFrom(this.savedPromotions$),
+      switchMap(([promotionId, savedPromotions]) => {
+        const currentUser = this.getCurrentUser();
+        
+        if (!currentUser?.id) {
+          // Handle redirection to login in the component
+          return of(null);
+        }
+        
+        // Check if already saved to avoid duplicates
+        const alreadySaved = savedPromotions.some(p => p.id === promotionId);
+        if (alreadySaved) {
+          this.showNotification('This promotion is already saved!');
+          this.updateSelectedPromotion(null);
+          return of(null);
+        }
+        
+        this.setLoading('savedPromotions', true);
+        
+        return this.savedPromotionService.savePromotion(currentUser.id, promotionId).pipe(
+          tap(() => {
+            // Explicitly refresh the saved promotions list to ensure updates propagate
+            this.savedPromotionService.refreshUserSavedPromotions(currentUser.id);
+            
+            this.showNotification('Promotion saved successfully!');
+            this.updateSelectedPromotion(null);
+            this.setLoading('savedPromotions', false);
+          }),
+          catchError((error) => {
+            console.error('Error saving promotion:', error);
+            this.showNotification('Failed to save promotion. Please try again.');
+            this.setLoading('savedPromotions', false);
+            return of(null);
+          })
+        );
+      })
+    );
+  });
+
+  readonly removeSavedPromotion = this.effect((promotionId$: Observable<string>) => {
+    return promotionId$.pipe(
+      switchMap((promotionId) => {
+        const currentUser = this.getCurrentUser();
+        
+        if (!currentUser?.id) {
+          return of(null);
+        }
+        
+        this.setLoading('savedPromotions', true);
+        
+        return this.savedPromotionService.removePromotion(currentUser.id, promotionId).pipe(
+          tap(() => {
+            this.showNotification('Promotion removed successfully!');
+            this.setLoading('savedPromotions', false);
+          }),
+          catchError((error) => {
+            console.error('Error removing promotion:', error);
+            this.showNotification('Failed to remove promotion. Please try again.');
+            this.setLoading('savedPromotions', false);
+            return of(null);
+          })
+        );
+      })
+    );
+  });
+
+  // Public Utility Methods
+  
+  /**
+   * Checks if a promotion is expiring soon (within 7 days)
+   */
+  isExpiringSoon(expiryDate: string): boolean {
+    if (!expiryDate) return false;
+    
+    try {
+      const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return false;
+      
+      const now = new Date();
+      const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
+      return differenceInDays >= 0 && differenceInDays <= 7;
+    } catch (error) {
+      console.error('Error checking if date is expiring soon:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a promotion has already expired
+   */
+  hasExpired(expiryDate: string): boolean {
+    if (!expiryDate) return false;
+    
+    try {
+      const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return false;
+      
+      return expiry < new Date();
+    } catch (error) {
+      console.error('Error checking if date has expired:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Formats a date string to a readable format
+   */
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  }
+
+  // Private Helper Methods
+
+  /**
+   * Sets up necessary subscriptions for the store
+   */
+  private setupSubscriptions(): void {
     // Subscribe to receipt processing service for new receipts
     this.receiptProcessingService.recentlySavedReceipt$.subscribe(receipt => {
       if (receipt) {
@@ -101,315 +400,47 @@ export class HomePageStore extends ComponentStore<HomePageState> {
       }
     });
     
-        // Subscribe to matching promotions
+    // Subscribe to matching promotions
     this.receiptProcessingService.matchingPromotions$.subscribe(promotions => {
-        console.log('Received matching promotions:', promotions);
-        
-        if (promotions && promotions.length > 0) {
+      if (promotions && promotions.length > 0) {
         this.patchState({ matchingPromotions: promotions });
         
         // Group promotions by category
         const groupedPromotions = this.receiptProcessingService.groupPromotionsByCategory(promotions);
-        console.log('Grouped promotions by category:', groupedPromotions);
         
         // Add each category group to recommendations
         groupedPromotions.forEach(group => {
-            console.log('Adding promotion group to recommendations:', group.name, group.deals);
-            this.addPromotionsToRecommendations(group.name, group.deals);
+          this.addPromotionsToRecommendations(group.name, group.deals);
         });
-        
-        // Log final state of recommendedPromotions
-        console.log('Updated recommendedPromotions state:', this.get().recommendedPromotions);
-        }
+      }
     });
 
     // Subscribe to savedPromotions observable
-    this.savedPromotionService.savedPromotions$.subscribe(
-      promotions => {
-        this.patchState({ savedPromotions: promotions });
-      }
-    );
+    this.savedPromotionService.savedPromotions$.subscribe(promotions => {
+      this.patchState({ savedPromotions: promotions });
+    });
   }
 
-  // Selectors
-  readonly userName$ = this.select(state => state.userName);
-  readonly monthlyExpenses$ = this.select(state => state.monthlyExpenses);
-  readonly userReceiptHistory$ = this.select(state => state.userReceiptHistory);
-  readonly recommendedPromotions$ = this.select(state => state.recommendedPromotions);
-  readonly savedPromotions$ = this.select(state => state.savedPromotions);
-  readonly matchingPromotions$ = this.select(state => state.matchingPromotions);
-  readonly recentlySavedReceipt$ = this.select(state => state.recentlySavedReceipt);
-  readonly selectedPromotion$ = this.select(state => state.selectedPromotion);
-  readonly showSuccessNotification$ = this.select(state => state.showSuccessNotification);
-  readonly successNotificationMessage$ = this.select(state => state.successNotificationMessage);
-  readonly notificationTimeRemaining$ = this.select(state => state.notificationTimeRemaining);
-  readonly showFullText$ = this.select(state => state.showFullText);
-  readonly isLoading$ = this.select(state => state.isLoading);
-  readonly showMoreSavedPromotions$ = this.select(state => state.showMoreSavedPromotions);
-  readonly savedPromotionsLimit$ = this.select(state => state.savedPromotionsLimit);
+  /**
+   * Helper method to manage loading state
+   */
+  private setLoading(key: keyof HomePageState['isLoading'], isLoading: boolean): void {
+    this.patchState(state => ({
+      isLoading: { ...state.isLoading, [key]: isLoading }
+    }));
+  }
 
-  // Computed selector for displayed saved promotions
-  readonly displayedSavedPromotions$ = this.select(
-    this.savedPromotions$,
-    this.showMoreSavedPromotions$,
-    this.savedPromotionsLimit$,
-    (savedPromotions, showMore, limit) => {
-      return showMore ? savedPromotions : savedPromotions.slice(0, limit);
-    }
-  );
-
-  // Helper selector to check if a promotion is saved
-  readonly isSavedPromotion = (promotion: any) => this.select(
-    this.savedPromotions$,
-    (savedPromotions) => savedPromotions.some(p => p.id === promotion?.id)
-  );
-
-  // Updaters
-  readonly updateUserName = this.updater((state, userName: string) => ({
-    ...state,
-    userName
-  }));
-
-  readonly updateMonthlyExpenses = this.updater((state, monthlyExpenses: number) => ({
-    ...state,
-    monthlyExpenses
-  }));
-
-  readonly updateRecentlySavedReceipt = this.updater((state, receipt: any) => ({
-    ...state,
-    recentlySavedReceipt: receipt
-  }));
-
-  readonly updateSelectedPromotion = this.updater((state, promotion: any) => {
-    console.log('[STORE] Updating selected promotion:', promotion);
-    return{...state,
-    selectedPromotion: promotion
-    };
-  });
-
-  readonly toggleShowMoreSavedPromotions = this.updater((state) => ({
-    ...state,
-    showMoreSavedPromotions: !state.showMoreSavedPromotions
-  }));
-
-  readonly toggleShowFullText = this.updater((state) => ({
-    ...state,
-    showFullText: !state.showFullText
-  }));
-
-  readonly closeSuccessNotification = this.updater((state) => {
-    if (this.notificationTimer) {
-      clearTimeout(this.notificationTimer);
-      this.notificationTimer = null;
-    }
-    
-    return {
-      ...state,
-      showSuccessNotification: false,
-      successNotificationMessage: ''
-    };
-  });
-
-  readonly updateNotificationTimeRemaining = this.updater((state, timeRemaining: number) => ({
-    ...state,
-    notificationTimeRemaining: timeRemaining
-  }));
-
-  // Effects
-  readonly loadUserData = this.effect((trigger$) => {
-    return trigger$.pipe(
-      switchMap(() => {
-        const currentUser = this.getCurrentUser();
-        
-        if (currentUser?.name) {
-          this.updateUserName(currentUser.name);
-        }
-        
-        if (!currentUser?.id) {
-          return of(null);
-        }
-        
-        this.patchState(state => ({
-          isLoading: { ...state.isLoading, budget: true }
-        }));
-        
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-        
-        return this.budgetService.loadUserBudget(currentUser.id, currentMonth).pipe(
-          tap((budget) => {
-            this.updateMonthlyExpenses(budget?.totalSpent || 0);
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, budget: false }
-            }));
-          }),
-          catchError((error) => {
-            console.error('Error loading budget data:', error);
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, budget: false }
-            }));
-            return of(null); // Return a value to keep the stream alive
-          })
-        );
-      })
-    );
-  });
-
-  readonly loadSavedPromotions = this.effect((trigger$) => {
-    return trigger$.pipe(
-      switchMap(() => {
-        const currentUser = this.getCurrentUser();
-        
-        if (!currentUser?.id) {
-          return of([]);
-        }
-        
-        this.patchState(state => ({
-          isLoading: { ...state.isLoading, savedPromotions: true }
-        }));
-        
-        return this.savedPromotionService.getSavedPromotions(currentUser.id).pipe(
-          tap(() => {
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-          }),
-          catchError((error) => {
-            console.error('Error loading saved promotions:', error);
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-            return of([]); // Return empty array to keep the stream alive
-          })
-        );
-      })
-    );
-  });
-
-  readonly loadUserReceiptHistory = this.effect((trigger$) => {
-    return trigger$.pipe(
-      switchMap(() => {
-        const currentUser = this.getCurrentUser();
-        
-        if (!currentUser?.id) {
-          return of([]);
-        }
-        
-        this.patchState(state => ({
-          isLoading: { ...state.isLoading, receipts: false }
-        }));
-        
-        return this.http.get<any[]>(`${this.apiUrl}/receipts/user/${currentUser.id}`).pipe(
-          tap((receipts) => {
-            this.patchState({ userReceiptHistory: receipts });
-            const categories = this.analyzeReceiptHistory(receipts);
-            this.loadRecommendedPromotions(categories);
-          }),
-          catchError((error) => {
-            console.error('Error fetching receipt history:', error);
-            this.loadRecommendedPromotions([]);
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, receipts: false }
-            }));
-            return of([]); // Return empty array to keep the stream alive
-          })
-        );
-      })
-    );
-  });
-
-  readonly savePromotion = this.effect((promotionId$: Observable<string>) => {
-    return promotionId$.pipe(
-      withLatestFrom(this.savedPromotions$),
-      switchMap(([promotionId, savedPromotions]) => {
-        const currentUser = this.getCurrentUser();
-        
-        if (!currentUser?.id) {
-          // Handle redirection to login in the component
-          return of(null);
-        }
-        
-        // Check if already saved to avoid duplicates
-        const alreadySaved = savedPromotions.some(p => p.id === promotionId);
-        if (alreadySaved) {
-          this.showNotification('This promotion is already saved!');
-          this.updateSelectedPromotion(null);
-          return of(null);
-        }
-        
-        this.patchState(state => ({
-          isLoading: { ...state.isLoading, savedPromotions: true }
-        }));
-        
-        return this.savedPromotionService.savePromotion(currentUser.id, promotionId).pipe(
-          tap(() => {
-            // Explicitly refresh the saved promotions list to ensure updates propagate
-            this.savedPromotionService.refreshUserSavedPromotions(currentUser.id);
-            
-            // Show success notification
-            this.showNotification('Promotion saved successfully!');
-            
-            // Close promotion details
-            this.updateSelectedPromotion(null);
-            
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-          }),
-          catchError((error) => {
-            console.error('Error saving promotion:', error);
-            this.showNotification('Failed to save promotion. Please try again.');
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-            return of(null); // Return a value to keep the stream alive
-          })
-        );
-      })
-    );
-  });
-
-  readonly removeSavedPromotion = this.effect((promotionId$: Observable<string>) => {
-    return promotionId$.pipe(
-      switchMap((promotionId) => {
-        const currentUser = this.getCurrentUser();
-        
-        if (!currentUser?.id) {
-          return of(null);
-        }
-        
-        this.patchState(state => ({
-          isLoading: { ...state.isLoading, savedPromotions: true }
-        }));
-        
-        return this.savedPromotionService.removePromotion(currentUser.id, promotionId).pipe(
-          tap(() => {
-            // Show success notification
-            this.showNotification('Promotion removed successfully!');
-            
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-          }),
-          catchError((error) => {
-            console.error('Error removing promotion:', error);
-            this.showNotification('Failed to remove promotion. Please try again.');
-            this.patchState(state => ({
-              isLoading: { ...state.isLoading, savedPromotions: false }
-            }));
-            return of(null); // Return a value to keep the stream alive
-          })
-        );
-      })
-    );
-  });
-
-  // Helper Methods
+  /**
+   * Gets the current user from Firebase or localStorage
+   */
   private getCurrentUser() {
     return this.firebaseAuthService.getCurrentUser() || 
            JSON.parse(localStorage.getItem('currentUser') || '{}');
   }
 
-  // Analyze receipts & determine frequent categories
+  /**
+   * Analyzes receipt history to determine frequent categories
+   */
   private analyzeReceiptHistory(receipts: any[]): string[] {
     if (!receipts || !Array.isArray(receipts) || receipts.length === 0) {
       return [];
@@ -433,10 +464,11 @@ export class HomePageStore extends ComponentStore<HomePageState> {
       .map(([category]) => category);
   }
 
+  /**
+   * Loads recommended promotions based on user categories
+   */
   private loadRecommendedPromotions(categories: string[]): void {
-    this.patchState(state => ({
-      isLoading: { ...state.isLoading, promotions: true }
-    }));
+    this.setLoading('promotions', true);
 
     if (!categories || categories.length === 0) {
       this.patchState({
@@ -462,23 +494,21 @@ export class HomePageStore extends ComponentStore<HomePageState> {
               recommendedPromotions: categoryPromotions,
               isLoading: { ...this.get().isLoading, promotions: false }
             });
-            console.log('[RECOMMENDED] Final state updated');
           }
         }
       });
     });
   }
 
-  // Helper method to add promotions to recommendations
+  /**
+   * Adds new promotions to recommendations
+   */
   private addPromotionsToRecommendations(categoryName: string, promotions: any[]): void {
-    console.log(`Adding promotions to recommendations - Category: ${categoryName}, Count: ${promotions?.length || 0}`);
     if (!categoryName || !promotions || !Array.isArray(promotions)) {
-        console.warn('Invalid promotions data:', { categoryName, promotions });
-        return;
+      return;
     }
     
     const state = this.get();
-    console.log('Current recommendedPromotions state:', state.recommendedPromotions);
     const recommendedPromotions = [...state.recommendedPromotions];
     
     // Check if this category already exists in recommendations
@@ -513,7 +543,9 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     this.patchState({ recommendedPromotions });
   }
 
-  // Show notification with countdown timer
+  /**
+   * Shows notification with countdown timer
+   */
   private showNotification(message: string): void {
     if (!message) return;
     
@@ -523,10 +555,7 @@ export class HomePageStore extends ComponentStore<HomePageState> {
       notificationTimeRemaining: 100
     });
     
-    // Clear any existing timer
-    if (this.notificationTimer) {
-      clearTimeout(this.notificationTimer);
-    }
+    this.clearNotificationTimer();
     
     // Set new timer to auto-close notification
     this.notificationTimer = setTimeout(() => {
@@ -545,53 +574,13 @@ export class HomePageStore extends ComponentStore<HomePageState> {
     }, 100);
   }
 
-  // Utility methods for components to use
-  isExpiringSoon(expiryDate: string): boolean {
-    if (!expiryDate) return false;
-    
-    try {
-      const expiry = new Date(expiryDate);
-      if (isNaN(expiry.getTime())) return false;
-      
-      const now = new Date();
-      const differenceInDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
-      return differenceInDays >= 0 && differenceInDays <= 7;
-    } catch (error) {
-      console.error('Error checking if date is expiring soon:', error);
-      return false;
-    }
-  }
-
-  hasExpired(expiryDate: string): boolean {
-    if (!expiryDate) return false;
-    
-    try {
-      const expiry = new Date(expiryDate);
-      if (isNaN(expiry.getTime())) return false;
-      
-      const now = new Date();
-      return expiry < now;
-    } catch (error) {
-      console.error('Error checking if date has expired:', error);
-      return false;
-    }
-  }
-
-  formatDate(dateString: string): string {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid date';
-      
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
+  /**
+   * Clears the notification timer if it exists
+   */
+  private clearNotificationTimer(): void {
+    if (this.notificationTimer) {
+      clearTimeout(this.notificationTimer);
+      this.notificationTimer = null;
     }
   }
 }

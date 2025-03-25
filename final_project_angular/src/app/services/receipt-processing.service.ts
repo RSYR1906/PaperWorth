@@ -8,29 +8,30 @@ import { BudgetService } from './budget.service';
 import { CameraService } from './camera.service';
 import { PromotionService } from './promotions.service';
 
+/**
+ * Service for processing receipts, finding matching promotions and managing related UI states
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class ReceiptProcessingService {
-  private apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
   
-  // Processing status
+  // BehaviorSubjects
   private processingSubject = new BehaviorSubject<boolean>(false);
   private processingMessageSubject = new BehaviorSubject<string>('');
   private successMessageSubject = new BehaviorSubject<string>('');
   private errorMessageSubject = new BehaviorSubject<string | null>(null);
-  
-  // Receipt data
   private recentlySavedReceiptSubject = new BehaviorSubject<any>(null);
   private matchingPromotionsSubject = new BehaviorSubject<any[]>([]);
 
   // Observable streams
-  processing$ = this.processingSubject.asObservable();
-  processingMessage$ = this.processingMessageSubject.asObservable();
-  successMessage$ = this.successMessageSubject.asObservable();
-  errorMessage$ = this.errorMessageSubject.asObservable();
-  recentlySavedReceipt$ = this.recentlySavedReceiptSubject.asObservable();
-  matchingPromotions$ = this.matchingPromotionsSubject.asObservable();
+  readonly processing$ = this.processingSubject.asObservable();
+  readonly processingMessage$ = this.processingMessageSubject.asObservable();
+  readonly successMessage$ = this.successMessageSubject.asObservable();
+  readonly errorMessage$ = this.errorMessageSubject.asObservable();
+  readonly recentlySavedReceipt$ = this.recentlySavedReceiptSubject.asObservable();
+  readonly matchingPromotions$ = this.matchingPromotionsSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -40,20 +41,27 @@ export class ReceiptProcessingService {
     private budgetService: BudgetService
   ) {}
 
-  // Reset processing state
+  /**
+   * Resets the processing state
+   */
   resetProcessing(): void {
     this.processingSubject.next(false);
     this.processingMessageSubject.next('');
     this.errorMessageSubject.next(null);
   }
 
-  // Cancel receipt processing
+  /**
+   * Cancels receipt processing and resets the scanner
+   */
   cancelReceiptProcessing(): void {
     this.cameraService.resetScanner();
     this.resetProcessing();
   }
 
-  // Confirm and save receipt
+  /**
+   * Confirms and saves the current receipt
+   * @param userId ID of the user saving the receipt
+   */
   confirmAndSaveReceipt(userId: string): void {
     if (!userId) {
       this.router.navigate(['/login']);
@@ -72,136 +80,23 @@ export class ReceiptProcessingService {
     this.saveReceipt(userId, extractedData, imagePreview, ocrText);
   }
 
-  // Save receipt to backend
-  private saveReceipt(userId: string, extractedData: any, imagePreview: any, ocrText: string): void {
-    if (!extractedData || !extractedData.merchantName || !extractedData.totalAmount || !extractedData.dateOfPurchase) {
-      this.errorMessageSubject.next("Incomplete receipt data. Please try again.");
-      return;
-    }
-
-    this.processingSubject.next(true);
-    this.processingMessageSubject.next("Saving your receipt...");
-    
-    // Determine category based on merchant name
-    const category = extractedData.category || this.cameraService.determineCategoryFromMerchant(extractedData.merchantName);
-    
-    // Create receipt object
-    const receiptData = {
-      userId: userId,
-      merchantName: extractedData.merchantName,
-      totalAmount: extractedData.totalAmount,
-      dateOfPurchase: extractedData.dateOfPurchase,
-      category: category,
-      imageUrl: imagePreview, // Store the image preview URL
-      additionalFields: {
-        fullText: extractedData.fullText || ocrText,
-        // Include any other fields from extracted data
-        ...Object.entries(extractedData)
-          .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
-          .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
-      }
-    };
-  
-    this.http.post(`${this.apiUrl}/receipts`, receiptData)
-      .subscribe({
-        next: (response: any) => {
-          console.log('Receipt saved:', response);
-          
-          // Update the processing message
-          this.processingMessageSubject.next("Finding matching promotions...");
-          
-          // Extract receipt and points data from response
-          const savedReceipt = response.receipt;
-          const pointsAwarded = response.pointsAwarded || 0;
-          
-          // Store the recently saved receipt
-          this.recentlySavedReceiptSubject.next({
-            ...receiptData,
-            id: savedReceipt.id
-          });
-          
-          // Set success message with points
-          this.successMessageSubject.next(`Receipt saved! You earned ${pointsAwarded} points.`);
-          
-          // Fetch matching promotions for the receipt
-          this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
-          
-          // Navigate to homepage to show results
-          this.router.navigate(['/homepage'], {
-            state: { 
-              fromReceiptProcessing: true,
-              savedReceiptId: savedReceipt.id
-            }
-          });
-        },
-        error: (error) => {
-          console.error('Error saving receipt:', error);
-          this.errorMessageSubject.next('Failed to save receipt. Please try again.');
-          this.processingSubject.next(false);
-          this.processingMessageSubject.next("");
-        }
-      });
+  /**
+   * Resets the success message
+   */
+  resetSuccessMessage(): void {
+    this.successMessageSubject.next('');
   }
 
-  // Fetch matching promotions based on merchant name and category
-  private fetchMatchingPromotions(merchant: string, category: string, receiptId: string): void {
-    // Add logging to track execution
-    console.log(`Fetching matching promotions for merchant: ${merchant}, category: ${category}`);
-    
-    // Use the match endpoint to find promotions by merchant or category
-    this.http.get<any[]>(`${this.apiUrl}/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`)
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching matching promotions:', error);
-          // Fall back to receipt-based API
-          this.processingMessageSubject.next("Searching for more promotions...");
-          return this.fetchPromotionsByReceiptId(receiptId);
-        }),
-        finalize(() => {
-          // Set final processing message before completion
-          this.processingMessageSubject.next("Completing...");
-          
-          // Short timeout to show the final step before clearing
-          setTimeout(() => {
-            this.processingSubject.next(false);
-            this.processingMessageSubject.next("");
-          }, 500);
-        })
-      )
-      .subscribe({
-        next: (promotions) => {
-          console.log('Matching promotions fetched:', promotions?.length || 0);
-          if (promotions && promotions.length > 0) {
-            // Store matching promotions
-            this.matchingPromotionsSubject.next(promotions);
-            console.log('Matching promotions emitted to subject');
-          } else {
-            console.log('No matching promotions found, trying receipt-based API');
-            // If no promotions found, try fallback to receipt-based API
-            this.processingMessageSubject.next("Searching for more promotions...");
-            this.fetchPromotionsByReceiptId(receiptId).subscribe();
-          }
-        },
-        error: (error) => {
-          console.error('Error in promotions subscription:', error);
-          this.matchingPromotionsSubject.next([]);
-        }
-      });
-  }
-
-  // Fallback method to fetch promotions by receipt ID
-  private fetchPromotionsByReceiptId(receiptId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/promotions/receipt/${receiptId}`)
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching promotions by receipt ID:', error);
-          return of([]);
-        })
-      );
-  }
-
-  // Group promotions by category (helper method)
+  /**
+   * Groups promotions by category
+   * @param promotions Array of promotions to group
+   * @returns Array of category objects with nested promotions
+   */
   groupPromotionsByCategory(promotions: any[]): any[] {
+    if (!promotions || !Array.isArray(promotions) || promotions.length === 0) {
+      return [];
+    }
+    
     // Group the promotions by category
     const categoryMap = new Map<string, any[]>();
     
@@ -220,7 +115,217 @@ export class ReceiptProcessingService {
     }));
   }
 
-  resetSuccessMessage(): void {
-    this.successMessageSubject.next('');
+  /**
+   * Saves the receipt to the backend
+   * @param userId ID of the user
+   * @param extractedData Extracted receipt data
+   * @param imagePreview Image preview data
+   * @param ocrText OCR text from receipt
+   */
+  private saveReceipt(userId: string, extractedData: any, imagePreview: any, ocrText: string): void {
+    if (!this.validateReceiptData(extractedData)) {
+      this.errorMessageSubject.next("Incomplete receipt data. Please try again.");
+      return;
+    }
+
+    this.setProcessingState(true, "Saving your receipt...");
+    
+    // Determine category based on merchant name
+    const category = extractedData.category || 
+      this.cameraService.determineCategoryFromMerchant(extractedData.merchantName);
+    
+    const receiptData = this.createReceiptObject(userId, extractedData, category, imagePreview, ocrText);
+  
+    this.http.post(`${this.apiUrl}/receipts`, receiptData)
+      .subscribe({
+        next: (response: any) => this.handleReceiptSaveSuccess(response, extractedData, category),
+        error: (error) => this.handleReceiptSaveError(error)
+      });
+  }
+
+  /**
+   * Validates that required receipt data is present
+   * @param extractedData The extracted receipt data
+   * @returns Boolean indicating if data is valid
+   */
+  private validateReceiptData(extractedData: any): boolean {
+    return !!(
+      extractedData && 
+      extractedData.merchantName && 
+      extractedData.totalAmount && 
+      extractedData.dateOfPurchase
+    );
+  }
+
+  /**
+   * Creates a receipt object for saving to the backend
+   * @param userId User ID
+   * @param extractedData Extracted receipt data
+   * @param category Receipt category
+   * @param imagePreview Image preview data
+   * @param ocrText OCR text
+   * @returns Receipt object ready for API submission
+   */
+  private createReceiptObject(
+    userId: string, 
+    extractedData: any, 
+    category: string, 
+    imagePreview: any, 
+    ocrText: string
+  ): any {
+    // Extract core fields
+    const { merchantName, totalAmount, dateOfPurchase, fullText } = extractedData;
+    
+    // Get additional fields (exclude core fields)
+    const additionalFields = {
+      fullText: fullText || ocrText,
+      ...Object.entries(extractedData)
+        .filter(([key]) => !['merchantName', 'totalAmount', 'dateOfPurchase', 'category', 'fullText'].includes(key))
+        .reduce((obj, [key, value]) => ({...obj, [key]: value}), {})
+    };
+    
+    return {
+      userId,
+      merchantName,
+      totalAmount,
+      dateOfPurchase,
+      category,
+      imageUrl: imagePreview,
+      additionalFields
+    };
+  }
+
+  /**
+   * Handles successful receipt save
+   * @param response API response
+   * @param extractedData Original extracted data
+   * @param category Receipt category
+   */
+  private handleReceiptSaveSuccess(response: any, extractedData: any, category: string): void {
+    console.log('Receipt saved:', response);
+    
+    this.processingMessageSubject.next("Finding matching promotions...");
+    
+    const savedReceipt = response.receipt;
+    const pointsAwarded = response.pointsAwarded || 0;
+    
+    this.recentlySavedReceiptSubject.next({
+      ...extractedData,
+      category,
+      id: savedReceipt.id
+    });
+    
+    this.successMessageSubject.next(`Receipt saved! You earned ${pointsAwarded} points.`);
+    
+    this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
+    
+    this.navigateToHomepage(savedReceipt.id);
+  }
+
+  /**
+   * Handles receipt save error
+   * @param error Error object
+   */
+  private handleReceiptSaveError(error: any): void {
+    console.error('Error saving receipt:', error);
+    this.errorMessageSubject.next('Failed to save receipt. Please try again.');
+    this.setProcessingState(false, "");
+  }
+
+  /**
+   * Sets the processing state
+   * @param isProcessing Boolean indicating if processing
+   * @param message Processing message to display
+   */
+  private setProcessingState(isProcessing: boolean, message: string): void {
+    this.processingSubject.next(isProcessing);
+    this.processingMessageSubject.next(message);
+  }
+
+  /**
+   * Navigates to homepage with receipt data
+   * @param receiptId ID of the saved receipt
+   */
+  private navigateToHomepage(receiptId: string): void {
+    this.router.navigate(['/homepage'], {
+      state: { 
+        fromReceiptProcessing: true,
+        savedReceiptId: receiptId
+      }
+    });
+  }
+
+  /**
+   * Fetches matching promotions for a receipt
+   * @param merchant Merchant name
+   * @param category Receipt category
+   * @param receiptId Receipt ID
+   */
+  private fetchMatchingPromotions(merchant: string, category: string, receiptId: string): void {
+    console.log(`Fetching matching promotions for merchant: ${merchant}, category: ${category}`);
+    
+    const url = `${this.apiUrl}/promotions/match?merchant=${encodeURIComponent(merchant)}&category=${encodeURIComponent(category)}`;
+    
+    this.http.get<any[]>(url)
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching matching promotions:', error);
+          this.processingMessageSubject.next("Searching for more promotions...");
+          return this.fetchPromotionsByReceiptId(receiptId);
+        }),
+        finalize(() => this.finalizeProcessing())
+      )
+      .subscribe({
+        next: (promotions) => this.handleMatchingPromotions(promotions, receiptId),
+        error: (error) => {
+          console.error('Error in promotions subscription:', error);
+          this.matchingPromotionsSubject.next([]);
+        }
+      });
+  }
+
+  /**
+   * Handles the matching promotions response
+   * @param promotions Array of matching promotions
+   * @param receiptId Receipt ID for fallback
+   */
+  private handleMatchingPromotions(promotions: any[], receiptId: string): void {
+    console.log('Matching promotions fetched:', promotions?.length || 0);
+    
+    if (promotions && promotions.length > 0) {
+      this.matchingPromotionsSubject.next(promotions);
+      console.log('Matching promotions emitted to subject');
+    } else {
+      console.log('No matching promotions found, trying receipt-based API');
+      this.processingMessageSubject.next("Searching for more promotions...");
+      this.fetchPromotionsByReceiptId(receiptId).subscribe();
+    }
+  }
+
+  /**
+   * Finalizes the processing state
+   */
+  private finalizeProcessing(): void {
+    this.processingMessageSubject.next("Completing...");
+    
+    // Short timeout to show the final step before clearing
+    setTimeout(() => {
+      this.setProcessingState(false, "");
+    }, 500);
+  }
+
+  /**
+   * Fallback method to fetch promotions by receipt ID
+   * @param receiptId Receipt ID
+   * @returns Observable of promotions
+   */
+  private fetchPromotionsByReceiptId(receiptId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/promotions/receipt/${receiptId}`)
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching promotions by receipt ID:', error);
+          return of([]);
+        })
+      );
   }
 }
