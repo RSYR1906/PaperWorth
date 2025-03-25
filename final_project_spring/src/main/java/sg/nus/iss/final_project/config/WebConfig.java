@@ -13,7 +13,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("https://paperworth.vercel.app",
                         "https://magnificent-reverence-production.up.railway.app",
                         "https://paperworth.sgp1.digitaloceanspaces.com",
-                        "http://localhost:4200", "http://localhost:8080")
+                        "http://localhost:4200", "http://localhost:8080",
+                        "http://localhost",
+                        "capacitor://localhost")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
