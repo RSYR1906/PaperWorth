@@ -22,7 +22,10 @@ export class AuthInterceptor implements HttpInterceptor {
           console.log('Adding auth header to request to:', request.url);
           const cloned = request.clone({
             setHeaders: {
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
             }
           });
           return next.handle(cloned);

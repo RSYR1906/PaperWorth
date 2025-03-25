@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "https://paperworth.sgp1.digitaloceanspaces.com",
                         "http://localhost:4200", "http://localhost:8080",
                         "http://localhost",
-                        "capacitor://localhost")
+                        "capacitor://localhost", "capacitor://paperworth.app", "capacitor://firebaseauth")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)

@@ -26,35 +26,41 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Skip authentication for login and public endpoints
+        // Always set CORS headers
+        response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers",
+                "Authorization, Content-Type, X-Requested-With, Accept, Origin");
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+
+        // Handle preflight requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+
+        // Your normal auth check
         String path = request.getRequestURI();
-        if (request.getMethod().equals("OPTIONS") ||
-                path.contains("/public/") ||
-                path.contains("/login") ||
-                path.contains("/firebase-auth")) {
+        if (path.contains("/public/") || path.contains("/login") || path.contains("/firebase-auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String idToken = authorizationHeader.substring(7);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String idToken = authHeader.substring(7);
             try {
                 FirebaseToken decodedToken = firebaseAuth.verifyIdToken(idToken);
-                // You can set the user information in request attributes if needed
                 request.setAttribute("uid", decodedToken.getUid());
                 request.setAttribute("email", decodedToken.getEmail());
-
                 filterChain.doFilter(request, response);
-                return;
             } catch (FirebaseAuthException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid token");
-                return;
             }
+        } else {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Authentication required");
         }
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write("Authentication required");
     }
 }

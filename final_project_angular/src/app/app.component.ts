@@ -6,6 +6,8 @@ import { filter } from 'rxjs/operators';
 import { CameraService } from './services/camera.service';
 import { FirebaseAuthService } from './services/firebase-auth.service';
 import { ReceiptProcessingService } from './services/receipt-processing.service';
+import { Capacitor } from '@capacitor/core';
+import { environment } from '../environments/environment.prod';
 
 @Component({
   selector: 'app-root',
@@ -28,6 +30,9 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    console.log('Application starting...');
+    console.log('Environment:', environment);
+    console.log('Platform:', Capacitor.getPlatform());
     // Subscribe to router events
     this.subscriptions.add(
       this.router.events

@@ -20,6 +20,14 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
 import { firebaseConfig } from '../firebase-config';
 
+
+// Enable Firebase debug mode in development
+if (!environment.production) {
+  const auth = getAuth();
+  auth.useDeviceLanguage();
+  console.log('Firebase auth debugging enabled');
+}
+
 /**
  * Interface defining user data structure
  */

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "246958918346",
+    "project_id": "final-project-ef75f",
+    "storage_bucket": "final-project-ef75f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246958918346:android:02d32abd99fb3ead084233",
+        "android_client_info": {
+          "package_name": "com.example.paperworth"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "246958918346-7hmih13gapkam41r7vdmjfkg4spc3jh8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwCdMFJppyUHToNCid1N95LDqqf8Tf0Lc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "246958918346-7hmih13gapkam41r7vdmjfkg4spc3jh8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "246958918346-5nf82tde24ldovmuevk4ud7inpu7pfk7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.paperworth"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
