@@ -217,9 +217,13 @@ export class ReceiptProcessingService {
     
     this.successMessageSubject.next(`Receipt saved! You earned ${pointsAwarded} points.`);
     
-    this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
+     // Call the method without trying to subscribe to it
+     this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
     
-    this.navigateToHomepage(savedReceipt.id);
+     // Add a small delay before navigation to allow time for promotions to load
+     setTimeout(() => {
+       this.navigateToHomepage(savedReceipt.id);
+     }, 500);
   }
 
   /**

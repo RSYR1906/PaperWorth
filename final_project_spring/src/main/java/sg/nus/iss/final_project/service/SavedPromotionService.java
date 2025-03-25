@@ -69,14 +69,7 @@ public class SavedPromotionService {
                 .collect(Collectors.toList());
 
         // Fetch all promotions
-        List<Promotion> promotions = new ArrayList<>();
-        for (String id : promotionIds) {
-            Promotion promotion = promotionRepository.findById(id);
-            if (promotion != null) {
-                promotions.add(promotion);
-            }
-        }
-
+        List<Promotion> promotions = savedPromotionRepository.findByBatchId(promotionIds);
         // Add saved datetime to each promotion
         return promotions.stream().map(promotion -> {
             // Find the matching saved promotion to get savedAt timestamp

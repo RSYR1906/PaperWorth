@@ -1,7 +1,7 @@
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, from } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable, from, throwError } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { FirebaseAuthService } from '../services/firebase-auth.service';
 
 @Injectable()
@@ -15,19 +15,25 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     // Convert Promise to Observable
-    return from(this.firebaseAuthService.getIdToken())
-      .pipe(
-        switchMap(token => {
-          if (token) {
-            const cloned = request.clone({
-              setHeaders: {
-                Authorization: `Bearer ${token}`
-              }
-            });
-            return next.handle(cloned);
-          }
-          return next.handle(request);
-        })
-      );
+    return from(this.firebaseAuthService.getIdToken()).pipe(
+      tap(token => console.log('Firebase token available:', !!token)),
+      switchMap(token => {
+        if (token) {
+          console.log('Adding auth header to request to:', request.url);
+          const cloned = request.clone({
+            setHeaders: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          return next.handle(cloned);
+        }
+        console.log('No token available, proceeding without auth header to:', request.url);
+        return next.handle(request);
+      }),
+      catchError(error => {
+        console.error('Error in auth interceptor:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

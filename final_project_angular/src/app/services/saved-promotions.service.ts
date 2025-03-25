@@ -95,15 +95,17 @@ export class SavedPromotionsService {
     this.loadingSubject.next(true);
     
     return this.http.post<SavedPromotion>(`${this.apiBaseUrl}/${userId}/${promotionId}`, {}).pipe(
-      tap(() => {
-        console.log(`Saved promotion id=${promotionId} for user=${userId}`);
-        // After saving, refresh the list of saved promotions
+      tap((response) => {
+        console.log('Save promotion response:', response);
+        
+        // Skip the optimistic update and immediately trigger a refresh
+        // This is more reliable for ensuring the UI is up-to-date
         this.refreshSavedPromotions(userId);
       }),
       catchError(error => {
         console.error('Error saving promotion:', error);
         this.loadingSubject.next(false);
-        throw error; // Rethrow to let component handle it
+        throw error;
       })
     );
   }

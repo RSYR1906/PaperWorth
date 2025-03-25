@@ -1,136 +1,224 @@
-// src/app/components/home-page/home-page.component.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subject, of } from 'rxjs';
+import { Subscription } from 'rxjs';
+import { Promotion } from '../../model';
+import { BudgetService } from '../../services/budget.service';
 import { CameraService } from '../../services/camera.service';
+import { FirebaseAuthService } from '../../services/firebase-auth.service';
+import { PromotionService } from '../../services/promotions.service';
 import { ReceiptProcessingService } from '../../services/receipt-processing.service';
-import { HomePageStore } from '../../stores/homepage.store';
+import { SavedPromotionsService } from '../../services/saved-promotions.service';
 
 @Component({
   selector: 'app-home-page',
   standalone: false,
   templateUrl: './home-page.component.html',
-  styleUrls: ['./home-page.component.css'],
+  styleUrls: ['./home-page.component.css']
 })
 export class HomePageComponent implements OnInit, OnDestroy {
-  // Store Observables
-  userName$!: Observable<string>;
-  monthlyExpenses$!: Observable<number>;
-  recommendedPromotions$!: Observable<any[]>;
-  savedPromotions$!: Observable<any[]>;
-  displayedSavedPromotions$!: Observable<any[]>;
-  selectedPromotion$!: Observable<any | null>;
-  showSuccessNotification$!: Observable<boolean>;
-  successNotificationMessage$!: Observable<string>;
-  notificationTimeRemaining$!: Observable<number>;
-  isLoading$!: Observable<any>;
-  showMoreSavedPromotions$!: Observable<boolean>;
-  
-  private destroy$ = new Subject<void>();
+  userName: string = 'User';
+  monthlyExpenses: number = 0;
+  savedPromotions: Promotion[] = [];
+  displayedSavedPromotions: Promotion[] = [];
+  recommendedPromotions: any[] = [];
+  selectedPromotion: Promotion | null = null;
+  showSuccessNotification = false;
+  successNotificationMessage = '';
+  notificationTimeRemaining = 100;
+  isLoading = {
+    budget: false,
+    receipts: false,
+    promotions: false,
+    savedPromotions: false
+  };
+  showMoreSavedPromotions = false;
+  savedPromotionsLimit = 3;
+  private notificationTimer: any = null;
+  private subscriptions = new Subscription();
 
   constructor(
     private router: Router,
     public cameraService: CameraService,
     public receiptProcessingService: ReceiptProcessingService,
-    public store: HomePageStore
+    private savedPromotionsService: SavedPromotionsService,
+    private budgetService: BudgetService,
+    private firebaseAuthService: FirebaseAuthService,
+    private promotionService: PromotionService
   ) {}
 
   ngOnInit(): void {
-    this.initializeStoreObservables();
-    this.store.refreshData(); // Force refresh instead of clearing
-    this.checkReceiptProcessingState();
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (currentUser?.name) this.userName = currentUser.name;
+
+    this.loadBudget();
+    this.loadSavedPromotions();
+    this.loadReceiptHistory();
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.subscriptions.unsubscribe();
+    this.clearNotificationTimer();
   }
 
-  private initializeStoreObservables(): void {
-    this.userName$ = this.store.userName$;
-    this.monthlyExpenses$ = this.store.monthlyExpenses$;
-    this.recommendedPromotions$ = this.store.recommendedPromotions$;
-    this.savedPromotions$ = this.store.savedPromotions$;
-    this.displayedSavedPromotions$ = this.store.displayedSavedPromotions$;
-    this.selectedPromotion$ = this.store.selectedPromotion$;
-    this.showSuccessNotification$ = this.store.showSuccessNotification$;
-    this.successNotificationMessage$ = this.store.successNotificationMessage$;
-    this.notificationTimeRemaining$ = this.store.notificationTimeRemaining$;
-    this.isLoading$ = this.store.isLoading$;
-    this.showMoreSavedPromotions$ = this.store.showMoreSavedPromotions$;
+  loadBudget(): void {
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (!currentUser?.id) return;
+    this.isLoading.budget = true;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    this.subscriptions.add(
+      this.budgetService.loadUserBudget(currentUser.id, currentMonth).subscribe({
+        next: (budget) => {
+          this.monthlyExpenses = budget?.totalSpent || 0;
+          this.isLoading.budget = false;
+        },
+        error: () => (this.isLoading.budget = false)
+      })
+    );
   }
 
-  private loadInitialData(): void {
-    const trigger$ = of(void 0);
-    this.store.loadUserData(trigger$);
-    this.store.loadSavedPromotions(trigger$);
-    this.store.loadUserReceiptHistory(trigger$);
+  loadSavedPromotions(): void {
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (!currentUser?.id) return;
+    this.isLoading.savedPromotions = true;
+    this.subscriptions.add(
+      this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
+        next: (promotions) => {
+          this.savedPromotions = promotions;
+          this.displayedSavedPromotions = promotions.slice(0, this.savedPromotionsLimit);
+          this.isLoading.savedPromotions = false;
+        },
+        error: () => (this.isLoading.savedPromotions = false)
+      })
+    );
   }
 
-  private checkReceiptProcessingState(): void {
-    const state = history.state;
-    if (state?.fromReceiptProcessing) {
-      console.log('Navigated from receipt processing, receipt ID:', state.savedReceiptId);
-    }
+  loadReceiptHistory(): void {
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (!currentUser?.id) return;
+    this.isLoading.receipts = false;
+    // this.subscriptions.add(
+    //   this.receiptProcessingService.loadUserReceiptHistory(currentUser.id).subscribe({
+    //     next: (receipts) => {
+    //       const categories = this.analyzeReceiptHistory(receipts);
+    //       this.loadRecommendedPromotions(categories);
+    //       this.isLoading.receipts = false;
+    //     },
+    //     error: () => (this.isLoading.receipts = false)
+    //   })
+    // );
   }
 
-  // Promotion Actions
-  viewPromotionDetails(promotion: any): void {
-    if (promotion) {
-      this.store.updateSelectedPromotion(promotion);
-    }
+  isSavedPromotion(promotion: any): boolean {
+    return this.savedPromotions.some(p => p.id === promotion.id);
+  }
+
+  analyzeReceiptHistory(receipts: any[]): string[] {
+    const categoryCounts: Record<string, number> = {};
+    receipts.forEach(({ category, merchantName, additionalFields }) => {
+      const detected = category || additionalFields?.category || merchantName || 'Others';
+      categoryCounts[detected] = (categoryCounts[detected] || 0) + 1;
+    });
+    return Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([cat]) => cat);
+  }
+
+  loadRecommendedPromotions(categories: string[]): void {
+    this.isLoading.promotions = true;
+    const promos: any[] = [];
+    let completed = 0;
+    categories.forEach((cat) => {
+      this.promotionService.getPromotionsByCategory(cat).subscribe({
+        next: (deals) => {
+          promos.push({ name: cat, deals });
+        },
+        complete: () => {
+          if (++completed === categories.length) {
+            this.recommendedPromotions = promos;
+            this.isLoading.promotions = false;
+          }
+        },
+        error: () => (this.isLoading.promotions = false)
+      });
+    });
+  }
+
+  toggleShowMoreSavedPromotions(): void {
+    this.showMoreSavedPromotions = !this.showMoreSavedPromotions;
+    this.displayedSavedPromotions = this.showMoreSavedPromotions
+      ? this.savedPromotions
+      : this.savedPromotions.slice(0, this.savedPromotionsLimit);
+  }
+
+  viewPromotionDetails(promotion: Promotion): void {
+    this.selectedPromotion = promotion;
   }
 
   closePromotionDetails(): void {
-    this.store.updateSelectedPromotion(null);
+    this.selectedPromotion = null;
   }
 
-  savePromotion(promotion: any): void {
-    if (!promotion?.id) {
-      console.error('Invalid promotion object:', promotion);
-      return;
-    }
-    this.store.savePromotion(promotion.id);
+  savePromotion(promotion: Promotion): void {
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (!currentUser?.id) return;
+    this.savedPromotionsService.savePromotion(currentUser.id, promotion.id).subscribe({
+      next: () => {
+        this.showNotification('Promotion saved!');
+        this.loadSavedPromotions();
+      },
+      error: () => this.showNotification('Failed to save promotion')
+    });
   }
 
   removeSavedPromotion(promotionId: string): void {
-    if (!promotionId) {
-      console.error('Invalid promotion ID');
-      return;
-    }
-    
-    if (confirm('Are you sure you want to remove this promotion?')) {
-      this.store.removeSavedPromotion(promotionId);
-    }
+    const currentUser = this.firebaseAuthService.getCurrentUser();
+    if (!currentUser?.id) return;
+    this.savedPromotionsService.removePromotion(currentUser.id, promotionId).subscribe({
+      next: () => {
+        this.showNotification('Promotion removed!');
+        this.loadSavedPromotions();
+      },
+      error: () => this.showNotification('Failed to remove promotion')
+    });
   }
 
-  isSavedPromotion(promotion: any): Observable<boolean> {
-    return this.store.isSavedPromotion(promotion);
-  }
-
-  // UI Actions
-  toggleShowMoreSavedPromotions(): void {
-    this.store.toggleShowMoreSavedPromotions();
+  showNotification(message: string): void {
+    this.successNotificationMessage = message;
+    this.showSuccessNotification = true;
+    this.notificationTimeRemaining = 100;
+    this.clearNotificationTimer();
+    this.notificationTimer = setInterval(() => {
+      this.notificationTimeRemaining -= 2;
+      if (this.notificationTimeRemaining <= 0) this.closeSuccessNotification();
+    }, 100);
   }
 
   closeSuccessNotification(): void {
-    this.store.closeSuccessNotification();
+    this.showSuccessNotification = false;
+    this.clearNotificationTimer();
   }
 
-  toggleFullText(): void {
-    this.store.toggleShowFullText();
+  clearNotificationTimer(): void {
+    if (this.notificationTimer) {
+      clearInterval(this.notificationTimer);
+      this.notificationTimer = null;
+    }
   }
 
-  // Utility Methods
   isExpiringSoon(expiryDate: string): boolean {
-    return this.store.isExpiringSoon(expiryDate);
+    if (!expiryDate) return false;
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    const diff = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    return diff >= 0 && diff <= 7;
   }
 
   hasExpired(expiryDate: string): boolean {
-    return this.store.hasExpired(expiryDate);
+    return new Date(expiryDate) < new Date();
   }
 
   formatDate(dateString: string): string {
-    return this.store.formatDate(dateString);
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? 'Invalid date' : date.toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
   }
 }

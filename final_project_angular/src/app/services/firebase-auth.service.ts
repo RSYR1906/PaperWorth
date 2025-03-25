@@ -40,13 +40,15 @@ export class FirebaseAuthService {
   private readonly app = initializeApp(firebaseConfig);
   private readonly auth = getAuth(this.app);
   private readonly currentUserSubject = new BehaviorSubject<UserData | null>(this.loadStoredUser());
+  private readonly authReadySubject = new BehaviorSubject<boolean>(false);
   private readonly storageKey = 'currentUser';
   private isProcessingRedirect = false;
-  
+
   /**
    * Observable for current user data
    */
   public readonly currentUser$: Observable<UserData | null> = this.currentUserSubject.asObservable();
+  public readonly authReady$: Observable<boolean> = this.authReadySubject.asObservable();
 
   constructor(
     private router: Router,
@@ -58,7 +60,6 @@ export class FirebaseAuthService {
 
   /**
    * Gets the current authenticated user
-   * @returns Current user data or null if not authenticated
    */
   getCurrentUser(): UserData | null {
     return this.currentUserSubject.value;
@@ -66,20 +67,18 @@ export class FirebaseAuthService {
 
   /**
    * Checks if a user is currently authenticated
-   * @returns Boolean indicating authentication status
    */
   isAuthenticated(): boolean {
     return !!this.currentUserSubject.value;
   }
 
   /**
-   * Gets the Firebase ID token for authenticated requests
-   * @returns Promise with the ID token or null
+   * Gets the Firebase ID token
    */
   async getIdToken(): Promise<string | null> {
     const user = this.auth.currentUser;
     if (!user) return null;
-    
+
     try {
       return await user.getIdToken();
     } catch (error) {
@@ -89,10 +88,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Signs in a user with email and password
-   * @param email User's email
-   * @param password User's password
-   * @returns Promise with user data
+   * Email/password sign in
    */
   async signInWithEmailandPassword(email: string, password: string): Promise<UserData> {
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
@@ -100,8 +96,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Signs in a user with Google authentication
-   * @returns Promise with user data or null
+   * Google sign-in
    */
   async signInWithGoogle(): Promise<UserData | null> {
     const provider = new GoogleAuthProvider();
@@ -121,11 +116,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Signs up a new user with email and password
-   * @param email User's email
-   * @param password User's password
-   * @param displayName Optional display name
-   * @returns Promise with user data
+   * Sign up with email/password
    */
   async signUpWithEmailandPassword(email: string, password: string, displayName?: string): Promise<UserData> {
     try {
@@ -141,8 +132,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Signs out the current user
-   * @returns Promise that resolves when sign out is complete
+   * Sign out
    */
   async signOut(): Promise<void> {
     await signOut(this.auth);
@@ -152,7 +142,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Handles Firebase redirect authentication result
+   * Redirect sign-in result
    */
   private async handleRedirectResult(): Promise<void> {
     if (this.isProcessingRedirect) return;
@@ -172,8 +162,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Loads the stored user from localStorage
-   * @returns User data or null
+   * Load user from localStorage
    */
   private loadStoredUser(): UserData | null {
     try {
@@ -186,8 +175,7 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Saves user data to localStorage
-   * @param user User data or null
+   * Save user to localStorage
    */
   private saveUser(user: UserData | null): void {
     if (user) {
@@ -199,23 +187,27 @@ export class FirebaseAuthService {
   }
 
   /**
-   * Sets up the Firebase auth state change listener
+   * Firebase auth state listener
    */
   private setupAuthStateListener(): void {
-    this.auth.onAuthStateChanged(user => user ? this.syncUserWithBackend(user) : this.saveUser(null));
+    this.auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        await this.syncUserWithBackend(user);
+      } else {
+        this.saveUser(null);
+      }
+      this.authReadySubject.next(true);
+    });
   }
 
   /**
-   * Synchronizes Firebase user with backend system
-   * @param firebaseUser Firebase user object
-   * @param displayName Optional display name
-   * @returns Promise with synchronized user data
+   * Sync Firebase user with backend
    */
   private async syncUserWithBackend(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
     if (!firebaseUser) throw new Error('No Firebase user');
-  
+
     const idToken = await firebaseUser.getIdToken();
-    
+
     const userData: UserData = {
       id: firebaseUser.uid,
       name: displayName || firebaseUser.displayName || 'User',
@@ -224,7 +216,7 @@ export class FirebaseAuthService {
       emailVerified: firebaseUser.emailVerified,
       createdAt: new Date().toISOString()
     };
-  
+
     try {
       const backendUser = await firstValueFrom(
         this.http.post<any>(`${environment.apiUrl}/users/firebase-auth`, {
@@ -234,14 +226,14 @@ export class FirebaseAuthService {
           idToken: idToken
         })
       );
-  
+
       const mergedUser: UserData = {
         ...userData,
         id: backendUser.id,
         createdAt: backendUser.createdAt || userData.createdAt,
         name: backendUser.name !== 'User' ? backendUser.name : userData.name
       };
-  
+
       this.saveUser(mergedUser);
       return mergedUser;
     } catch (error) {

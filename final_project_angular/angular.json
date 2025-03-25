@@ -39,9 +39,7 @@
             "outputPath": "dist/final_project_angular",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -61,7 +59,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -77,17 +75,6 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ]
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
-                }
-              ]
             }
           },
           "defaultConfiguration": "production"
@@ -97,12 +84,9 @@
           "configurations": {
             "production": {
               "buildTarget": "final_project_angular:build:production"
-            },
-            "development": {
-              "buildTarget": "final_project_angular:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "production"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
