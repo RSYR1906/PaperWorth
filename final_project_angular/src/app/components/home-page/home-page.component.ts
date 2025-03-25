@@ -1,6 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment.prod';
 import { Promotion } from '../../model';
 import { BudgetService } from '../../services/budget.service';
 import { CameraService } from '../../services/camera.service';
@@ -8,6 +10,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { ReceiptProcessingService } from '../../services/receipt-processing.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
+import { CategoryRecommendation, RecommendedPromotionsStore } from '../../stores/homepage.store';
 
 @Component({
   selector: 'app-home-page',
@@ -20,21 +23,24 @@ export class HomePageComponent implements OnInit, OnDestroy {
   monthlyExpenses: number = 0;
   savedPromotions: Promotion[] = [];
   displayedSavedPromotions: Promotion[] = [];
-  recommendedPromotions: any[] = [];
   selectedPromotion: Promotion | null = null;
   showSuccessNotification = false;
   successNotificationMessage = '';
   notificationTimeRemaining = 100;
   isLoading = {
     budget: false,
-    receipts: false,
-    promotions: false,
     savedPromotions: false
   };
   showMoreSavedPromotions = false;
   savedPromotionsLimit = 3;
   private notificationTimer: any = null;
   private subscriptions = new Subscription();
+  
+  // Observable streams from the store
+  recommendedPromotions$: Observable<CategoryRecommendation[]>;
+  isLoadingRecommendations$: Observable<boolean>;
+  errorRecommendations$: Observable<string | null>;
+  hasRecommendations$: Observable<boolean>;
 
   constructor(
     private router: Router,
@@ -43,8 +49,17 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private savedPromotionsService: SavedPromotionsService,
     private budgetService: BudgetService,
     private firebaseAuthService: FirebaseAuthService,
-    private promotionService: PromotionService
-  ) {}
+    private promotionService: PromotionService,
+    private http: HttpClient,
+    // Inject the store in the constructor
+    private recommendedStore: RecommendedPromotionsStore
+  ) {
+    // Initialize observable streams from the store
+    this.recommendedPromotions$ = this.recommendedStore.recommendedPromotions$;
+    this.isLoadingRecommendations$ = this.recommendedStore.isLoading$;
+    this.errorRecommendations$ = this.recommendedStore.error$;
+    this.hasRecommendations$ = this.recommendedStore.hasRecommendations$;
+  }
 
   ngOnInit(): void {
     const currentUser = this.firebaseAuthService.getCurrentUser();
@@ -95,50 +110,29 @@ export class HomePageComponent implements OnInit, OnDestroy {
   loadReceiptHistory(): void {
     const currentUser = this.firebaseAuthService.getCurrentUser();
     if (!currentUser?.id) return;
-    this.isLoading.receipts = false;
-    // this.subscriptions.add(
-    //   this.receiptProcessingService.loadUserReceiptHistory(currentUser.id).subscribe({
-    //     next: (receipts) => {
-    //       const categories = this.analyzeReceiptHistory(receipts);
-    //       this.loadRecommendedPromotions(categories);
-    //       this.isLoading.receipts = false;
-    //     },
-    //     error: () => (this.isLoading.receipts = false)
-    //   })
-    // );
+    
+    // Fetch receipts from API
+    this.http.get<any[]>(`${environment.apiUrl}/receipts/user/${currentUser.id}`).subscribe({
+      next: (receipts) => {
+        // Use the store to process receipts and load recommendations
+        this.recommendedStore.processReceiptHistory(receipts);
+      },
+      error: (error) => {
+        console.error('Error loading receipts:', error);
+        // If no receipts are available, load some default categories
+        this.loadDefaultRecommendations();
+      }
+    });
+  }
+
+  loadDefaultRecommendations(): void {
+    // Fallback categories if no receipt history is available
+    const defaultCategories = ['Groceries', 'Dining', 'Retail'];
+    this.recommendedStore.loadByCategories(defaultCategories);
   }
 
   isSavedPromotion(promotion: any): boolean {
     return this.savedPromotions.some(p => p.id === promotion.id);
-  }
-
-  analyzeReceiptHistory(receipts: any[]): string[] {
-    const categoryCounts: Record<string, number> = {};
-    receipts.forEach(({ category, merchantName, additionalFields }) => {
-      const detected = category || additionalFields?.category || merchantName || 'Others';
-      categoryCounts[detected] = (categoryCounts[detected] || 0) + 1;
-    });
-    return Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([cat]) => cat);
-  }
-
-  loadRecommendedPromotions(categories: string[]): void {
-    this.isLoading.promotions = true;
-    const promos: any[] = [];
-    let completed = 0;
-    categories.forEach((cat) => {
-      this.promotionService.getPromotionsByCategory(cat).subscribe({
-        next: (deals) => {
-          promos.push({ name: cat, deals });
-        },
-        complete: () => {
-          if (++completed === categories.length) {
-            this.recommendedPromotions = promos;
-            this.isLoading.promotions = false;
-          }
-        },
-        error: () => (this.isLoading.promotions = false)
-      });
-    });
   }
 
   toggleShowMoreSavedPromotions(): void {
@@ -163,6 +157,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
       next: () => {
         this.showNotification('Promotion saved!');
         this.loadSavedPromotions();
+        this.closePromotionDetails();
       },
       error: () => this.showNotification('Failed to save promotion')
     });
@@ -175,6 +170,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
       next: () => {
         this.showNotification('Promotion removed!');
         this.loadSavedPromotions();
+        if (this.selectedPromotion?.id === promotionId) {
+          this.closePromotionDetails();
+        }
       },
       error: () => this.showNotification('Failed to remove promotion')
     });
@@ -212,10 +210,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   hasExpired(expiryDate: string): boolean {
+    if (!expiryDate) return false;
     return new Date(expiryDate) < new Date();
   }
 
   formatDate(dateString: string): string {
+    if (!dateString) return 'No date provided';
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? 'Invalid date' : date.toLocaleDateString('en-US', {
       year: 'numeric', month: 'short', day: 'numeric'

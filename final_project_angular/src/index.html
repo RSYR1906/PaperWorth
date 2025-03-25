@@ -16,6 +16,18 @@
 </head>
 <body>
   <app-root></app-root>
-  <noscript>Please enable JavaScript to continue using this application.</noscript>
-</body>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("service-worker.js")
+          .then(function (registration) {
+            console.log("ServiceWorker registered");
+          })
+          .catch(function (err) {
+            console.log("ServiceWorker error: ", err);
+          });
+      });
+    }
+  </script></body>
 </html>

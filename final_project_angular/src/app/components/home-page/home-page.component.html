@@ -83,17 +83,25 @@
     </ng-container>
   </div>
 
-  <!-- RECOMMENDATIONS SECTION -->
+  <!-- RECOMMENDATIONS SECTION - Using NgRx Component Store -->
   <div class="recommendations-section" *ngIf="!cameraService.isProcessing && !(receiptProcessingService.processing$ | async)">
     <h3 class="personalized-title">Recommended For You</h3>
 
-    <div *ngIf="isLoading.receipts || isLoading.promotions" class="loading-promotions">
+    <!-- Loading state using store's isLoading$ observable -->
+    <div *ngIf="isLoadingRecommendations$ | async" class="loading-promotions">
       <div class="spinner"></div>
       <p>Preparing your personalized recommendations...</p>
     </div>
 
-    <ng-container *ngIf="!isLoading.receipts && !isLoading.promotions">
-      <ng-container *ngIf="recommendedPromotions.length > 0">
+    <!-- Error state using store's error$ observable -->
+    <div *ngIf="(errorRecommendations$ | async) as errorMessage" class="no-recommendations">
+      <p>{{ errorMessage }}</p>
+      <button class="action-btn primary" (click)="loadDefaultRecommendations()">Try Again</button>
+    </div>
+
+    <!-- Content state -->
+    <ng-container *ngIf="!(isLoadingRecommendations$ | async) && !(errorRecommendations$ | async)">
+      <ng-container *ngIf="(recommendedPromotions$ | async) as recommendedPromotions">
         <div *ngFor="let category of recommendedPromotions" class="category-section">
           <div class="category-header">
             <h4>{{ category.name }}</h4>
@@ -119,9 +127,15 @@
             <p>No current deals available for {{ category.name }}</p>
           </div>
         </div>
+        
+        <!-- Empty state - using the has recommendations computed selector -->
+        <div *ngIf="!(hasRecommendations$ | async) && recommendedPromotions.length > 0" class="no-recommendations">
+          <p>No recommendations available in your preferred categories.</p>
+        </div>
       </ng-container>
 
-      <div *ngIf="recommendedPromotions.length === 0" class="no-recommendations">
+      <!-- Overall empty state when no categories found -->
+      <div *ngIf="(recommendedPromotions$ | async)?.length === 0" class="no-recommendations">
         <p>Scan more receipts to get personalized recommendations!</p>
       </div>
     </ng-container>

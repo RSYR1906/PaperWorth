@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { Capacitor } from '@capacitor/core';
 import { initializeApp } from 'firebase/app';
 import {
   User as FirebaseUser,
@@ -8,6 +10,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   getRedirectResult,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -99,19 +102,45 @@ export class FirebaseAuthService {
    * Google sign-in
    */
   async signInWithGoogle(): Promise<UserData | null> {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account', display: 'popup' });
-
     try {
-      const result = await signInWithPopup(this.auth, provider);
-      return this.syncUserWithBackend(result.user);
-    } catch (error: any) {
-      console.error('Google Sign-In Error:', error);
-
-      if (error.code === 'auth/popup-blocked' || error.message?.includes('Cross-Origin-Opener-Policy')) {
-        await signInWithRedirect(this.auth, provider);
+      // Check if running on a native platform with Capacitor
+      if (Capacitor.isNativePlatform()) {
+        // Sign in with Google using Capacitor Firebase Auth
+        const result = await FirebaseAuthentication.signInWithGoogle();
+  
+        // Verify we got the required credential
+        if (!result.credential?.idToken) {
+          throw new Error('Google login failed - missing idToken');
+        }
+  
+        // Create Firebase credential
+        const credential = GoogleAuthProvider.credential(
+          result.credential.idToken
+        );
+  
+        // Sign in to Firebase
+        const userCredential = await signInWithCredential(this.auth, credential);
+        return this.syncUserWithBackend(userCredential.user);
+      } else {
+        // Web implementation
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account', display: 'popup' });
+  
+        try {
+          const result = await signInWithPopup(this.auth, provider);
+          return this.syncUserWithBackend(result.user);
+        } catch (error: any) {
+          console.error('Google Sign-In Error:', error);
+  
+          if (error.code === 'auth/popup-blocked' || error.message?.includes('Cross-Origin-Opener-Policy')) {
+            await signInWithRedirect(this.auth, provider);
+          }
+          throw error;
+        }
       }
-      return null;
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      throw error;
     }
   }
 
