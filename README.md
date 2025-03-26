@@ -114,8 +114,7 @@ PaperWorth is a personal finance management application that allows users to:
 - Safe area handling for notched phones
 
 ### Security Considerations
-- JWT-based authentication
-- Secure Firebase integration
+- Secure Firebase integration with Google Authentication
 - Environment variable management for API keys
 - Separation of frontend/backend concerns
 - Proper error handling and input validation
