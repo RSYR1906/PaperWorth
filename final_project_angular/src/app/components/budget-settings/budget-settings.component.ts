@@ -232,4 +232,43 @@ export class BudgetSettingsComponent implements OnInit {
   formatCurrency(value: number): string {
     return value.toFixed(2);
   }
+
+  // New methods for enhanced category stats
+  /**
+   * Checks if remaining budget is low (less than 20% of total)
+   */
+  isRemainingLow(category: any): boolean {
+    const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
+    if (budgetValue <= 0) return false;
+    
+    const remaining = budgetValue - category.spentAmount;
+    return remaining > 0 && remaining < (budgetValue * 0.2);
+  }
+
+  /**
+   * Checks if remaining budget is negative
+   */
+  isRemainingNegative(category: any): boolean {
+    const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
+    return (budgetValue - category.spentAmount) < 0;
+  }
+
+  /**
+   * Calculates the spent percentage for the visual meter
+   */
+  getSpentPercentage(category: any): number {
+    const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
+    if (budgetValue <= 0) return 0;
+    
+    const percentage = (category.spentAmount / budgetValue) * 100;
+    return Math.min(percentage, 100); // Cap at 100%
+  }
+  
+  /**
+   * Get remaining amount with proper formatting
+   */
+  getRemainingAmount(category: any): number {
+    const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
+    return budgetValue - category.spentAmount;
+  }
 }

@@ -458,3 +458,90 @@
     font-size: 16px;
   }
 }
+
+/* Enhanced Category Stats Styling */
+.category-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background-color: rgba(245, 247, 250, 0.7);
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.category-stats:hover {
+  background-color: rgba(233, 236, 239, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* First row with spent and remaining */
+.category-stats > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spent-amount {
+  color: #dc3545;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.remaining-amount {
+  color: #28a745;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+/* Visual indicator when remaining is low */
+.remaining-amount.low {
+  color: #fd7e14;
+}
+
+.remaining-amount.negative {
+  color: #dc3545;
+}
+
+/* Visual meter to show spent vs total */
+.category-meter {
+  height: 4px;
+  width: 100%;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.category-meter-fill {
+  height: 100%;
+  background-color: #28a745;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.category-meter-fill.warning {
+  background-color: #fd7e14;
+}
+
+.category-meter-fill.danger {
+  background-color: #dc3545;
+}
+
+/* For better visual structure on larger screens */
+@media (min-width: 768px) {
+  .category-stats {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .category-meter {
+    height: 5px;
+    margin-top: 8px;
+  }
+}

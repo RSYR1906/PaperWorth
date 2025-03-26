@@ -534,7 +534,7 @@
 
 .success-notification {
   position: fixed;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  bottom: calc(80px + env(safe-area-inset-bottom, 0));
   left: 50%;
   transform: translateX(-50%);
   background-color: white;
@@ -749,10 +749,6 @@
     padding-top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
     padding-left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
     padding-right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
-  }
-  
-  .success-notification {
-    bottom: max(24px, calc(24px + env(safe-area-inset-bottom, 0px)));
   }
 }
 

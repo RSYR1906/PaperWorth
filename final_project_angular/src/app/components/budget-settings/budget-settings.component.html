@@ -99,10 +99,14 @@
           ></div>
         </div>
         
-        <!-- Added spent amount indicator -->
+        <!-- Enhanced Spent Amount Indicator -->
         <div class="category-stats" *ngIf="category.spentAmount > 0">
           <span class="spent-amount">Spent: ${{ category.spentAmount.toFixed(2) }}</span>
-          <span class="remaining-amount">Remaining: ${{ (budgetForm.get('category_' + category.category)?.value - category.spentAmount).toFixed(2) }}</span>
+          <span class="remaining-amount" 
+                [class.low]="isRemainingLow(category)" 
+                [class.negative]="isRemainingNegative(category)">
+            Remaining: ${{ getRemainingAmount(category).toFixed(2) }}
+          </span>
         </div>
       </div>
     </div>
@@ -115,7 +119,7 @@
       <span>Cancel</span>
     </button>
     <button type="submit" class="action-btn primary" [disabled]="budgetForm.invalid || isSubmitting">
-      <span class="btn-icon" *ngIf="!isSubmitting">💾  </span>
+      <span class="btn-icon" *ngIf="!isSubmitting">💾</span>
       <span class="spinner-small" *ngIf="isSubmitting"></span>
       <span>{{ isSubmitting ? 'Saving...' : 'Save Budget' }}</span>
     </button>
