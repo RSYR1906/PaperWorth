@@ -156,7 +156,12 @@ public class OcrService {
             String line = lines[i].trim().toLowerCase();
             // Check against known merchant names
             if (line.contains("cold storage") || line.contains("fairprice") ||
-                    line.contains("ntuc") || line.contains("mcdonald") /* add more */) {
+                    line.contains("ntuc") || line.contains("mcdonald") ||
+                    line.contains("kfc") || line.contains("wingstop") ||
+                    line.contains("uniqlo") || line.contains("starbucks") ||
+                    line.contains("coffee bean") || line.contains("subway") ||
+                    line.contains("watsons") || line.contains("guardian") ||
+                    line.contains("unity")) {
                 return lines[i].trim();
             }
         }

@@ -90,16 +90,23 @@ export class ExpenseTrackerComponent implements OnInit {
       ? Math.min(Math.round((this.totalSpent / this.monthlyBudget) * 100), 100)
       : 0;
 
-    this.expenseCategories = budget.categories.map((category: any) => ({
-      name: category.category,
-      amount: category.spentAmount,
-      percentage: category.spentAmount > 0 && this.totalSpent > 0
-        ? Math.round((category.spentAmount / this.totalSpent) * 100)
-        : 0,
-      color: this.getCategoryColor(category.category),
-      icon: this.getCategoryIcon(category.category),
-      transactions: category.transactions
-    })).sort((a: { amount: number; }, b: { amount: number; }) => b.amount - a.amount);
+    this.expenseCategories = budget.categories.map((category: any) => {
+      // First get category budget if available
+      const categoryBudget = category.budgetAmount || 0;
+      
+      return {
+        name: category.category,
+        amount: category.spentAmount,
+        budget: categoryBudget,
+        // Calculate percentage of category budget used (if budget exists)
+        percentage: categoryBudget > 0
+          ? Math.round((category.spentAmount / categoryBudget) * 100)
+          : (this.totalSpent > 0 ? Math.round((category.spentAmount / this.totalSpent) * 100) : 0),
+        color: this.getCategoryColor(category.category),
+        icon: this.getCategoryIcon(category.category),
+        transactions: category.transactions
+      };
+    }).sort((a: { amount: number; }, b: { amount: number; }) => b.amount - a.amount);
   }
 
   processBudgetHistory(budgets: any[]): void {
