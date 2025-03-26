@@ -85,7 +85,6 @@ PaperWorth is a personal finance management application that allows users to:
   - Merchant name
   - Total amount
   - Date of purchase
-  - Individual items where possible
 - Automatic category detection based on merchant name
 
 #### Budget Management
