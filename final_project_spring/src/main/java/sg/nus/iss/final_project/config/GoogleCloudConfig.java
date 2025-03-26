@@ -30,22 +30,18 @@ public class GoogleCloudConfig {
 	@Bean
 	public GoogleCredentials googleCredentials() throws IOException {
 		try {
-			// First check if it's a Base64-encoded string
 			if (googleCredentials != null && !googleCredentials.isEmpty()) {
 				if (googleCredentials.startsWith("{") || googleCredentials.trim().startsWith("{")) {
-					// This appears to be a JSON string, not Base64
 					logger.info("Using direct JSON credential string");
 					return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentials.getBytes()))
 							.createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
 				} else if (Files.exists(Paths.get(googleCredentials))) {
-					// It's a file path
 					logger.info("Loading credentials from file: {}", googleCredentials);
 					try (InputStream credentialsStream = new FileInputStream(googleCredentials)) {
 						return GoogleCredentials.fromStream(credentialsStream)
 								.createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
 					}
 				} else {
-					// Try to parse as Base64
 					try {
 						logger.info("Attempting to decode Base64 credentials");
 						byte[] decodedBytes = Base64.getDecoder().decode(googleCredentials);
@@ -57,8 +53,6 @@ public class GoogleCloudConfig {
 					}
 				}
 			}
-
-			// If we get here, no valid credentials were found
 			logger.error("No Google credentials found");
 			throw new IOException("No Google credentials found");
 		} catch (Exception e) {

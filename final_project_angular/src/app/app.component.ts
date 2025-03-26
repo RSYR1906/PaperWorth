@@ -48,26 +48,22 @@ export class AppComponent implements OnInit, OnDestroy {
       console.error('Failed to initialize Firebase:', error);
     }
     
-    // Subscribe to router events
     this.subscriptions.add(
       this.router.events
         .pipe(filter(event => event instanceof NavigationEnd))
         .subscribe(() => {
-          // Reset camera service when navigating to a new route
           if (!this.isReceiptProcessingRoute()) {
             this.cameraService.resetScanner();
           }
         })
     );
     
-    // Subscribe to camera trigger events
     this.subscriptions.add(
       this.cameraService.triggerCamera$.subscribe(() => {
         this.triggerFileInput();
       })
     );
     
-    // Subscribe to OCR processed events from the camera service
     this.subscriptions.add(
       this.cameraService.ocrProcessed$.subscribe(result => {
         if (result) {
@@ -109,13 +105,11 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Camera functionality methods
   triggerFileInput() {
     if (this.fileInput && this.fileInput.nativeElement) {
       this.fileInput.nativeElement.click();
     } else {
       console.error("File input element not found or not yet initialized");
-      // Fallback for when the ViewChild is not available
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
@@ -133,12 +127,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
   
-  // Handle receipt confirmation
   cancelReceiptProcessing(): void {
     this.receiptProcessingService.cancelReceiptProcessing();
   }
   
-  // Confirm and save receipt
   confirmAndSaveReceipt(): void {
     const currentUser = this.firebaseAuthService.getCurrentUser() || 
                        JSON.parse(localStorage.getItem('currentUser') || '{}');

@@ -12,13 +12,13 @@ public class Promotion {
     private String id;
     private String merchant;
     private String description;
-    private String expiry; // Changed from LocalDateTime to match the data structure
-    private String imageUrl; // Changed to match property name in the data
+    private String expiry;
+    private String imageUrl;
     private String location;
     private String code;
     private String conditions;
-    private String category; // Added category field
-    private int promotionId; // Added to store the numeric ID from the data
+    private String category;
+    private int promotionId;
 
     // Transient field to store when a user saved this promotion
     // This field is not stored in the database, but can be populated

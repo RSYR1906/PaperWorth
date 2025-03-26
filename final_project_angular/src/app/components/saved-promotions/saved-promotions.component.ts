@@ -1,4 +1,3 @@
-// src/app/components/saved-promotions/saved-promotions.component.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Subscription, map } from 'rxjs';
@@ -45,7 +44,6 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     private savedPromotionsService: SavedPromotionsService
   ) {}
 
-  // Observables declared but will be initialized in ngOnInit
   savedPromotions$!: Observable<Promotion[]>;
   filteredPromotions$!: Observable<Promotion[]>;
 
@@ -66,7 +64,6 @@ export class SavedPromotionsComponent implements OnInit, OnDestroy {
     const currentUser = this.getCurrentUser();
 
     if (!currentUser?.id) {
-      // Retry after short delay in case Firebase is still loading
       setTimeout(() => this.ngOnInit(), 300);
       return;
     }

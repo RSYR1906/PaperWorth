@@ -20,11 +20,9 @@ public class Budget {
     private double totalSpent;
     private List<BudgetCategory> categories = new ArrayList<>();
 
-    // Default constructor
     public Budget() {
     }
 
-    // Constructor with fields
     public Budget(String userId, String monthYear, double totalBudget) {
         this.userId = userId;
         this.monthYear = monthYear;
@@ -32,7 +30,6 @@ public class Budget {
         this.totalSpent = 0;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -81,19 +78,16 @@ public class Budget {
         this.categories = categories;
     }
 
-    // Helper method to add a category
     public void addCategory(BudgetCategory category) {
         this.categories.add(category);
     }
 
-    // Helper method to update totalSpent
     public void updateTotalSpent() {
         this.totalSpent = this.categories.stream()
                 .mapToDouble(BudgetCategory::getSpentAmount)
                 .sum();
     }
 
-    // Helper method to find a category by name (case insensitive)
     public BudgetCategory findCategoryByName(String categoryName) {
         return this.categories.stream()
                 .filter(c -> c.getCategory().equalsIgnoreCase(categoryName))

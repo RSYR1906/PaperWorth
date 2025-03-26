@@ -17,11 +17,9 @@ public class PointTransaction {
     private LocalDateTime transactionDate;
     private String description;
 
-    // Default constructor
     public PointTransaction() {
     }
 
-    // Constructor with fields
     public PointTransaction(String userId, int points, String transactionType,
             String source, String referenceId, String description) {
         this.userId = userId;
@@ -33,7 +31,6 @@ public class PointTransaction {
         this.description = description;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

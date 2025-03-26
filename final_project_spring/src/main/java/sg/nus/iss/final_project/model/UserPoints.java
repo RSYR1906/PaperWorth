@@ -15,11 +15,9 @@ public class UserPoints {
     private int spentPoints;
     private LocalDateTime lastUpdated;
 
-    // Default constructor
     public UserPoints() {
     }
 
-    // Constructor with fields
     public UserPoints(String userId, int totalPoints, int availablePoints, int spentPoints) {
         this.userId = userId;
         this.totalPoints = totalPoints;
@@ -28,7 +26,6 @@ public class UserPoints {
         this.lastUpdated = LocalDateTime.now();
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

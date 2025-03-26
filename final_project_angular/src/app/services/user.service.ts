@@ -1,4 +1,3 @@
-// src/app/services/user.service.ts
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
@@ -18,11 +17,6 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Authenticates a user with provided credentials
-   * @param credentials User login credentials (email/password)
-   * @returns Observable with login response
-   */
   login(credentials: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap(response => console.log('Login response:', response)),
@@ -33,11 +27,6 @@ export class UserService {
     );
   }
 
-  /**
-   * Registers a new user
-   * @param user User registration data
-   * @returns Observable with registration response
-   */
   register(user: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, user).pipe(
       tap(response => console.log('Register response:', response)),
@@ -48,10 +37,6 @@ export class UserService {
     );
   }
 
-  /**
-   * Gets current user details from API or localStorage
-   * @returns Observable with user information
-   */
   getCurrentUser(): Observable<User> {
     const currentUser = this.getUserFromStorage();
     return this.http.get<User>(`${this.apiUrl}/me?userId=${currentUser.id}`).pipe(
@@ -63,16 +48,10 @@ export class UserService {
     );
   }
 
-  /**
-   * Logs out the current user
-   */
   logout(): void {
     localStorage.removeItem(this.storageKey);
   }
   
-  /**
-   * Debugs localStorage contents
-   */
   debugLocalStorage(): void {
     console.log('Debugging localStorage:');
     const keys = Object.keys(localStorage);
@@ -97,10 +76,6 @@ export class UserService {
     }
   }
   
-  /**
-   * Returns a mock user for testing
-   * @returns Mock user object
-   */
   getMockUser(): User {
     return {
       id: "999",
@@ -110,10 +85,6 @@ export class UserService {
     };
   }
 
-  /**
-   * Retrieves the current user from localStorage
-   * @returns User object from storage or empty object
-   */
   private getUserFromStorage(): Partial<User> {
     try {
       return JSON.parse(localStorage.getItem(this.storageKey) || '{}');

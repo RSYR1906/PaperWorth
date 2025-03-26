@@ -26,27 +26,21 @@ public class FirebaseConfig {
     public FirebaseApp firebaseApp() throws IOException {
         if (FirebaseApp.getApps().isEmpty()) {
             if (firebaseCredentialsBase64 != null && !firebaseCredentialsBase64.isEmpty()) {
-                // Decode base64 to bytes
                 byte[] decodedBytes = Base64.getDecoder().decode(firebaseCredentialsBase64);
-
-                // Create credentials from decoded bytes
                 GoogleCredentials credentials = GoogleCredentials.fromStream(
                         new ByteArrayInputStream(decodedBytes));
-
                 FirebaseOptions options = FirebaseOptions.builder()
                         .setCredentials(credentials)
                         .build();
 
                 return FirebaseApp.initializeApp(options);
             } else {
-                // Try to load from classpath for local development
                 try {
                     Resource resource = (Resource) new ClassPathResource("firebase-service-account.json");
                     FirebaseOptions options = FirebaseOptions.builder()
                             .setCredentials(
                                     GoogleCredentials.fromStream(((ClassPathResource) resource).getInputStream()))
                             .build();
-
                     return FirebaseApp.initializeApp(options);
                 } catch (Exception e) {
                     throw new IOException(
@@ -57,7 +51,7 @@ public class FirebaseConfig {
             return FirebaseApp.getInstance();
         }
     }
-
+    
     @Bean
     public FirebaseAuth firebaseAuth(FirebaseApp firebaseApp) {
         return FirebaseAuth.getInstance(firebaseApp);

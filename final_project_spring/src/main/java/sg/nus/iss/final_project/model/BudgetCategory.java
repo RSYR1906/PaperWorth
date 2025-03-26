@@ -7,11 +7,9 @@ public class BudgetCategory {
     private double spentAmount;
     private int transactions;
 
-    // Default constructor
     public BudgetCategory() {
     }
 
-    // Constructor with fields
     public BudgetCategory(String category, double budgetAmount) {
         this.category = category;
         this.budgetAmount = budgetAmount;
@@ -19,7 +17,6 @@ public class BudgetCategory {
         this.transactions = 0;
     }
 
-    // Getters and Setters
     public String getCategory() {
         return category;
     }
@@ -52,13 +49,11 @@ public class BudgetCategory {
         this.transactions = transactions;
     }
 
-    // Helper method to add an expense
     public void addExpense(double amount) {
         this.spentAmount += amount;
         this.transactions++;
     }
 
-    // Helper method to subtract an expense
     public void subtractExpense(double amount) {
         this.spentAmount = Math.max(0, this.spentAmount - amount);
         this.transactions = Math.max(0, this.transactions - 1);

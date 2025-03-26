@@ -1,4 +1,3 @@
-// src/app/components/rewards/rewards.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PointTransaction, Reward, UserPoints, UserReward } from '../../model';

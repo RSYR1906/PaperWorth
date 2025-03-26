@@ -4,7 +4,6 @@ import { EMPTY, Observable, catchError, forkJoin, of, switchMap, tap } from 'rxj
 import { Promotion } from '../model';
 import { PromotionService } from '../services/promotions.service';
 
-// Define interfaces for the state structure
 export interface CategoryRecommendation {
   name: string;
   deals: Promotion[];
@@ -17,7 +16,6 @@ export interface RecommendedPromotionsState {
   error: string | null;
 }
 
-// Initial state
 const initialState: RecommendedPromotionsState = {
   recommendedPromotions: [],
   topCategories: [],
@@ -29,13 +27,11 @@ const initialState: RecommendedPromotionsState = {
   providedIn: 'root'
 })
 export class RecommendedPromotionsStore extends ComponentStore<RecommendedPromotionsState> {
-  // Selectors
   readonly recommendedPromotions$ = this.select(state => state.recommendedPromotions);
   readonly topCategories$ = this.select(state => state.topCategories);
   readonly isLoading$ = this.select(state => state.isLoading);
   readonly error$ = this.select(state => state.error);
 
-  // Computed selector for checking if there are any recommendations
   readonly hasRecommendations$ = this.select(
     this.recommendedPromotions$,
     (recommendations) => recommendations.some(cat => cat.deals.length > 0)
@@ -45,7 +41,6 @@ export class RecommendedPromotionsStore extends ComponentStore<RecommendedPromot
     super(initialState);
   }
 
-  // Updaters (equivalent to reducers in NgRx)
   readonly setLoading = this.updater((state, isLoading: boolean) => ({
     ...state,
     isLoading,
@@ -71,7 +66,6 @@ export class RecommendedPromotionsStore extends ComponentStore<RecommendedPromot
     })
   );
 
-  // Effects (for side effects like API calls)
   readonly loadRecommendedPromotions = this.effect((categories$: Observable<string[]>) => {
     return categories$.pipe(
       tap(() => this.setLoading(true)),
@@ -112,13 +106,11 @@ export class RecommendedPromotionsStore extends ComponentStore<RecommendedPromot
       switchMap(receipts => {
         const categoryCounts: Record<string, number> = {};
         
-        // Count occurrences of each category
         receipts.forEach(({ category, merchantName, additionalFields }) => {
           const detected = category || additionalFields?.category || merchantName || 'Others';
           categoryCounts[detected] = (categoryCounts[detected] || 0) + 1;
         });
-        
-        // Sort and get top 3 categories
+    
         const topCategories = Object.entries(categoryCounts)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 3)
@@ -141,7 +133,6 @@ export class RecommendedPromotionsStore extends ComponentStore<RecommendedPromot
     );
   });
 
-  // Public methods to use in components
   loadByCategories(categories: string[]): void {
     this.loadRecommendedPromotions(categories);
   }

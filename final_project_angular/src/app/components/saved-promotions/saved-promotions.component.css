@@ -1,6 +1,3 @@
-/* Saved Promotions CSS - Styled to match Promotions */
-
-/* Hero Section - Mobile Optimized */
 .hero {
   background: linear-gradient(135deg, #2E3192 0%, #1b93ff 100%);
   color: white;
@@ -68,7 +65,6 @@
   }
 }
 
-/* Container Styles - Mobile Optimized */
 .promotions-container {
   padding: 0;
   max-width: 100%;
@@ -83,7 +79,6 @@
   to { opacity: 1; }
 }
 
-/* Loading Indicator - Mobile Optimized */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -114,7 +109,6 @@
   font-weight: 500;
 }
 
-/* Error Message - Mobile Optimized */
 .error-message {
   background-color: #fff0f0;
   border-radius: 12px;
@@ -183,7 +177,6 @@
   font-size: 16px;
 }
 
-/* Specific error types */
 .error-message.network {
   border-left-color: #ff9800;
   background-color: #fff8e1;
@@ -201,7 +194,6 @@
   background-color: #e68900;
 }
 
-/* Empty State - Mobile Optimized */
 .empty-state {
   text-align: center;
   padding: 40px 16px;
@@ -249,7 +241,6 @@
   transform: scale(0.98);
 }
 
-/* Category tabs - Mobile Optimized */
 .category-tabs {
   background-color: white;
   padding: 12px 16px;
@@ -301,7 +292,6 @@
   transform: scale(0.95);
 }
 
-/* Promotions Grid - Mobile Optimized */
 .promotions-grid {
   padding: 16px;
   animation: fadeIn 1s ease-out;
@@ -337,7 +327,6 @@
   margin-bottom: 28px;
 }
 
-/* Promotion card - Mobile Optimized */
 .promotion-card {
   background-color: white;
   border-radius: 12px;
@@ -358,7 +347,6 @@
   transform: scale(0.98);
 }
 
-/* Expiry Badge - Mobile Optimized */
 .expiry-badge {
   position: absolute;
   top: 8px;
@@ -405,7 +393,6 @@
   font-size: 13px;
 }
 
-/* Promotion Image - Mobile Optimized */
 .promotion-image {
   height: 160px;
   overflow: hidden;
@@ -421,7 +408,6 @@
   transition: transform 0.3s;
 }
 
-/* Promotion Info - Mobile Optimized */
 .promotion-info {
   padding: 16px;
   flex: 1;
@@ -429,7 +415,6 @@
   flex-direction: column;
 }
 
-/* Used promotion-merchant instead of promotion-title to match promotions style */
 .promotion-merchant {
   font-weight: 700;
   font-size: 15px;
@@ -500,7 +485,6 @@
   color: #ff9800;
 }
 
-/* Modal styles - Mobile Optimized */
 .promotion-modal-overlay {
   position: fixed;
   top: 0;
@@ -650,7 +634,6 @@
   display: inline-block;
 }
 
-/* Promo Code Styles */
 .promo-code-container {
   margin-top: 10px;
 }
@@ -747,7 +730,6 @@
   transform: scale(0.98);
 }
 
-/* Notification styles - Mobile Optimized */
 .notification-container {
   position: fixed;
   bottom: calc(16px + env(safe-area-inset-bottom, 0));
@@ -817,7 +799,6 @@
   color: #666;
 }
 
-/* Timer bar for success notification */
 .timer-bar {
   height: 3px;
   background-color: #f1f1f1;
@@ -830,7 +811,6 @@
   transition: width 0.1s linear;
 }
 
-/* Update existing notification-progress class (if you want to keep it) */
 .notification-progress {
   position: absolute;
   bottom: 0;
@@ -840,7 +820,6 @@
   transition: width 3s linear;
 }
 
-/* Responsive adjustments */
 @media (min-width: 480px) {
   .deals-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -922,7 +901,6 @@
   }
 }
 
-/* Safe area insets for notched phones */
 @supports (padding: max(0px)) {
   .hero {
     padding-top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
@@ -939,7 +917,6 @@
   }
 }
 
-/* Fix for iPhone input zooming */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   select,
   textarea,
@@ -948,7 +925,6 @@
   }
 }
 
-/* Improve scrolling experience */
 .promotion-modal {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;

@@ -20,11 +20,9 @@ public class SavedPromotionDTO {
     private LocalDateTime savedAt;
     private String savedPromotionId; // ID of the SavedPromotion record
 
-    // Default constructor
     public SavedPromotionDTO() {
     }
 
-    // Getters and setters
     public String getId() {
         return id;
     }

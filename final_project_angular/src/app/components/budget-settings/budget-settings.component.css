@@ -1,6 +1,3 @@
-/* Enhanced Budget Settings Styles - Mobile Optimized */
-
-/* Hero Section - Mobile Optimized */
 .hero {
   background: linear-gradient(135deg, #2E3192 0%, #1b93ff 100%);
   color: white;
@@ -69,7 +66,6 @@
   }
 }
 
-/* Settings Container - Mobile Optimized */
 .settings-form {
   background-color: white;
   max-width: 100%;
@@ -85,7 +81,6 @@
   to { opacity: 1; }
 }
 
-/* Loading State - Mobile Optimized */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -119,7 +114,6 @@
   font-size: 15px;
 }
 
-/* Message Styling - Mobile Optimized */
 .message {
   padding: 12px;
   border-radius: 8px;
@@ -153,7 +147,6 @@
   font-size: 14px;
 }
 
-/* Settings Section - Mobile Optimized */
 .settings-section {
   margin-bottom: 20px;
   background-color: white;
@@ -187,7 +180,6 @@
   margin-bottom: 16px;
 }
 
-/* Form Styling - Mobile Optimized */
 .form-group {
   margin-bottom: 20px;
 }
@@ -240,7 +232,6 @@
   margin-top: 6px;
 }
 
-/* Categories List Styling - Mobile Optimized */
 .categories-list {
   max-height: 450px;
   overflow-y: auto;
@@ -257,7 +248,6 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Replace hover with active for touch */
 .category-item:active {
   transform: scale(0.99);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -298,7 +288,6 @@
   transition: width 0.5s ease-in-out, background-color 0.3s;
 }
 
-/* Form Actions - Mobile Optimized */
 .form-actions {
   display: grid;
   grid-template-columns: 1fr;
@@ -348,7 +337,6 @@
   opacity: 0.7;
 }
 
-/* Scrollbar Styling */
 .categories-list::-webkit-scrollbar {
   width: 4px;
 }
@@ -363,7 +351,6 @@
   border-radius: 10px;
 }
 
-/* Animation for changes */
 @keyframes highlight {
   0% { background-color: rgba(46, 49, 146, 0.2); }
   100% { background-color: transparent; }
@@ -373,7 +360,6 @@
   animation: highlight 1.5s ease-out;
 }
 
-/* Category name container styling */
 .category-name-container {
   display: flex;
   align-items: center;
@@ -386,7 +372,6 @@
   margin-right: 2px;
 }
 
-/* Responsive Improvements */
 @media (min-width: 480px) {
   .settings-form,
   .message {
@@ -441,7 +426,6 @@
   }
 }
 
-/* Safe area insets for notched phones */
 @supports (padding: max(0px)) {
   .hero {
     padding-top: max(24px, calc(24px + env(safe-area-inset-top, 0px)));
@@ -450,7 +434,6 @@
   }
 }
 
-/* Fix for iPhone input zooming */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   select,
   textarea,
@@ -459,7 +442,6 @@
   }
 }
 
-/* Enhanced Category Stats Styling */
 .category-stats {
   display: flex;
   flex-direction: column;
@@ -478,7 +460,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-/* First row with spent and remaining */
 .category-stats > span {
   display: flex;
   justify-content: space-between;
@@ -499,7 +480,6 @@
   align-items: center;
 }
 
-/* Visual indicator when remaining is low */
 .remaining-amount.low {
   color: #fd7e14;
 }
@@ -508,7 +488,6 @@
   color: #dc3545;
 }
 
-/* Visual meter to show spent vs total */
 .category-meter {
   height: 4px;
   width: 100%;
@@ -533,7 +512,6 @@
   background-color: #dc3545;
 }
 
-/* For better visual structure on larger screens */
 @media (min-width: 768px) {
   .category-stats {
     padding: 10px 12px;

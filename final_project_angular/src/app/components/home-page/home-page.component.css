@@ -1,13 +1,11 @@
-/* App Container - Mobile Optimized */
 .app-container {
   padding: 0;
   max-width: 100%;
   position: relative;
-  overflow: visible !important; /* prevent clipping */
+  overflow: visible !important;
   z-index: 1;
 }
 
-/* Hero Section - Mobile Optimized */
 .hero {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: var(--white);
@@ -103,7 +101,6 @@
   font-size: 16px;
 }
 
-/* Dashboard Styles - Mobile Optimized */
 .dashboard-card {
   background-color: var(--white);
   border-radius: var(--radius-md);
@@ -131,7 +128,6 @@
   font-size: 14px;
 }
 
-/* Rewards Section - Mobile Optimized */
 .rewards-promo {
   display: flex;
   align-items: center;
@@ -189,7 +185,6 @@
   transform: scale(0.95);
 }
 
-/* Unified Promotions and Saved Promotions Sections */
 .promotions-section, 
 .recommendations-section {
   background-color: var(--white);
@@ -200,7 +195,6 @@
   animation: fadeIn 0.8s ease-out;
 }
 
-/* Section Headers */
 .section-header,
 .category-header {
   display: flex;
@@ -238,7 +232,6 @@
   font-size: 15px;
 }
 
-/* View All Link */
 .view-all {
   color: var(--primary-color);
   text-decoration: none;
@@ -259,13 +252,12 @@
   margin-left: 4px;
 }
 
-/* Horizontal Scrollable Lists */
 .saved-promotions-scroll,
 .promo-scroll-container,
 .promo-list {
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding-bottom: 8px;
   display: flex;
   gap: 12px;
@@ -279,10 +271,9 @@
 .saved-promotions-scroll::-webkit-scrollbar,
 .promo-scroll-container::-webkit-scrollbar,
 .promo-list::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+  display: none;
 }
 
-/* Unified Card Styles */
 .promo-card {
   background-color: var(--white);
   border-radius: var(--radius-md);
@@ -307,7 +298,6 @@
   transform: scale(0.98);
 }
 
-/* Unified Image Style */
 .promo-image {
   height: 130px;
   overflow: hidden;
@@ -320,7 +310,6 @@
   transition: transform 0.3s;
 }
 
-/* Unified Content Styles */
 .promo-content {
   padding: 10px;
   flex-grow: 1;
@@ -339,7 +328,6 @@
   color: var(--text-dark);
   margin-bottom: 6px;
   
-  /* Limit to 2 lines with ellipsis */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -347,7 +335,6 @@
   line-height: 1.4;
 }
 
-/* Unified Meta Information */
 .promo-meta {
   font-size: 12px;
   color: var(--text-muted);
@@ -373,7 +360,6 @@
   font-size: 11px;
 }
 
-/* Unified Action Buttons */
 .promo-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -417,7 +403,6 @@
   transform: scale(0.95);
 }
 
-/* Expiry Badge */
 .expiry-badge {
   position: absolute;
   top: 8px;
@@ -435,7 +420,6 @@
   background-color: #e53935;
 }
 
-/* Show More Button - Mobile Optimized */
 .show-more-container {
   text-align: center;
   margin-top: 12px;
@@ -460,7 +444,6 @@
   transform: scale(0.98);
 }
 
-/* Unified Loading States */
 .loading-promotions,
 .loading-indicator {
   text-align: center;
@@ -493,7 +476,6 @@
   100% { opacity: 0.6; }
 }
 
-/* Unified Empty States */
 .empty-state,
 .no-deals-message,
 .no-recommendations {
@@ -532,7 +514,6 @@
   padding: 12px;
 }
 
-/* Action Buttons - Mobile Optimized */
 .action-btn {
   padding: 10px 16px;
   border: none;
@@ -564,7 +545,6 @@
   cursor: not-allowed;
 }
 
-/* Personalized Recommendations Styles */
 .personalized-title {
   color: var(--primary-color);
   display: flex;
@@ -577,7 +557,6 @@
   font-size: 18px;
 }
 
-/* Promotion Modal Styles */
 .promotion-modal-overlay {
   position: fixed;
   top: 0;
@@ -786,12 +765,10 @@
   transform: scale(0.98);
 }
 
-/* Content padding */
 .content {
   padding-bottom: 20px;
 }
 
-/* Responsive adjustments */
 @media (min-width: 480px) {
   .action-buttons {
     grid-template-columns: 1fr 1fr;
@@ -846,7 +823,6 @@
     padding-bottom: 20px;
   }
   
-  /* Grid layout for desktop */
   .saved-promotions-list, .promo-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -865,7 +841,6 @@
     min-width: auto;
   }
   
-  /* Larger hero for desktop */
   .hero {
     padding: 60px 30px;
   }
@@ -879,7 +854,6 @@
   }
 }
 
-/* Safe area insets for notched phones */
 @supports (padding: max(0px)) {
   .hero {
     padding-top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
@@ -892,7 +866,6 @@
   }
 }
 
-/* Fix for iPhone input zooming */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   select,
   textarea,
@@ -970,7 +943,6 @@
   color: #666;
 }
 
-/* Success notification timer */
 .timer-bar {
   height: 3px;
   background-color: #f1f1f1;
@@ -980,7 +952,7 @@
 .timer-progress {
   height: 100%;
   background-color: #4CAF50;
-  width: 100%; /* Initial width */
+  width: 100%;
   transition: width 0.1s linear;
 }
 

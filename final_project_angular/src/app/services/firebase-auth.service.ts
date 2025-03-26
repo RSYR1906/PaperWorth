@@ -20,16 +20,12 @@ import { environment } from '../../environments/environment.prod';
 import { firebaseConfig } from '../firebaseConfig';
 
 
-// Enable Firebase debug mode in development
 if (!environment.production) {
   const auth = getAuth();
   auth.useDeviceLanguage();
   console.log('Firebase auth debugging enabled');
 }
 
-/**
- * Interface defining user data structure
- */
 interface UserData {
   id: string;
   name: string;
@@ -52,11 +48,6 @@ export class FirebaseAuthService {
   private readonly authReadySubject = new BehaviorSubject<boolean>(false);
   private readonly storageKey = 'currentUser';
   private isProcessingRedirect = false;
-
-
-  /**
-   * Observable for current user data
-   */
   public readonly currentUser$: Observable<UserData | null> = this.currentUserSubject.asObservable();
   public readonly authReady$: Observable<boolean> = this.authReadySubject.asObservable();
 
@@ -68,23 +59,14 @@ export class FirebaseAuthService {
     this.handleRedirectResult();
   }
 
-  /**
-   * Gets the current authenticated user
-   */
   getCurrentUser(): UserData | null {
     return this.currentUserSubject.value;
   }
 
-  /**
-   * Checks if a user is currently authenticated
-   */
   isAuthenticated(): boolean {
     return !!this.currentUserSubject.value;
   }
 
-  /**
-   * Gets the Firebase ID token
-   */
   async getIdToken(): Promise<string | null> {
     const user = this.auth.currentUser;
     if (!user) return null;
@@ -97,39 +79,28 @@ export class FirebaseAuthService {
     }
   }
 
-  /**
-   * Email/password sign in
-   */
   async signInWithEmailandPassword(email: string, password: string): Promise<UserData> {
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
     return this.syncUserWithBackend(credential.user);
   }
 
-  /**
-   * Google sign-in
-   */
   async signInWithGoogle(): Promise<UserData | null> {
     try {
       const platform = Capacitor.getPlatform();
       console.log(`Running on platform: ${platform}`);
   
       if (platform === 'android' || platform === 'ios') {
-        // Clear previous sign-in state
         await FirebaseAuthentication.signOut();
         
-        // Add more detailed logging
         console.log('Starting native Google sign-in with Firebase Authentication plugin');
         
-        // Use the plugin to sign in
         const result = await FirebaseAuthentication.signInWithGoogle();
         console.log('Native sign-in completed, result:', JSON.stringify(result));
         
-        // Check if we have valid authentication data
         if (!result || !result.user) {
           throw new Error('Google login failed - missing user data');
         }
         
-        // Create a user object from the plugin result
         const userData: UserData = {
           id: result.user.uid,
           name: result.user.displayName || 'User',
@@ -139,10 +110,8 @@ export class FirebaseAuthService {
           createdAt: new Date().toISOString()
         };
         
-        // Sync with backend
         return this.syncUserWithBackend(this.auth.currentUser!);
       } else {
-        // Web-based sign-in implementation
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(this.auth, provider);
         return this.syncUserWithBackend(result.user);
@@ -153,9 +122,6 @@ export class FirebaseAuthService {
     }
   }
 
-  /**
-   * Sign up with email/password
-   */
   async signUpWithEmailandPassword(email: string, password: string, displayName?: string): Promise<UserData> {
     try {
       const credential = await createUserWithEmailAndPassword(this.auth, email, password);
@@ -169,9 +135,6 @@ export class FirebaseAuthService {
     }
   }
 
-  /**
-   * Sign out
-   */
   async signOut(): Promise<void> {
     await signOut(this.auth);
     this.saveUser(null);
@@ -179,9 +142,6 @@ export class FirebaseAuthService {
     this.router.navigate(['/login']);
   }
 
-  /**
-   * Redirect sign-in result
-   */
   private async handleRedirectResult(): Promise<void> {
     if (this.isProcessingRedirect) return;
     this.isProcessingRedirect = true;
@@ -199,9 +159,6 @@ export class FirebaseAuthService {
     }
   }
 
-  /**
-   * Load user from localStorage
-   */
   private loadStoredUser(): UserData | null {
     try {
       const storedUser = localStorage.getItem(this.storageKey);
@@ -212,9 +169,6 @@ export class FirebaseAuthService {
     }
   }
 
-  /**
-   * Save user to localStorage
-   */
   private saveUser(user: UserData | null): void {
     if (user) {
       localStorage.setItem(this.storageKey, JSON.stringify(user));
@@ -224,9 +178,6 @@ export class FirebaseAuthService {
     this.currentUserSubject.next(user);
   }
 
-  /**
-   * Firebase auth state listener
-   */
   private setupAuthStateListener(): void {
     this.auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -238,9 +189,6 @@ export class FirebaseAuthService {
     });
   }
 
-  /**
-   * Sync Firebase user with backend
-   */
   private async syncUserWithBackend(firebaseUser: FirebaseUser, displayName?: string): Promise<UserData> {
     if (!firebaseUser) throw new Error('No Firebase user');
 

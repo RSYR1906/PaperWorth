@@ -15,18 +15,15 @@ public class SavedPromotion {
     private String promotionId;
     private LocalDateTime savedAt;
 
-    // Default constructor
     public SavedPromotion() {
     }
 
-    // Constructor with fields
     public SavedPromotion(String userId, String promotionId) {
         this.userId = userId;
         this.promotionId = promotionId;
         this.savedAt = LocalDateTime.now();
     }
 
-    // Getters and setters
     public String getId() {
         return id;
     }

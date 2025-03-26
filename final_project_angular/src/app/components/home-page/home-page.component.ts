@@ -37,7 +37,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private notificationTimer: any = null;
   private subscriptions = new Subscription();
   
-  // Observable streams from the store
   recommendedPromotions$: Observable<CategoryRecommendation[]>;
   isLoadingRecommendations$: Observable<boolean>;
   errorRecommendations$: Observable<string | null>;
@@ -52,10 +51,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private firebaseAuthService: FirebaseAuthService,
     private promotionService: PromotionService,
     private http: HttpClient,
-    // Inject the store in the constructor
     private recommendedStore: RecommendedPromotionsStore
   ) {
-    // Initialize observable streams from the store
     this.recommendedPromotions$ = this.recommendedStore.recommendedPromotions$;
     this.isLoadingRecommendations$ = this.recommendedStore.isLoading$;
     this.errorRecommendations$ = this.recommendedStore.error$;
@@ -66,12 +63,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
     const currentUser = this.firebaseAuthService.getCurrentUser();
     if (currentUser?.name) this.userName = currentUser.name;
 
-    // Initial data loading
     this.loadBudget();
     this.loadSavedPromotions();
     this.loadReceiptHistory();
     
-    // Subscribe to receipt saved events to refresh saved promotions
     this.subscriptions.add(
       this.receiptProcessingService.receiptSaved
         .pipe(
@@ -84,7 +79,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
         .subscribe(this.handleReceiptSaved.bind(this))
     );
     
-    // Check if we navigated from receipt processing
     const navigation = this.router.getCurrentNavigation();
     if (navigation?.extras?.state && navigation.extras.state['fromReceiptProcessing']) {
       const receiptId = navigation.extras.state['savedReceiptId'];
@@ -92,7 +86,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       console.log('Navigated from receipt processing with receipt ID:', receiptId);
       
       if (userId) {
-        // Force refresh data from server since we just processed a receipt
         setTimeout(() => {
           this.refreshAllData(userId);
         }, 500);
@@ -100,30 +93,18 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
   }
   
-  /**
-   * Handles receipt saved event by refreshing all data
-   * This will work regardless of whether we're on the homepage or just navigated to it
-   */
   handleReceiptSaved(userId: string): void {
-    console.log('⭐ Receipt saved event captured, refreshing all data for user:', userId);
+    console.log('Receipt saved event captured, refreshing all data for user:', userId);
     
-    // Force a delay to ensure navigation has completed
     setTimeout(() => {
       this.refreshAllData(userId);
-      
-      // Show notification about refreshed data
       this.showNotification('Data refreshed with your latest receipt!');
     }, 300);
   }
   
-  /**
-   * Refreshes all data for the user
-   * Can be called from ngOnInit or from receipt event handler
-   */
   refreshAllData(userId: string): void {
     console.log('Refreshing all data for user:', userId);
     
-    // Use the existing method to refresh promotions
     this.savedPromotionsService.refreshUserSavedPromotions(userId);
     this.loadBudget();
     this.loadReceiptHistory();
@@ -157,7 +138,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.isLoading.savedPromotions = true;
     console.log('Loading saved promotions for user:', currentUser.id);
     
-    // Subscribe to both the one-time call and the observable stream
     this.subscriptions.add(
       this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
@@ -175,7 +155,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       })
     );
     
-    // Also subscribe to the stream to get updates
     this.subscriptions.add(
       this.savedPromotionsService.savedPromotions$.subscribe(promotions => {
         console.log('Saved promotions stream updated:', promotions.length);
@@ -192,23 +171,19 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (!currentUser?.id) return;
     
     console.log('Loading receipt history for user:', currentUser.id);
-    // Fetch receipts from API
     this.http.get<any[]>(`${environment.apiUrl}/receipts/user/${currentUser.id}`).subscribe({
       next: (receipts) => {
         console.log('Receipts loaded:', receipts.length);
-        // Use the store to process receipts and load recommendations
         this.recommendedStore.processReceiptHistory(receipts);
       },
       error: (error) => {
         console.error('Error loading receipts:', error);
-        // If no receipts are available, load some default categories
         this.loadDefaultRecommendations();
       }
     });
   }
 
   loadDefaultRecommendations(): void {
-    // Fallback categories if no receipt history is available
     const defaultCategories = ['Groceries', 'Dining', 'Retail'];
     this.recommendedStore.loadByCategories(defaultCategories);
   }

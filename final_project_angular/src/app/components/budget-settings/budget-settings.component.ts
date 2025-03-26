@@ -1,4 +1,3 @@
-// src/app/components/budget-settings/budget-settings.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -233,10 +232,6 @@ export class BudgetSettingsComponent implements OnInit {
     return value.toFixed(2);
   }
 
-  // New methods for enhanced category stats
-  /**
-   * Checks if remaining budget is low (less than 20% of total)
-   */
   isRemainingLow(category: any): boolean {
     const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
     if (budgetValue <= 0) return false;
@@ -245,17 +240,11 @@ export class BudgetSettingsComponent implements OnInit {
     return remaining > 0 && remaining < (budgetValue * 0.2);
   }
 
-  /**
-   * Checks if remaining budget is negative
-   */
   isRemainingNegative(category: any): boolean {
     const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
     return (budgetValue - category.spentAmount) < 0;
   }
 
-  /**
-   * Calculates the spent percentage for the visual meter
-   */
   getSpentPercentage(category: any): number {
     const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
     if (budgetValue <= 0) return 0;
@@ -264,9 +253,6 @@ export class BudgetSettingsComponent implements OnInit {
     return Math.min(percentage, 100); // Cap at 100%
   }
   
-  /**
-   * Get remaining amount with proper formatting
-   */
   getRemainingAmount(category: any): number {
     const budgetValue = this.budgetForm.get('category_' + category.category)?.value || 0;
     return budgetValue - category.spentAmount;

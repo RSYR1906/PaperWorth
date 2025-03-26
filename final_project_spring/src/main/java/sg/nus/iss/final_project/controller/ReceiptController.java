@@ -46,7 +46,6 @@ public class ReceiptController {
         logger.info("ReceiptController initialized with repository: {}", receiptRepository);
     }
 
-    // Get recent receipts for a user
     @GetMapping("/user/{userId}/recent")
     public List<Receipt> getRecentUserReceipts(@PathVariable String userId) {
         logger.info("Getting recent receipts for user: {}", userId);
@@ -57,14 +56,12 @@ public class ReceiptController {
         return receipts;
     }
 
-    // Endpoint to check MongoDB connection
     @GetMapping("/system/check")
     public Map<String, Object> checkSystem() {
         logger.info("System check requested");
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Check MongoDB connection by counting all receipts
             long receiptCount = receiptRepository.count();
             logger.info("Database connection successful. Total receipts: {}", receiptCount);
 
@@ -73,7 +70,6 @@ public class ReceiptController {
             response.put("receiptCount", receiptCount);
             response.put("timestamp", LocalDateTime.now().toString());
 
-            // Add sample receipt data for diagnostics
             List<Receipt> recentReceipts = receiptRepository.findAll().stream().limit(5).toList();
             logger.debug("Sample receipts for diagnostics: {}", recentReceipts);
             response.put("recentReceipts", recentReceipts);
@@ -84,20 +80,16 @@ public class ReceiptController {
             response.put("error", e.getMessage());
             response.put("timestamp", LocalDateTime.now().toString());
         }
-
         return response;
     }
 
-    // Helper method to parse different date formats
     private LocalDateTime parseDate(String dateStr) {
         if (dateStr == null || dateStr.trim().isEmpty()) {
             logger.debug("Empty date string, using current date");
             return LocalDateTime.now();
         }
-
         logger.debug("Attempting to parse date: {}", dateStr);
 
-        // Try to parse date-only formats first, then convert to LocalDateTime
         String[] dateFormats = {
                 "dd/MM/yyyy",
                 "MM/dd/yyyy",
@@ -107,22 +99,17 @@ public class ReceiptController {
                 "yyyy/MM/dd",
                 "dd.MM.yyyy"
         };
-
         for (String format : dateFormats) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
-                // Parse as LocalDate first, then convert to LocalDateTime
                 LocalDate date = LocalDate.parse(dateStr, formatter);
-                // Convert to LocalDateTime with time set to noon (12:00)
                 logger.debug("Successfully parsed date using format {}: {}", format, date);
                 return date.atTime(12, 0);
             } catch (DateTimeParseException e) {
-                // Continue trying other formats
                 logger.trace("Failed to parse date {} with format {}", dateStr, format);
             }
         }
 
-        // Try with time formats
         String[] dateTimeFormats = {
                 "dd/MM/yyyy HH:mm:ss",
                 "MM/dd/yyyy HH:mm:ss",
@@ -138,12 +125,9 @@ public class ReceiptController {
                 logger.debug("Successfully parsed datetime using format {}: {}", format, dateTime);
                 return dateTime;
             } catch (DateTimeParseException e) {
-                // Continue trying other formats
                 logger.trace("Failed to parse datetime {} with format {}", dateStr, format);
             }
         }
-
-        // If all parsing attempts fail, log and return current date
         logger.warn("All parsing attempts failed for date string: {}, using current date", dateStr);
         return LocalDateTime.now();
     }
@@ -153,12 +137,10 @@ public class ReceiptController {
         logger.info("Getting receipts for user ID: {}", userId);
 
         try {
-            // Try to find receipts using the standard repository method
             List<Receipt> receipts = receiptRepository.findByUserId(userId);
             logger.info("Found {} receipts for user ID: {}", receipts.size(), userId);
 
             if (receipts.isEmpty()) {
-                // Log all receipts in the database for debugging
                 List<Receipt> allReceipts = receiptRepository.findAll();
                 logger.info("Total receipts in database: {}", allReceipts.size());
 
@@ -168,7 +150,6 @@ public class ReceiptController {
                             receipt.getId(), receipt.getUserId(), receipt.getMerchantName(), receipt.getTotalExpense());
                 }
 
-                // Try a manual approach to see if there might be format issues with IDs
                 logger.info("Trying manual filtering for user ID: {}", userId);
                 receipts = receiptRepository.findAll().stream()
                         .filter(r -> r.getUserId() != null &&
@@ -177,7 +158,6 @@ public class ReceiptController {
 
                 logger.info("After manual filtering found {} receipts for user ID: {}", receipts.size(), userId);
             }
-
             return receipts;
         } catch (Exception e) {
             logger.error("Exception while fetching receipts for user ID: {}", userId, e);
@@ -205,8 +185,6 @@ public class ReceiptController {
 
         try {
             Receipt receipt = new Receipt();
-
-            // Set user ID - handle both String and Integer types
             Object userIdObj = receiptData.get("userId");
             if (userIdObj != null) {
                 receipt.setUserId(userIdObj.toString());
@@ -214,8 +192,6 @@ public class ReceiptController {
             } else {
                 logger.warn("Receipt data missing userId");
             }
-
-            // Set merchant name
             Object merchantNameObj = receiptData.get("merchantName");
             if (merchantNameObj != null) {
                 receipt.setMerchantName(merchantNameObj.toString());
@@ -223,15 +199,12 @@ public class ReceiptController {
             } else {
                 logger.warn("Receipt data missing merchantName");
             }
-
-            // Handle standardized total expense field
             double totalAmount = 0.0;
             Object totalExpenseObj = receiptData.get("totalExpense");
             if (totalExpenseObj == null) {
                 logger.debug("totalExpense not found, trying totalAmount");
                 totalExpenseObj = receiptData.get("totalAmount"); // Fallback to legacy field name
             }
-
             if (totalExpenseObj instanceof Number) {
                 totalAmount = ((Number) totalExpenseObj).doubleValue();
                 receipt.setTotalExpense(totalAmount);
@@ -249,7 +222,6 @@ public class ReceiptController {
                 logger.warn("Receipt data missing or invalid totalExpense/totalAmount: {}", totalExpenseObj);
             }
 
-            // Parse and set date using standardized utility
             LocalDateTime purchaseDate = LocalDateTime.now();
             Object dateObj = receiptData.get("dateOfPurchase");
             if (dateObj != null) {
@@ -266,8 +238,7 @@ public class ReceiptController {
             }
             receipt.setDateOfPurchase(purchaseDate);
 
-            // Set category if provided
-            String category = "Others"; // Default category
+            String category = "Others";
             Object categoryObj = receiptData.get("category");
             if (categoryObj != null) {
                 category = categoryObj.toString();
@@ -277,14 +248,12 @@ public class ReceiptController {
             }
             receipt.setCategory(category);
 
-            // Set image URL if provided
             Object imageUrlObj = receiptData.get("imageUrl");
             if (imageUrlObj != null) {
                 receipt.setImageUrl(imageUrlObj.toString());
                 logger.debug("Set image URL");
             }
 
-            // Handle items if provided
             Object itemsObj = receiptData.get("items");
             if (itemsObj instanceof List) {
                 List<?> itemsList = (List<?>) itemsObj;
@@ -292,7 +261,6 @@ public class ReceiptController {
                 for (int i = 0; i < itemsList.size(); i++) {
                     Object item = itemsList.get(i);
 
-                    // Handle case where items are objects with 'name' property
                     if (item instanceof Map && ((Map<?, ?>) item).containsKey("name")) {
                         itemsArray[i] = ((Map<?, ?>) item).get("name").toString();
                     } else {
@@ -303,33 +271,26 @@ public class ReceiptController {
                 logger.debug("Set {} items", itemsArray.length);
             }
 
-            // Set scan date to now
             receipt.setScanDate(LocalDateTime.now());
 
-            // Save receipt to MongoDB
             Receipt savedReceipt = receiptRepository.save(receipt);
             logger.info("Saved receipt: ID={}, userID={}, merchant={}, amount={}",
                     savedReceipt.getId(), savedReceipt.getUserId(), savedReceipt.getMerchantName(),
                     savedReceipt.getTotalExpense());
 
-            // Update budget with this expense
             if (receipt.getUserId() != null && totalAmount > 0) {
-                // Format month-year as YYYY-MM from the purchase date
                 String monthYear = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
                 logger.info("Updating budget for user: {}, month: {}, category: {}, amount: {}",
                         receipt.getUserId(), monthYear, category, totalAmount);
 
-                // Add the expense to the user's budget
                 budgetService.addExpenseToBudget(receipt.getUserId(), monthYear, category, totalAmount);
             }
 
-            // Award points for scanning the receipt
             logger.info("Awarding points for receipt ID: {}", savedReceipt.getId());
             PointTransaction pointsAwarded = rewardsService.awardPointsForReceipt(savedReceipt.getId());
             int points = pointsAwarded != null ? pointsAwarded.getPoints() : 0;
             logger.info("Awarded {} points for receipt ID: {}", points, savedReceipt.getId());
 
-            // Create response that includes both the receipt and points awarded
             Map<String, Object> response = new HashMap<>();
             response.put("receipt", savedReceipt);
             response.put("pointsAwarded", points);
@@ -345,25 +306,20 @@ public class ReceiptController {
     public ResponseEntity<?> deleteReceipt(@PathVariable String receiptId) {
         logger.info("Deleting receipt with ID: {}", receiptId);
         try {
-            // Find receipt before deleting it
             Receipt receipt = receiptRepository.findById(receiptId);
 
             if (receipt != null) {
                 logger.info("Found receipt to delete: ID={}, userID={}, merchant={}, amount={}",
                         receipt.getId(), receipt.getUserId(), receipt.getMerchantName(), receipt.getTotalExpense());
 
-                // Delete the receipt
                 receiptRepository.deleteById(receiptId);
                 logger.info("Receipt deleted successfully: {}", receiptId);
 
-                // Update budget by removing the expense
                 if (receipt.getUserId() != null && receipt.getTotalExpense() > 0) {
-                    // Format month-year as YYYY-MM from the purchase date
                     String monthYear = receipt.getDateOfPurchase().format(DateTimeFormatter.ofPattern("yyyy-MM"));
                     logger.info("Updating budget to remove expense: user={}, month={}, category={}, amount={}",
                             receipt.getUserId(), monthYear, receipt.getCategory(), receipt.getTotalExpense());
 
-                    // Remove the expense from the user's budget
                     budgetService.removeExpenseFromBudget(
                             receipt.getUserId(),
                             monthYear,

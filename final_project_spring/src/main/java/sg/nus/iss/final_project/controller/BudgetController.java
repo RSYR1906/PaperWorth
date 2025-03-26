@@ -24,28 +24,24 @@ public class BudgetController {
     @Autowired
     private BudgetService budgetService;
 
-    // Get a budget for a specific user and month
     @GetMapping("/user/{userId}/month/{monthYear}")
     public ResponseEntity<Budget> getUserBudget(@PathVariable String userId, @PathVariable String monthYear) {
         Budget budget = budgetService.getUserBudget(userId, monthYear);
         return ResponseEntity.ok(budget);
     }
 
-    // Get all budgets for a user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Budget>> getAllUserBudgets(@PathVariable String userId) {
         List<Budget> budgets = budgetService.getAllUserBudgets(userId);
         return ResponseEntity.ok(budgets);
     }
 
-    // Create or update an entire budget
     @PostMapping("")
     public ResponseEntity<Budget> saveBudget(@RequestBody Budget budget) {
         Budget savedBudget = budgetService.saveBudget(budget);
         return ResponseEntity.ok(savedBudget);
     }
 
-    // Update total budget amount
     @PutMapping("/user/{userId}/month/{monthYear}/total")
     public ResponseEntity<Budget> updateTotalBudget(
             @PathVariable String userId,
@@ -61,7 +57,6 @@ public class BudgetController {
         return ResponseEntity.ok(updatedBudget);
     }
 
-    // Update a category budget
     @PutMapping("/user/{userId}/month/{monthYear}/category/{categoryName}")
     public ResponseEntity<Budget> updateCategoryBudget(
             @PathVariable String userId,
@@ -78,7 +73,6 @@ public class BudgetController {
         return ResponseEntity.ok(updatedBudget);
     }
 
-    // Add an expense to the budget
     @PostMapping("/user/{userId}/month/{monthYear}/expense")
     public ResponseEntity<Budget> addExpense(
             @PathVariable String userId,
@@ -96,7 +90,6 @@ public class BudgetController {
         return ResponseEntity.ok(updatedBudget);
     }
 
-    // Delete a budget
     @DeleteMapping("/{budgetId}")
     public ResponseEntity<Void> deleteBudget(@PathVariable String budgetId) {
         budgetService.deleteBudget(budgetId);

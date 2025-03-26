@@ -28,9 +28,6 @@ public class SavedPromotionController {
     @Autowired
     private SavedPromotionService savedPromotionService;
 
-    /**
-     * Get all saved promotions for a user
-     */
     @GetMapping("/{userId}")
     public ResponseEntity<List<Promotion>> getSavedPromotions(@PathVariable String userId) {
         logger.info("GET request received: Getting saved promotions for user ID: {}", userId);
@@ -54,9 +51,6 @@ public class SavedPromotionController {
         }
     }
 
-    /**
-     * Get all saved promotions for a user in a specific category
-     */
     @GetMapping("/{userId}/category/{category}")
     public ResponseEntity<List<Promotion>> getSavedPromotionsByCategory(
             @PathVariable String userId,
@@ -74,9 +68,6 @@ public class SavedPromotionController {
         }
     }
 
-    /**
-     * Check if a promotion is saved by a user
-     */
     @GetMapping("/{userId}/{promotionId}")
     public ResponseEntity<Map<String, Boolean>> isPromotionSaved(
             @PathVariable String userId,
@@ -96,16 +87,12 @@ public class SavedPromotionController {
         }
     }
 
-    /**
-     * Save a promotion for a user
-     */
     @PostMapping("/{userId}/{promotionId}")
     public ResponseEntity<?> savePromotion(
             @PathVariable String userId,
             @PathVariable String promotionId) {
         logger.info("POST request received: Saving promotion ID: {} for user ID: {}", promotionId, userId);
         try {
-            // Check if already saved first
             boolean alreadySaved = savedPromotionService.isPromotionSaved(userId, promotionId);
             if (alreadySaved) {
                 logger.info("Promotion ID: {} is already saved by user ID: {}", promotionId, userId);
@@ -127,16 +114,12 @@ public class SavedPromotionController {
         }
     }
 
-    /**
-     * Remove a saved promotion
-     */
     @DeleteMapping("/{userId}/{promotionId}")
     public ResponseEntity<Map<String, String>> removePromotion(
             @PathVariable String userId,
             @PathVariable String promotionId) {
         logger.info("DELETE request received: Removing promotion ID: {} for user ID: {}", promotionId, userId);
         try {
-            // Check if saved first
             boolean isSaved = savedPromotionService.isPromotionSaved(userId, promotionId);
             if (!isSaved) {
                 logger.info("Promotion ID: {} is not saved by user ID: {}, nothing to remove", promotionId, userId);
@@ -144,7 +127,6 @@ public class SavedPromotionController {
                 response.put("message", "Promotion was not saved, nothing to remove");
                 return ResponseEntity.ok(response);
             }
-
             savedPromotionService.removePromotion(userId, promotionId);
             logger.info("Successfully removed promotion ID: {} for user ID: {}", promotionId, userId);
             Map<String, String> response = new HashMap<>();
@@ -158,9 +140,6 @@ public class SavedPromotionController {
         }
     }
 
-    /**
-     * Get the count of users who saved a promotion
-     */
     @GetMapping("/count/{promotionId}")
     public ResponseEntity<Map<String, Long>> getSaveCount(@PathVariable String promotionId) {
         logger.info("GET request received: Getting save count for promotion ID: {}", promotionId);

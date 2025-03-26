@@ -22,11 +22,9 @@ public class Receipt {
     private String[] items;
     private LocalDateTime scanDate; // Added to track when receipt was scanned
 
-    // Default constructor
     public Receipt() {
     }
 
-    // Constructor with fields
     public Receipt(String userId, String merchantName, LocalDateTime dateOfPurchase,
             double totalExpense, String category) {
         this.userId = userId;
@@ -34,10 +32,9 @@ public class Receipt {
         this.dateOfPurchase = dateOfPurchase;
         this.totalExpense = totalExpense;
         this.category = category;
-        this.scanDate = LocalDateTime.now(); // Set scan date to current time
+        this.scanDate = LocalDateTime.now();
     }
 
-    // Getters and setters
     public String getId() {
         return id;
     }
@@ -78,12 +75,10 @@ public class Receipt {
         this.totalExpense = totalExpense;
     }
 
-    // Backward compatibility method for totalAmount
     public double getTotalAmount() {
         return totalExpense;
     }
 
-    // Backward compatibility method for totalAmount
     public void setTotalAmount(double totalAmount) {
         this.totalExpense = totalAmount;
     }

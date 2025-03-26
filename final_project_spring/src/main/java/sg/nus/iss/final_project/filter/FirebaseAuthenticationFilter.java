@@ -26,20 +26,17 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Always set CORS headers
         response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         response.setHeader("Access-Control-Allow-Headers",
                 "Authorization, Content-Type, X-Requested-With, Accept, Origin");
         response.setHeader("Access-Control-Allow-Credentials", "true");
 
-        // Handle preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
-        // Your normal auth check
         String path = request.getRequestURI();
         if (path.contains("/public/") || path.contains("/login") || path.contains("/firebase-auth")) {
             filterChain.doFilter(request, response);

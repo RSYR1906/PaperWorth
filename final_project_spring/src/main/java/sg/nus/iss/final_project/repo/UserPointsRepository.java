@@ -18,54 +18,45 @@ public class UserPointsRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    // Find all user points
     public List<UserPoints> findAll() {
-        return mongoTemplate.findAll(UserPoints.class);
+        return mongoTemplate.findAll(UserPoints.class, "userPoints");
     }
 
-    // Find user points by ID
     public UserPoints findById(String id) {
-        return mongoTemplate.findById(id, UserPoints.class);
+        return mongoTemplate.findById(id, UserPoints.class, "userPoints");
     }
 
-    // Find by ID with Optional wrapper
     public Optional<UserPoints> findByIdOptional(String id) {
-        UserPoints userPoints = mongoTemplate.findById(id, UserPoints.class);
+        UserPoints userPoints = mongoTemplate.findById(id, UserPoints.class, "userPoints");
         return Optional.ofNullable(userPoints);
     }
 
-    // Save user points
     public UserPoints save(UserPoints userPoints) {
-        return mongoTemplate.save(userPoints);
+        return mongoTemplate.save(userPoints, "userPoints");
     }
 
-    // Find by user ID
     public Optional<UserPoints> findByUserId(String userId) {
         Query query = new Query(Criteria.where("userId").is(userId));
-        UserPoints userPoints = mongoTemplate.findOne(query, UserPoints.class);
+        UserPoints userPoints = mongoTemplate.findOne(query, UserPoints.class, "userPoints");
         return Optional.ofNullable(userPoints);
     }
 
-    // Find users with high points
     public List<UserPoints> findByAvailablePointsGreaterThan(int threshold) {
         Query query = new Query(Criteria.where("availablePoints").gt(threshold));
-        return mongoTemplate.find(query, UserPoints.class);
+        return mongoTemplate.find(query, UserPoints.class, "userPoints");
     }
 
-    // Find users who haven't updated their points recently
     public List<UserPoints> findByLastUpdatedBefore(LocalDateTime date) {
         Query query = new Query(Criteria.where("lastUpdated").lt(date));
-        return mongoTemplate.find(query, UserPoints.class);
+        return mongoTemplate.find(query, UserPoints.class, "userPoints");
     }
 
-    // Delete user points
     public void delete(UserPoints userPoints) {
-        mongoTemplate.remove(userPoints);
+        mongoTemplate.remove(userPoints, "userPoints");
     }
 
-    // Delete user points by ID
     public void deleteById(String id) {
         Query query = new Query(Criteria.where("id").is(id));
-        mongoTemplate.remove(query, UserPoints.class);
+        mongoTemplate.remove(query, UserPoints.class, "userPoints");
     }
 }

@@ -1,5 +1,3 @@
-// src/app/services/receipt.service.ts
-
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
@@ -19,7 +17,6 @@ export class ReceiptService {
     private budgetService: BudgetService
   ) {}
 
-  // Upload receipt - now uses the backend to update budget automatically
   uploadReceipt(formData: FormData): Observable<Receipt> {
     return this.http.post<Receipt>(this.apiUrl, formData).pipe(
       tap(response => console.log('Receipt upload response:', response)),
@@ -30,7 +27,6 @@ export class ReceiptService {
     );
   }
 
-  // Get user receipts
   getUserReceipts(userId: string): Observable<Receipt[]> {
     console.log(`Fetching receipts for user ID: ${userId}`);
     return this.http.get<Receipt[]>(`${this.apiUrl}/user/${userId}`).pipe(
@@ -45,7 +41,6 @@ export class ReceiptService {
     );
   }
 
-  // Get receipt by ID
   getReceiptById(receiptId: string): Observable<Receipt> {
     return this.http.get<Receipt>(`${this.apiUrl}/${receiptId}`).pipe(
       tap(receipt => console.log(`Received receipt by ID ${receiptId}:`, receipt)),
@@ -56,18 +51,16 @@ export class ReceiptService {
     );
   }
 
-  // Get promotions for a receipt
   getReceiptPromotions(receiptId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/${receiptId}/promotions`).pipe(
       tap(promotions => console.log(`Received promotions for receipt ${receiptId}:`, promotions)),
       catchError(error => {
         console.error('Error fetching receipt promotions:', error);
-        return of([]); // Return empty array on error
+        return of([]);
       })
     );
   }
 
-  // Delete a receipt
   deleteReceipt(receiptId: string): Observable<any> {
     console.log(`Deleting receipt with ID: ${receiptId}`);
     return this.http.delete(`${this.apiUrl}/${receiptId}`).pipe(
@@ -79,7 +72,6 @@ export class ReceiptService {
     );
   }
 
-  // Save a receipt
   saveReceipt(receiptData: any): Observable<{ receipt: Receipt, pointsAwarded: number }> {
     const standardizedReceipt = this.prepareReceiptForBackend(receiptData);
     console.log('Saving receipt with standardized fields:', standardizedReceipt);
@@ -98,7 +90,6 @@ export class ReceiptService {
     );
   }
 
-  // Standardize fields in receipt objects
   private standardizeReceiptFields(receipts: any[]): void {
     if (!receipts || !Array.isArray(receipts)) return;
 
@@ -120,7 +111,6 @@ export class ReceiptService {
     });
   }
 
-  // Prepare receipt data before sending to backend
   private prepareReceiptForBackend(receiptData: any): any {
     const standardizedReceipt: any = { ...receiptData };
 

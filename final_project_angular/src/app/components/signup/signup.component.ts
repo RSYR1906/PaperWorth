@@ -30,23 +30,18 @@ export class SignupComponent {
     }, { validators: this.passwordMatchValidator });
   }
 
-  /** Custom validator to ensure password and confirm password match */
   private passwordMatchValidator(g: FormGroup) {
     return g.get('password')?.value === g.get('confirmPassword')?.value 
       ? null 
       : g.get('confirmPassword')?.setErrors({ mismatch: true });
   }
 
-  /** Convenience getter for form fields */
   get f() { return this.signupForm.controls; }
 
-  /** Toggles password visibility */
   togglePasswordVisibility() { this.passwordVisible = !this.passwordVisible; }
 
-  /** Toggles confirm password visibility */
   toggleConfirmPasswordVisibility() { this.confirmPasswordVisible = !this.confirmPasswordVisible; }
 
-  /** Handles form submission */
   async onSubmit() {
     this.markFormTouched();
 
@@ -70,7 +65,6 @@ export class SignupComponent {
     }
   }
 
-  /** Handles Google Sign-Up */
   async signUpWithGoogle() {
     this.isLoading = true;
     this.errorMessage = '';
@@ -86,17 +80,14 @@ export class SignupComponent {
     }
   }
 
-  /** Navigates to login page */
   goToLogin() {
     this.router.navigate(['/login']);
   }
 
-  /** Marks all form fields as touched to trigger validation messages */
   private markFormTouched() {
     Object.values(this.signupForm.controls).forEach(control => control.markAsTouched());
   }
 
-  /** Handles Firebase authentication errors */
   private handleAuthError(error: any) {
     console.error('Authentication error:', error);
 

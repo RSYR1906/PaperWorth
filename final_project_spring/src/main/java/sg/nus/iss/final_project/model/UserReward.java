@@ -19,11 +19,9 @@ public class UserReward {
     private String deliveryInfo; // For physical rewards
     private LocalDateTime expiryDate; // For vouchers
 
-    // Default constructor
     public UserReward() {
     }
 
-    // Constructor with fields
     public UserReward(String userId, String rewardId, String rewardName,
             int pointsSpent, String status) {
         this.userId = userId;
@@ -34,7 +32,6 @@ public class UserReward {
         this.status = status;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

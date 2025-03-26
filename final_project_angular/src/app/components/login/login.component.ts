@@ -1,4 +1,3 @@
-// src/app/components/login/login.component.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -27,7 +26,6 @@ export class LoginComponent {
     });
   }
 
-  // Convenience getter for easy access to form fields
   get f() { return this.loginForm.controls; }
 
   togglePasswordVisibility() {

@@ -21,14 +21,12 @@ public class UserRewardController {
     @Autowired
     private UserRewardRepository userRewardRepository;
 
-    // Get all rewards for a user
     @GetMapping("/{userId}")
     public ResponseEntity<List<UserReward>> getUserRewards(@PathVariable String userId) {
         List<UserReward> rewards = userRewardRepository.findByUserId(userId);
         return ResponseEntity.ok(rewards);
     }
 
-    // Get rewards by status (PENDING, FULFILLED, CANCELLED)
     @GetMapping("/{userId}/status/{status}")
     public ResponseEntity<List<UserReward>> getUserRewardsByStatus(
             @PathVariable String userId,
@@ -37,7 +35,6 @@ public class UserRewardController {
         return ResponseEntity.ok(rewards);
     }
 
-    // Get recent rewards (redeemed in last N days)
     @GetMapping("/{userId}/recent")
     public ResponseEntity<List<UserReward>> getRecentUserRewards(
             @PathVariable String userId,
@@ -47,7 +44,6 @@ public class UserRewardController {
         return ResponseEntity.ok(rewards);
     }
 
-    // Get expiring rewards (e.g., vouchers expiring soon)
     @GetMapping("/{userId}/expiring")
     public ResponseEntity<List<UserReward>> getExpiringUserRewards(
             @PathVariable String userId,

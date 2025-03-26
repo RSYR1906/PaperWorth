@@ -16,75 +16,63 @@ public class RewardRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    // Find all rewards
     public List<Reward> findAll() {
-        return mongoTemplate.findAll(Reward.class);
+        return mongoTemplate.findAll(Reward.class, "rewards");
     }
 
-    // Find reward by ID
     public Reward findById(String id) {
-        return mongoTemplate.findById(id, Reward.class);
+        return mongoTemplate.findById(id, Reward.class, "rewards");
     }
 
-    // Find by ID with Optional wrapper
     public java.util.Optional<Reward> findByIdOptional(String id) {
-        Reward reward = mongoTemplate.findById(id, Reward.class);
+        Reward reward = mongoTemplate.findById(id, Reward.class, "rewards");
         return java.util.Optional.ofNullable(reward);
     }
 
-    // Save reward
     public Reward save(Reward reward) {
         return mongoTemplate.save(reward);
     }
 
-    // Find available rewards
     public List<Reward> findByIsAvailableTrue() {
         Query query = new Query(Criteria.where("isAvailable").is(true));
-        return mongoTemplate.find(query, Reward.class);
+        return mongoTemplate.find(query, Reward.class, "rewards");
     }
 
-    // Find rewards by category
     public List<Reward> findByCategoryAndIsAvailableTrue(String category) {
         Query query = new Query(Criteria.where("category").is(category)
                 .and("isAvailable").is(true));
-        return mongoTemplate.find(query, Reward.class);
+        return mongoTemplate.find(query, Reward.class, "rewards");
     }
 
-    // Find rewards by point cost range
     public List<Reward> findByPointsCostLessThanEqualAndIsAvailableTrue(int maxPoints) {
         Query query = new Query(Criteria.where("pointsCost").lte(maxPoints)
                 .and("isAvailable").is(true));
-        return mongoTemplate.find(query, Reward.class);
+        return mongoTemplate.find(query, Reward.class, "rewards");
     }
 
-    // Find rewards by merchant (for vouchers)
     public List<Reward> findByMerchantNameAndIsAvailableTrue(String merchantName) {
         Query query = new Query(Criteria.where("merchantName").is(merchantName)
                 .and("isAvailable").is(true));
-        return mongoTemplate.find(query, Reward.class);
+        return mongoTemplate.find(query, Reward.class, "rewards");
     }
 
-    // Custom query to find rewards that are almost out of stock
     public List<Reward> findLowStockRewards() {
         Query query = new Query(Criteria.where("quantity").lte(5)
                 .and("isAvailable").is(true));
-        return mongoTemplate.find(query, Reward.class);
+        return mongoTemplate.find(query, Reward.class, "rewards");
     }
 
-    // Delete a reward
     public void delete(Reward reward) {
         mongoTemplate.remove(reward);
     }
 
-    // Delete a reward by ID
     public void deleteById(String id) {
         Query query = new Query(Criteria.where("id").is(id));
-        mongoTemplate.remove(query, Reward.class);
+        mongoTemplate.remove(query, Reward.class, "rewards");
     }
 
-    // Check if exists by ID
     public boolean existsById(String id) {
         Query query = new Query(Criteria.where("id").is(id));
-        return mongoTemplate.exists(query, Reward.class);
+        return mongoTemplate.exists(query, Reward.class, "rewards");
     }
 }

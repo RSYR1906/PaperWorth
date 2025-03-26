@@ -7,7 +7,7 @@ public class User {
     private String name;
     private String email;
     private String passwordHash;
-    private String firebaseId; // New field for Firebase authentication
+    private String firebaseId;
     private LocalDateTime createdAt;
 
     public Long getId() {

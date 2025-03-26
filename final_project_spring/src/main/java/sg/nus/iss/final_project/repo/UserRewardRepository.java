@@ -17,71 +17,60 @@ public class UserRewardRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    // Find all user rewards
     public List<UserReward> findAll() {
-        return mongoTemplate.findAll(UserReward.class);
+        return mongoTemplate.findAll(UserReward.class, "userRewards");
     }
 
-    // Find user reward by ID
     public UserReward findById(String id) {
-        return mongoTemplate.findById(id, UserReward.class);
+        return mongoTemplate.findById(id, UserReward.class, "userRewards");
     }
 
-    // Find by ID with Optional wrapper
     public java.util.Optional<UserReward> findByIdOptional(String id) {
-        UserReward userReward = mongoTemplate.findById(id, UserReward.class);
+        UserReward userReward = mongoTemplate.findById(id, UserReward.class, "userRewards");
         return java.util.Optional.ofNullable(userReward);
     }
 
-    // Save user reward
     public UserReward save(UserReward userReward) {
         return mongoTemplate.save(userReward);
     }
 
-    // Find by user ID
     public List<UserReward> findByUserId(String userId) {
         Query query = new Query(Criteria.where("userId").is(userId));
-        return mongoTemplate.find(query, UserReward.class);
+        return mongoTemplate.find(query, UserReward.class, "userRewards");
     }
 
-    // Find by status
     public List<UserReward> findByUserIdAndStatus(String userId, String status) {
         Query query = new Query(Criteria.where("userId").is(userId)
                 .and("status").is(status));
-        return mongoTemplate.find(query, UserReward.class);
+        return mongoTemplate.find(query, UserReward.class, "userRewards");
     }
 
-    // Find redemptions by reward ID
     public List<UserReward> findByRewardId(String rewardId) {
         Query query = new Query(Criteria.where("rewardId").is(rewardId));
-        return mongoTemplate.find(query, UserReward.class);
+        return mongoTemplate.find(query, UserReward.class, "userRewards");
     }
 
-    // Find recent redemptions
     public List<UserReward> findByUserIdAndRedeemedDateAfter(String userId, LocalDateTime date) {
         Query query = new Query(Criteria.where("userId").is(userId)
                 .and("redeemedDate").gt(date));
-        return mongoTemplate.find(query, UserReward.class);
+        return mongoTemplate.find(query, UserReward.class, "userRewards");
     }
 
-    // Find expiring vouchers
     public List<UserReward> findByUserIdAndStatusAndExpiryDateBetween(
             String userId, String status, LocalDateTime start, LocalDateTime end) {
         Query query = new Query(Criteria.where("userId").is(userId)
                 .and("status").is(status)
                 .and("expiryDate").gte(start)
                 .and("expiryDate").lte(end));
-        return mongoTemplate.find(query, UserReward.class);
+        return mongoTemplate.find(query, UserReward.class, "userRewards");
     }
 
-    // Delete a user reward
     public void delete(UserReward userReward) {
-        mongoTemplate.remove(userReward);
+        mongoTemplate.remove(userReward, "userRewards");
     }
 
-    // Delete a user reward by ID
     public void deleteById(String id) {
         Query query = new Query(Criteria.where("id").is(id));
-        mongoTemplate.remove(query, UserReward.class);
+        mongoTemplate.remove(query, UserReward.class, "userRewards");
     }
 }

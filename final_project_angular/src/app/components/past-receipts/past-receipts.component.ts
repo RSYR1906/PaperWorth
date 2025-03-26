@@ -1,6 +1,3 @@
-// Cleaned and structured PastReceiptsComponent for better readability
-// All original functionality preserved
-
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReceiptService } from '../../services/receipt.service';

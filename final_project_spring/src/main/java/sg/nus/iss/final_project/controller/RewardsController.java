@@ -30,28 +30,24 @@ public class RewardsController {
     @Autowired
     private RewardsService rewardsService;
 
-    // Get all available rewards
     @GetMapping("/available")
     public ResponseEntity<List<Reward>> getAvailableRewards() {
         List<Reward> rewards = rewardsService.getAvailableRewards();
         return ResponseEntity.ok(rewards);
     }
 
-    // Get rewards by category
     @GetMapping("/category/{category}")
     public ResponseEntity<List<Reward>> getRewardsByCategory(@PathVariable String category) {
         List<Reward> rewards = rewardsService.getRewardsByCategory(category);
         return ResponseEntity.ok(rewards);
     }
 
-    // Get rewards that a user can afford
     @GetMapping("/affordable/{userId}")
     public ResponseEntity<List<Reward>> getAffordableRewards(@PathVariable String userId) {
         List<Reward> rewards = rewardsService.getAffordableRewards(userId);
         return ResponseEntity.ok(rewards);
     }
 
-    // Get a specific reward
     @GetMapping("/{rewardId}")
     public ResponseEntity<?> getRewardById(@PathVariable String rewardId) {
         Optional<Reward> reward = rewardsService.getRewardById(rewardId);
@@ -59,21 +55,18 @@ public class RewardsController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Get user points
     @GetMapping("/points/{userId}")
     public ResponseEntity<UserPoints> getUserPoints(@PathVariable String userId) {
         UserPoints userPoints = rewardsService.getUserPoints(userId);
         return ResponseEntity.ok(userPoints);
     }
 
-    // Get user's redemption history
     @GetMapping("/history/{userId}")
     public ResponseEntity<List<UserReward>> getRedemptionHistory(@PathVariable String userId) {
         List<UserReward> history = rewardsService.getUserRedemptionHistory(userId);
         return ResponseEntity.ok(history);
     }
 
-    // Get user's point transactions
     @GetMapping("/transactions/{userId}")
     public ResponseEntity<List<PointTransaction>> getPointTransactions(
             @PathVariable String userId,
@@ -85,11 +78,9 @@ public class RewardsController {
         } else {
             transactions = rewardsService.getUserPointTransactions(userId);
         }
-
         return ResponseEntity.ok(transactions);
     }
 
-    // Award points for scanning a receipt
     @PostMapping("/award-points/{receiptId}")
     public ResponseEntity<?> awardPointsForReceipt(@PathVariable String receiptId) {
         try {
@@ -105,7 +96,6 @@ public class RewardsController {
         }
     }
 
-    // Redeem a reward
     @PostMapping("/redeem/{userId}/{rewardId}")
     public ResponseEntity<?> redeemReward(
             @PathVariable String userId,
@@ -120,14 +110,12 @@ public class RewardsController {
         }
     }
 
-    // Add a new reward (admin function)
     @PostMapping("/admin/add")
     public ResponseEntity<Reward> addReward(@RequestBody Reward reward) {
         Reward newReward = rewardsService.addReward(reward);
         return ResponseEntity.status(HttpStatus.CREATED).body(newReward);
     }
 
-    // Update a reward (admin function)
     @PutMapping("/admin/{rewardId}")
     public ResponseEntity<?> updateReward(
             @PathVariable String rewardId,
@@ -141,7 +129,6 @@ public class RewardsController {
         }
     }
 
-    // Update redemption status (admin function)
     @PutMapping("/admin/redemption/{redemptionId}")
     public ResponseEntity<?> updateRedemptionStatus(
             @PathVariable String redemptionId,
@@ -151,7 +138,6 @@ public class RewardsController {
             if (status == null) {
                 return ResponseEntity.badRequest().body("Status is required");
             }
-
             UserReward userReward = rewardsService.updateRedemptionStatus(redemptionId, status);
             return ResponseEntity.ok(userReward);
         } catch (Exception e) {
@@ -160,7 +146,6 @@ public class RewardsController {
         }
     }
 
-    // Add delivery info to a redemption (admin function)
     @PutMapping("/admin/redemption/{redemptionId}/delivery")
     public ResponseEntity<?> addDeliveryInfo(
             @PathVariable String redemptionId,
@@ -170,7 +155,6 @@ public class RewardsController {
             if (info == null) {
                 return ResponseEntity.badRequest().body("Delivery info is required");
             }
-
             UserReward userReward = rewardsService.addDeliveryInfo(redemptionId, info);
             return ResponseEntity.ok(userReward);
         } catch (Exception e) {
@@ -183,12 +167,10 @@ public class RewardsController {
     public ResponseEntity<?> redeemWelcomeBonus(@PathVariable String userId) {
         try {
             PointTransaction transaction = rewardsService.redeemWelcomeBonus(userId);
-
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("pointsAwarded", transaction.getPoints());
             response.put("message", "Welcome bonus of 100 points has been added to your account!");
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();

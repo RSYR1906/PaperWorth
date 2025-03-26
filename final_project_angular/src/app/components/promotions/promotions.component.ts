@@ -1,6 +1,3 @@
-// Cleaned up version of PromotionsComponent for better readability and organization.
-// No logic has been removed or changed.
-
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';

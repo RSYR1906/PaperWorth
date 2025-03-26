@@ -20,11 +20,9 @@ public class Reward {
     private String termsConditions;
     private LocalDateTime expiryDate; // For vouchers
 
-    // Default constructor
     public Reward() {
     }
 
-    // Constructor with fields
     public Reward(String name, String description, int pointsCost, String imageUrl,
             String category, boolean isAvailable, int quantity,
             String merchantName, String termsConditions, LocalDateTime expiryDate) {
@@ -40,7 +38,6 @@ public class Reward {
         this.expiryDate = expiryDate;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
