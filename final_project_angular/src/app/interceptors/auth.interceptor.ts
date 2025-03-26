@@ -14,21 +14,43 @@ export class AuthInterceptor implements HttpInterceptor {
       return next.handle(request);
     }
 
+    // Check if this is a multipart form request (file upload)
+    const isMultipartRequest = request.body instanceof FormData;
+    
+    if (isMultipartRequest) {
+      console.log('Detected multipart request to:', request.url);
+    }
+
     // Convert Promise to Observable
     return from(this.firebaseAuthService.getIdToken()).pipe(
       tap(token => console.log('Firebase token available:', !!token)),
       switchMap(token => {
         if (token) {
           console.log('Adding auth header to request to:', request.url);
-          const cloned = request.clone({
-            setHeaders: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          });
-          return next.handle(cloned);
+          
+          let clonedRequest: HttpRequest<any>;
+          
+          if (isMultipartRequest) {
+            // For multipart requests, only add Authorization header without touching Content-Type
+            clonedRequest = request.clone({
+              setHeaders: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+            console.log('Preserving multipart format for request');
+          } else {
+            // For JSON requests, set all headers
+            clonedRequest = request.clone({
+              setHeaders: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            });
+          }
+          
+          return next.handle(clonedRequest);
         }
         console.log('No token available, proceeding without auth header to:', request.url);
         return next.handle(request);

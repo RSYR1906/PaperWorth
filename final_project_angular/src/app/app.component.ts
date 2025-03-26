@@ -1,13 +1,15 @@
 // src/app/app.component.ts
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { initializeApp } from 'firebase/app';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { environment } from '../environments/environment.prod';
+import { firebaseConfig } from './firebaseConfig';
 import { CameraService } from './services/camera.service';
 import { FirebaseAuthService } from './services/firebase-auth.service';
 import { ReceiptProcessingService } from './services/receipt-processing.service';
-import { Capacitor } from '@capacitor/core';
-import { environment } from '../environments/environment.prod';
 
 @Component({
   selector: 'app-root',
@@ -33,6 +35,19 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('Application starting...');
     console.log('Environment:', environment);
     console.log('Platform:', Capacitor.getPlatform());
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      console.log('Firebase app initialized');
+      
+      // For web platform, ensure auth is properly set up
+      if (Capacitor.getPlatform() === 'web') {
+        console.log('Setting up web authentication...');
+      }
+    } catch (error) {
+      console.error('Failed to initialize Firebase:', error);
+    }
+    
     // Subscribe to router events
     this.subscriptions.add(
       this.router.events

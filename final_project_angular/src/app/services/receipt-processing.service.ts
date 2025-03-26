@@ -1,6 +1,6 @@
 // src/app/services/receipt-processing.service.ts
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, finalize, of } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
@@ -24,6 +24,9 @@ export class ReceiptProcessingService {
   private errorMessageSubject = new BehaviorSubject<string | null>(null);
   private recentlySavedReceiptSubject = new BehaviorSubject<any>(null);
   private matchingPromotionsSubject = new BehaviorSubject<any[]>([]);
+
+  // Event emitter for receipt saved
+  receiptSaved = new EventEmitter<string>();
 
   // Observable streams
   readonly processing$ = this.processingSubject.asObservable();
@@ -217,13 +220,27 @@ export class ReceiptProcessingService {
     
     this.successMessageSubject.next(`Receipt saved! You earned ${pointsAwarded} points.`);
     
-     // Call the method without trying to subscribe to it
-     this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
+    // Call the method without trying to subscribe to it
+    this.fetchMatchingPromotions(extractedData.merchantName, category, savedReceipt.id);
     
-     // Add a small delay before navigation to allow time for promotions to load
-     setTimeout(() => {
-       this.navigateToHomepage(savedReceipt.id);
-     }, 500);
+    // Ensure we have a valid userId to emit
+    const userId = savedReceipt.userId || extractedData.userId;
+    
+    if (userId) {
+      console.log('Emitting receiptSaved event with userId:', userId);
+      // Emit event that a receipt was saved with the user ID - using timeout to ensure it's processed after navigation
+      setTimeout(() => {
+        this.receiptSaved.emit(userId);
+        console.log('Event emitted for saved receipt, userId:', userId);
+      }, 0);
+    } else {
+      console.warn('No userId available to emit for receipt saved event');
+    }
+    
+    // Add a small delay before navigation to allow time for promotions to load
+    setTimeout(() => {
+      this.navigateToHomepage(savedReceipt.id);
+    }, 700); // Increased delay to ensure event processing
   }
 
   /**

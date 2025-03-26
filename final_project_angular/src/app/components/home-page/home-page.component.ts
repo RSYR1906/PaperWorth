@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { environment } from '../../../environments/environment.prod';
 import { Promotion } from '../../model';
 import { BudgetService } from '../../services/budget.service';
@@ -10,7 +11,7 @@ import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { PromotionService } from '../../services/promotions.service';
 import { ReceiptProcessingService } from '../../services/receipt-processing.service';
 import { SavedPromotionsService } from '../../services/saved-promotions.service';
-import { CategoryRecommendation, RecommendedPromotionsStore } from '../../stores/homepage.store';
+import { CategoryRecommendation, RecommendedPromotionsStore } from '../../stores/recommended-promotions.state';
 
 @Component({
   selector: 'app-home-page',
@@ -65,8 +66,66 @@ export class HomePageComponent implements OnInit, OnDestroy {
     const currentUser = this.firebaseAuthService.getCurrentUser();
     if (currentUser?.name) this.userName = currentUser.name;
 
+    // Initial data loading
     this.loadBudget();
     this.loadSavedPromotions();
+    this.loadReceiptHistory();
+    
+    // Subscribe to receipt saved events to refresh saved promotions
+    this.subscriptions.add(
+      this.receiptProcessingService.receiptSaved
+        .pipe(
+          filter(userId => {
+            const currentUserId = this.firebaseAuthService.getCurrentUser()?.id;
+            console.log('Receipt event received for userId:', userId, 'Current userId:', currentUserId);
+            return !!userId && userId === currentUserId;
+          })
+        )
+        .subscribe(this.handleReceiptSaved.bind(this))
+    );
+    
+    // Check if we navigated from receipt processing
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation?.extras?.state && navigation.extras.state['fromReceiptProcessing']) {
+      const receiptId = navigation.extras.state['savedReceiptId'];
+      const userId = this.firebaseAuthService.getCurrentUser()?.id;
+      console.log('Navigated from receipt processing with receipt ID:', receiptId);
+      
+      if (userId) {
+        // Force refresh data from server since we just processed a receipt
+        setTimeout(() => {
+          this.refreshAllData(userId);
+        }, 500);
+      }
+    }
+  }
+  
+  /**
+   * Handles receipt saved event by refreshing all data
+   * This will work regardless of whether we're on the homepage or just navigated to it
+   */
+  handleReceiptSaved(userId: string): void {
+    console.log('⭐ Receipt saved event captured, refreshing all data for user:', userId);
+    
+    // Force a delay to ensure navigation has completed
+    setTimeout(() => {
+      this.refreshAllData(userId);
+      
+      // Show notification about refreshed data
+      this.showNotification('Data refreshed with your latest receipt!');
+    }, 300);
+  }
+  
+  /**
+   * Refreshes all data for the user
+   * Can be called from ngOnInit or from receipt event handler
+   */
+  refreshAllData(userId: string): void {
+    console.log('Refreshing all data for user:', userId);
+    
+    // Use the existing method to refresh promotions
+    this.savedPromotionsService.refreshUserSavedPromotions(userId);
+    this.loadBudget();
     this.loadReceiptHistory();
   }
 
@@ -94,15 +153,36 @@ export class HomePageComponent implements OnInit, OnDestroy {
   loadSavedPromotions(): void {
     const currentUser = this.firebaseAuthService.getCurrentUser();
     if (!currentUser?.id) return;
+    
     this.isLoading.savedPromotions = true;
+    console.log('Loading saved promotions for user:', currentUser.id);
+    
+    // Subscribe to both the one-time call and the observable stream
     this.subscriptions.add(
       this.savedPromotionsService.getSavedPromotions(currentUser.id).subscribe({
         next: (promotions) => {
+          console.log('Initial saved promotions loaded:', promotions.length);
           this.savedPromotions = promotions;
-          this.displayedSavedPromotions = promotions.slice(0, this.savedPromotionsLimit);
+          this.displayedSavedPromotions = this.showMoreSavedPromotions 
+            ? promotions 
+            : promotions.slice(0, this.savedPromotionsLimit);
           this.isLoading.savedPromotions = false;
         },
-        error: () => (this.isLoading.savedPromotions = false)
+        error: (error) => {
+          console.error('Error loading saved promotions:', error);
+          this.isLoading.savedPromotions = false;
+        }
+      })
+    );
+    
+    // Also subscribe to the stream to get updates
+    this.subscriptions.add(
+      this.savedPromotionsService.savedPromotions$.subscribe(promotions => {
+        console.log('Saved promotions stream updated:', promotions.length);
+        this.savedPromotions = promotions;
+        this.displayedSavedPromotions = this.showMoreSavedPromotions 
+          ? promotions 
+          : promotions.slice(0, this.savedPromotionsLimit);
       })
     );
   }
@@ -111,9 +191,11 @@ export class HomePageComponent implements OnInit, OnDestroy {
     const currentUser = this.firebaseAuthService.getCurrentUser();
     if (!currentUser?.id) return;
     
+    console.log('Loading receipt history for user:', currentUser.id);
     // Fetch receipts from API
     this.http.get<any[]>(`${environment.apiUrl}/receipts/user/${currentUser.id}`).subscribe({
       next: (receipts) => {
+        console.log('Receipts loaded:', receipts.length);
         // Use the store to process receipts and load recommendations
         this.recommendedStore.processReceiptHistory(receipts);
       },

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">PaperWorth</string>
-    <string name="title_activity_main">PaperWorth</string>
+    <string name="app_name">paperworth</string>
+    <string name="title_activity_main">paperworth</string>
     <string name="package_name">com.example.paperworth</string>
     <string name="custom_url_scheme">com.example.paperworth</string>
 </resources>

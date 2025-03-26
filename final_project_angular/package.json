@@ -30,6 +30,7 @@
     "@capacitor/device": "^7.0.0",
     "@capacitor/ios": "^7.1.0",
     "@ngrx/component-store": "^19.0.1",
+    "@ngxs/store": "^19.0.0",
     "@primeng/themes": "^19.0.9",
     "angularfire2": "^5.4.2",
     "core-js": "^3.41.0",

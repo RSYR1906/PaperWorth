@@ -11,11 +11,18 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("https://paperworth.vercel.app",
+                        "www.rsyr.online",
                         "https://magnificent-reverence-production.up.railway.app",
                         "https://paperworth.sgp1.digitaloceanspaces.com",
-                        "http://localhost:4200", "http://localhost:8080",
-                        "http://localhost",
-                        "capacitor://localhost", "capacitor://paperworth.app", "capacitor://firebaseauth")
+                        "http://localhost:4200",
+                        "http://localhost:8080",
+                        // Capacitor Android domains
+                        "http://localhost:8100", // Default Capacitor dev server
+                        "capacitor://localhost", // Capacitor app scheme
+                        "ionic://localhost", // Ionic scheme if you're using Ionic
+                        "http://10.0.2.2:8100", // Android emulator accessing localhost
+                        "http://192.168.1.0/24" // Common local IP range for testing on devices
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
