@@ -54,11 +54,6 @@ export class UserService {
    */
   getCurrentUser(): Observable<User> {
     const currentUser = this.getUserFromStorage();
-    
-    if (!currentUser.id) {
-      return of(this.createGuestUser());
-    }
-    
     return this.http.get<User>(`${this.apiUrl}/me?userId=${currentUser.id}`).pipe(
       tap(user => console.log('Retrieved user details:', user)),
       catchError(() => {
@@ -114,15 +109,6 @@ export class UserService {
       createdAt: new Date().toISOString()
     };
   }
-  
-  /**
-   * Saves a mock user to localStorage for testing
-   */
-  saveMockUserToLocalStorage(): void {
-    const mockUser = this.getMockUser();
-    localStorage.setItem(this.storageKey, JSON.stringify(mockUser));
-    console.log('Saved mock user to localStorage:', mockUser);
-  }
 
   /**
    * Retrieves the current user from localStorage
@@ -135,18 +121,5 @@ export class UserService {
       console.error('Error parsing user from localStorage:', error);
       return {};
     }
-  }
-
-  /**
-   * Creates a guest user object
-   * @returns Guest user
-   */
-  private createGuestUser(): User {
-    return {
-      id: "0",
-      name: 'Guest User',
-      email: 'guest@example.com',
-      createdAt: new Date().toISOString()
-    };
   }
 }

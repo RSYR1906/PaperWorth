@@ -7,20 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:246958918346:android:4563561efa0fbe0f084233",
+        "mobilesdk_app_id": "1:246958918346:android:a105dd52f1bfd244084233",
         "android_client_info": {
-          "package_name": "com.example.paperworthV2"
+          "package_name": "com.example.paperworth"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "246958918346-o7tuvmc3jv1noteqnvjonj200ljsgip1.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.paperworthV2",
-            "certificate_hash": "336811d3d482c7c2ca63fd501d06c79286f4763e"
-          }
-        },
         {
           "client_id": "246958918346-7hmih13gapkam41r7vdmjfkg4spc3jh8.apps.googleusercontent.com",
           "client_type": 3
