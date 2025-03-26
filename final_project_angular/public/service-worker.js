@@ -1,5 +1,7 @@
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js');
 
+const CACHE_VERSION = 'v2'; // Increment this when you want to force an update
+
 if (workbox) {
     const { routing, strategies, expiration } = workbox;
 
