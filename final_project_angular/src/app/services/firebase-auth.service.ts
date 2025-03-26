@@ -10,7 +10,6 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   getRedirectResult,
-  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -114,44 +113,38 @@ export class FirebaseAuthService {
       const platform = Capacitor.getPlatform();
       console.log(`Running on platform: ${platform}`);
   
-      if (platform === 'android') {
-        console.log('Starting native Google sign-in');
+      if (platform === 'android' || platform === 'ios') {
+        // Clear previous sign-in state
+        await FirebaseAuthentication.signOut();
+        
+        // Add more detailed logging
+        console.log('Starting native Google sign-in with Firebase Authentication plugin');
+        
+        // Use the plugin to sign in
         const result = await FirebaseAuthentication.signInWithGoogle();
-        console.log('Native sign-in result:', JSON.stringify(result));
-  
-        if (!result.credential?.idToken) {
-          throw new Error('Google login failed - missing idToken');
+        console.log('Native sign-in completed, result:', JSON.stringify(result));
+        
+        // Check if we have valid authentication data
+        if (!result || !result.user) {
+          throw new Error('Google login failed - missing user data');
         }
-  
-        console.log('Creating credential with idToken');
-        const credential = GoogleAuthProvider.credential(result.credential.idToken);
         
-        // Print out the credential details
-        console.log('Credential object:', credential);
+        // Create a user object from the plugin result
+        const userData: UserData = {
+          id: result.user.uid,
+          name: result.user.displayName || 'User',
+          email: result.user.email,
+          photoURL: result.user.photoUrl,
+          emailVerified: result.user.emailVerified,
+          createdAt: new Date().toISOString()
+        };
         
-        // If you need to see more details about the credential
-        console.log('Credential provider ID:', credential.providerId);
-        console.log('Credential sign-in method:', credential.signInMethod);
-        console.log('Has ID token:', !!credential.idToken);
-        console.log('Has access token:', !!credential.accessToken);
-        
-        console.log('Signing in with credential');
-        const userCredential = await signInWithCredential(this.auth, credential);
-        console.log('Sign-in successful', userCredential.user.uid);
-  
-        return this.syncUserWithBackend(userCredential.user);
+        // Sync with backend
+        return this.syncUserWithBackend(this.auth.currentUser!);
       } else {
         // Web-based sign-in implementation
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(this.auth, provider);
-        
-        // Log web sign-in details
-        console.log('Web sign-in result:', {
-          providerId: result.providerId,
-          userId: result.user.uid,
-          hasToken: !!result.user.getIdToken()
-        });
-        
         return this.syncUserWithBackend(result.user);
       }
     } catch (error) {
